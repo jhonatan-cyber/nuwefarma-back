@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -123,10 +124,13 @@ class AuthController extends Controller
             $usuario->ultimo_intento_fallido = null;
             $usuario->save();
 
-            // Revocar tokens anteriores
-            $usuario->tokens()->delete();
+            // DOBLE AUTENTICACIÓN: Sesión + Token
+            // 1. Crear sesión para frontend (cookies httpOnly - más seguro contra XSS)
+            Auth::login($usuario);
 
-            // Crear nuevo token
+            // 2. Generar token API para Swagger/Postman/Apps móviles
+            // Revocar tokens anteriores del usuario
+            $usuario->tokens()->delete();
             $token = $usuario->createToken('auth_token')->plainTextToken;
 
             // Registrar actividad de login exitoso
@@ -140,6 +144,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Login exitoso',
+                // Token para Swagger/Postman (bearer token)
                 'token' => $token,
                 'user' => [
                     'id' => $usuario->id,
@@ -183,7 +188,7 @@ class AuthController extends Controller
     )]
     public function logout(Request $request): JsonResponse
     {
-        // Registrar actividad antes de eliminar el token
+        // Registrar actividad antes de cerrar sesión
         ActivityLog::registrar(
             accion: 'logout',
             modulo: 'auth',
@@ -191,7 +196,17 @@ class AuthController extends Controller
             usuarioId: $request->user()->id
         );
 
-        $request->user()->currentAccessToken()->delete();
+        // Limpiar ambos métodos de autenticación
+        // 1. Revocar token API (si está usando bearer token)
+        if ($request->user()->currentAccessToken()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        // 2. Cerrar sesión (si está usando cookies)
+        if ($request->session()->has('_token')) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'success' => true,
@@ -289,7 +304,7 @@ class AuthController extends Controller
     public function sessions(Request $request): JsonResponse
     {
         $currentTokenId = $request->user()->currentAccessToken()->id;
-        
+
         $sessions = $request->user()->tokens->map(function ($token) use ($currentTokenId) {
             return [
                 'id' => $token->id,
@@ -376,7 +391,7 @@ class AuthController extends Controller
     public function revokeAllSessions(Request $request): JsonResponse
     {
         $currentTokenId = $request->user()->currentAccessToken()->id;
-        
+
         $revokedCount = $request->user()
             ->tokens()
             ->where('id', '!=', $currentTokenId)

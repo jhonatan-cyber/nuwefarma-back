@@ -28,6 +28,7 @@ class Usuario extends Authenticatable
         'email',
         'password',
         'rol_id',
+        'sucursal_id',
         'sueldo',
         'foto',
         'estado',
@@ -77,5 +78,13 @@ class Usuario extends Authenticatable
     public function rol(): BelongsTo
     {
         return $this->belongsTo(Rol::class, 'rol_id');
+    }
+
+    /**
+     * Relación con Sucursal
+     */
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class, 'sucursal_id');
     }
 }

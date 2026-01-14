@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ class Producto extends Model
 
     protected $fillable = [
         'categoria_id',
+        'proveedor_id',
         'nombre',
         'codigo_barras',
         'sku',
@@ -72,5 +74,46 @@ class Producto extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
+
+    /**
+     * Relación con Proveedor
+     */
+    public function proveedor(): BelongsTo
+    {
+        return $this->belongsTo(Proveedor::class, 'proveedor_id');
+    }
+
+    /**
+     * Scope para filtrar productos activos
+     */
+    public function scopeActivos(Builder $query): Builder
+    {
+        return $query->where('estado', 'activo');
+    }
+
+    /**
+     * Scope para filtrar productos inactivos
+     */
+    public function scopeInactivos(Builder $query): Builder
+    {
+        return $query->where('estado', 'inactivo');
+    }
+
+    /**
+     * Scope para filtrar productos con stock bajo
+     */
+    public function scopeStockBajo(Builder $query): Builder
+    {
+        return $query->whereColumn('stock_actual', '<=', 'stock_minimo');
+    }
+
+    /**
+     * Scope para filtrar productos próximos a vencer
+     */
+    public function scopeProximosAVencer(Builder $query, int $dias = 60): Builder
+    {
+        return $query->whereNotNull('fecha_vencimiento')
+            ->where('fecha_vencimiento', '<=', now()->addDays($dias));
     }
 }

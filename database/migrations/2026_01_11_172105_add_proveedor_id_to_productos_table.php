@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('productos', function (Blueprint $table) {
+            $table->uuid('proveedor_id')->nullable()->after('categoria_id');
+            $table->foreign('proveedor_id')->references('id')->on('proveedores')->onDelete('set null');
+            $table->index('proveedor_id');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('productos', function (Blueprint $table) {
+            $table->dropForeign(['proveedor_id']);
+            $table->dropIndex(['proveedor_id']);
+            $table->dropColumn('proveedor_id');
+        });
+    }
+};

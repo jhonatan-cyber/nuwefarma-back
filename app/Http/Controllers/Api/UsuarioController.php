@@ -53,7 +53,7 @@ class UsuarioController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = Usuario::with('rol');
+        $query = Usuario::with(['rol', 'sucursal']);
 
         $estado = $request->query('estado');
         if ($estado !== null && $estado !== '') {
@@ -112,10 +112,39 @@ class UsuarioController extends Controller
                 'telefono' => 'required|string|max:20',
                 'email' => 'required|email|unique:usuarios',
                 'rol_id' => 'required|uuid|exists:roles,id',
+                'sucursal_id' => 'nullable|uuid|exists:sucursals,id',
                 'sueldo' => 'nullable|numeric|min:0',
                 'foto' => 'required|string|max:255',
                 'estado' => 'required|string|in:activo,inactivo',
             ]);
+
+            // Validar que si el rol no es Administrador ni Gerente, debe tener sucursal
+            $rol = \App\Models\Rol::find($validated['rol_id']);
+            if ($rol && $rol->nombre !== 'Administrador' && $rol->nombre !== 'Gerente' && empty($validated['sucursal_id'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios de este rol deben tener una sucursal asignada',
+                    'errors' => ['sucursal_id' => ['La sucursal es requerida para este rol']],
+                ], 422);
+            }
+
+            // Si el rol es Gerente (Gerente) y tiene una sucursal asignada, verificar que no exista otro gerente activo
+            if ($rol && $rol->nombre === 'Gerente' && !empty($validated['sucursal_id'])) {
+                $gerenteExistente = Usuario::where('sucursal_id', $validated['sucursal_id'])
+                    ->where('rol_id', $rol->id)
+                    ->where('estado', 'activo')
+                    ->first();
+
+                if ($gerenteExistente) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Esta sucursal ya tiene un gerente asignado',
+                        'errors' => ['sucursal_id' => [
+                            'La sucursal ya tiene un gerente activo: ' . $gerenteExistente->nombre . ' ' . $gerenteExistente->apellidos
+                        ]],
+                    ], 422);
+                }
+            }
 
             // El modelo automáticamente hasheará el CI como password
             $usuario = Usuario::create($validated);
@@ -123,7 +152,7 @@ class UsuarioController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario creado exitosamente',
-                'data' => $usuario->load('rol'),
+                'data' => $usuario->load(['rol', 'sucursal']),
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -213,10 +242,42 @@ class UsuarioController extends Controller
                 'telefono' => 'sometimes|string|max:20',
                 'email' => 'sometimes|email|unique:usuarios,email,' . $id,
                 'rol_id' => 'sometimes|uuid|exists:roles,id',
+                'sucursal_id' => 'nullable|uuid|exists:sucursals,id',
                 'sueldo' => 'nullable|numeric|min:0',
                 'foto' => 'sometimes|string|max:255',
                 'estado' => 'sometimes|string|in:activo,inactivo',
             ]);
+
+            // Validar que si el rol no es Administrador ni Gerente, debe tener sucursal
+            $rolId = $validated['rol_id'] ?? $usuario->rol_id;
+            $rol = \App\Models\Rol::find($rolId);
+            if ($rol && $rol->nombre !== 'Administrador' && $rol->nombre !== 'Gerente' && empty($validated['sucursal_id']) && empty($usuario->sucursal_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios de este rol deben tener una sucursal asignada',
+                    'errors' => ['sucursal_id' => ['La sucursal es requerida para este rol']],
+                ], 422);
+            }
+
+            // Si el rol es Gerente (Gerente) y se está cambiando/asignando una sucursal, verificar que no exista otro gerente activo
+            $sucursalId = $validated['sucursal_id'] ?? $usuario->sucursal_id;
+            if ($rol && $rol->nombre === 'Gerente' && $sucursalId) {
+                $gerenteExistente = Usuario::where('sucursal_id', $sucursalId)
+                    ->where('rol_id', $rol->id)
+                    ->where('estado', 'activo')
+                    ->where('id', '!=', $id)
+                    ->first();
+
+                if ($gerenteExistente) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Esta sucursal ya tiene un gerente asignado',
+                        'errors' => ['sucursal_id' => [
+                            'La sucursal ya tiene un gerente activo: ' . $gerenteExistente->nombre . ' ' . $gerenteExistente->apellidos
+                        ]],
+                    ], 422);
+                }
+            }
 
             // Si se actualiza el CI, el modelo automáticamente actualizará el password
             $usuario->update($validated);
@@ -224,7 +285,7 @@ class UsuarioController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario actualizado exitosamente',
-                'data' => $usuario->load('rol'),
+                'data' => $usuario->load(['rol', 'sucursal']),
             ]);
         } catch (ValidationException $e) {
             return response()->json([

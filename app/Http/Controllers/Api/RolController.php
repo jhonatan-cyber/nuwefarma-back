@@ -235,6 +235,39 @@ class RolController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: '/api/roles/{id}/usuarios-count',
+        summary: 'Obtener cantidad de usuarios activos asociados al rol',
+        tags: ['Roles'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cantidad de usuarios'),
+            new OA\Response(response: 404, description: 'Rol no encontrado'),
+        ]
+    )]
+    public function getUsuariosCount(string $id): JsonResponse
+    {
+        $rol = Rol::find($id);
+
+        if (!$rol) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rol no encontrado',
+            ], 404);
+        }
+
+        $usuariosActivos = $rol->usuarios()->where('estado', 'activo')->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'usuarios_activos' => $usuariosActivos,
+            ],
+        ]);
+    }
+
     #[OA\Patch(
         path: '/api/roles/{id}/toggle-estado',
         summary: 'Activar o desactivar un rol',
@@ -249,7 +282,7 @@ class RolController extends Controller
     )]
     public function toggleEstado(string $id): JsonResponse
     {
-        $rol = Rol::find($id);
+        $rol = Rol::with('usuarios')->find($id);
 
         if (!$rol) {
             return response()->json([
@@ -259,14 +292,26 @@ class RolController extends Controller
         }
 
         $nuevoEstado = $rol->estado === 'activo' ? 'inactivo' : 'activo';
+        
+        // Contar usuarios activos asociados a este rol
+        $usuariosActivos = $rol->usuarios()->where('estado', 'activo')->count();
+        
+        // Si se está desactivando el rol, desactivar también los usuarios asociados
+        if ($nuevoEstado === 'inactivo' && $usuariosActivos > 0) {
+            $rol->usuarios()->where('estado', 'activo')->update(['estado' => 'inactivo']);
+        }
+        
         $rol->update(['estado' => $nuevoEstado]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Estado del rol actualizado',
+            'message' => $nuevoEstado === 'inactivo' && $usuariosActivos > 0 
+                ? "Rol desactivado. Se desactivaron {$usuariosActivos} usuario(s) asociado(s)."
+                : 'Estado del rol actualizado',
             'data' => [
                 'id' => $rol->id,
                 'estado' => $rol->estado,
+                'usuarios_afectados' => $nuevoEstado === 'inactivo' ? $usuariosActivos : 0,
             ],
         ]);
     }

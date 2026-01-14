@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Rol extends Model
 {
@@ -26,4 +27,12 @@ class Rol extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Relación con usuarios
+     */
+    public function usuarios(): HasMany
+    {
+        return $this->hasMany(Usuario::class, 'rol_id');
+    }
 }

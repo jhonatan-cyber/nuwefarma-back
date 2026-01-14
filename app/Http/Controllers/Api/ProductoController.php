@@ -7,6 +7,8 @@ use App\Models\ActivityLog;
 use App\Models\Producto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
@@ -46,7 +48,7 @@ class ProductoController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = Producto::with('categoria:id,nombre');
+        $query = Producto::with('categoria:id,nombre', 'proveedor:id,nombre');
 
         if ($estado = $request->query('estado')) {
             $query->where('estado', $estado);
@@ -169,7 +171,7 @@ class ProductoController extends Controller
     )]
     public function show(string $id): JsonResponse
     {
-        $producto = Producto::with('categoria:id,nombre')->find($id);
+        $producto = Producto::with(['categoria:id,nombre', 'proveedor:id,nombre'])->find($id);
 
         if (!$producto) {
             return response()->json([
@@ -209,7 +211,7 @@ class ProductoController extends Controller
 
             $datosAnteriores = $producto->toArray();
             $producto->update($validated);
-            $producto->load('categoria:id,nombre');
+            $producto->load(['categoria:id,nombre', 'proveedor:id,nombre']);
 
             ActivityLog::registrar(
                 accion: 'update',
@@ -314,8 +316,9 @@ class ProductoController extends Controller
     {
         $uniqueRule = fn(string $column) => Rule::unique('productos', $column)->ignore($id);
 
-        return $request->validate([
+        $rules = [
             'categoria_id' => ['nullable', 'exists:categorias,id'],
+            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
             'nombre' => ['required', 'string', 'max:255'],
             'codigo_barras' => ['nullable', 'string', 'max:100', $uniqueRule('codigo_barras')],
             'sku' => ['nullable', 'string', 'max:100', $uniqueRule('sku')],
@@ -346,6 +349,85 @@ class ProductoController extends Controller
             'fotos.*' => ['string'],
             'descripcion' => ['nullable', 'string'],
             'estado' => ['nullable', Rule::in(['activo', 'inactivo'])],
+        ];
+
+        // Si es PATCH, hacer reglas opcionales (pero validar si están presentes)
+        if ($request->isMethod('patch')) {
+            foreach ($rules as $key => $rule) {
+                if (is_array($rule)) {
+                    array_unshift($rules[$key], 'sometimes');
+                } else {
+                    $rules[$key] = 'sometimes|' . $rules[$key];
+                }
+            }
+        }
+
+        try {
+            return $request->validate($rules);
+        } catch (ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('Error de validación al crear/actualizar producto', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            throw $e;
+        }
+    }
+
+    #[OA\Post(
+        path: '/api/productos/upload-image',
+        summary: 'Subir imagen de producto',
+        security: [['bearerAuth' => []]],
+        tags: ['Productos'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    type: 'object',
+                    required: ['file'],
+                    properties: [
+                        new OA\Property(property: 'file', type: 'string', format: 'binary')
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Imagen subida'),
+            new OA\Response(response: 422, description: 'Archivo inválido')
+        ]
+    )]
+    public function uploadImage(Request $request): JsonResponse
+    {
+        // Validar que venga un archivo de imagen
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB
+        ]);
+
+        $file = $request->file('file');
+        if (!$file) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se recibió archivo',
+            ], 422);
+        }
+
+        // Directorio destino: public/producto
+        $dest = public_path('producto');
+        if (!File::exists($dest)) {
+            File::makeDirectory($dest, 0755, true);
+        }
+
+        // Nombre único
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $filename = Str::uuid()->toString() . '.' . $ext;
+
+        // Mover archivo
+        $file->move($dest, $filename);
+
+        return response()->json([
+            'success' => true,
+            'filename' => $filename,
+            'url' => asset("producto/{$filename}"),
         ]);
     }
 }

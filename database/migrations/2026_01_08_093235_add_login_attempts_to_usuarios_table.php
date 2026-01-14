@@ -7,22 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Esta migración fue reemplazada por 2026_01_08_093249_add_login_attempts_to_usuarios_table
+     * Se mantiene vacía para no romper el historial de migraciones ejecutadas.
      */
     public function up(): void
     {
-        Schema::table('usuarios', function (Blueprint $table) {
-            //
-        });
+        // Migración duplicada - ver 2026_01_08_093249
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('usuarios', function (Blueprint $table) {
-            //
-        });
+        // No-op
     }
 };

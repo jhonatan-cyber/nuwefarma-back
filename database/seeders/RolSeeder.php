@@ -10,11 +10,17 @@ class RolSeeder extends Seeder
 {
     public function run(): void
     {
-       
+        Rol::create([
+            'id' => Str::uuid(),
+            'nombre' => 'Administrador',
+            'descripcion' => 'Acceso completo',
+            'permiso_id' => [],
+            'estado' => 'activo',
+        ]);
 
         Rol::create([
             'id' => Str::uuid(),
-            'nombre' => 'Usuario',
+            'nombre' => 'Cajero',
             'descripcion' => 'Acceso limitado',
             'permiso_id' => ['leer'],
             'estado' => 'activo',
@@ -22,7 +28,7 @@ class RolSeeder extends Seeder
 
         Rol::create([
             'id' => Str::uuid(),
-            'nombre' => 'Editor',
+            'nombre' => 'Gerente',
             'descripcion' => 'Puede crear y editar',
             'permiso_id' => ['crear', 'editar', 'leer'],
             'estado' => 'activo',

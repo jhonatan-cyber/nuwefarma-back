@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoriaController;
+use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\ProveedorController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\ProductoStatsController;
@@ -166,6 +167,22 @@ Route::middleware(['auth:sanctum', 'verify.origin', 'verify.ua', 'api.ratelimit'
             Route::patch('/{id}', [CotizacionController::class, 'update']);
             Route::delete('/{id}', [CotizacionController::class, 'destroy']);
             Route::patch('/{id}/cambiar-estado', [CotizacionController::class, 'cambiarEstado'])->middleware('role:Administrador');
+        });
+    });
+
+    // Rutas de clientes (solo admin puede crear/editar/eliminar)
+    Route::prefix('/clientes')->group(function () {
+        Route::get('/', [ClienteController::class, 'index']);
+        Route::get('/{cliente}', [ClienteController::class, 'show']);
+        Route::get('/stats/overview', [ClienteController::class, 'stats']);
+
+        // Protegidas: solo Administrador
+        Route::middleware('role:Administrador')->group(function () {
+            Route::post('/', [ClienteController::class, 'store']);
+            Route::put('/{cliente}', [ClienteController::class, 'update']);
+            Route::patch('/{cliente}', [ClienteController::class, 'update']);
+            Route::delete('/{cliente}', [ClienteController::class, 'destroy']);
+            Route::patch('/{cliente}/toggle-estado', [ClienteController::class, 'toggleEstado']);
         });
     });
 });

@@ -170,7 +170,7 @@ class ProductoSeeder extends Seeder
                             'categoria_id' => $categoria->id,
                             'codigo_barras' => $codigoUnico,
                             'sku' => 'PRD-' . $skuCategoria . '-' . str_pad($contador, 6, '0', STR_PAD_LEFT),
-                            'codigo_interno' => 'INT-' . rand(1000, 9999),
+                            'codigo_interno' => 'INT-' . str_pad($contador, 4, '0', STR_PAD_LEFT),
                             'laboratorio' => $productoData['laboratorio'],
                             'forma_farmaceutica' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas', 'Cápsulas blandas']) ? $productoData['presentacion'] : 'Otro',
                             'concentracion' => $productoData['concentracion'],

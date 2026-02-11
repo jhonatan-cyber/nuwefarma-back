@@ -19,10 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
             'verify.origin' => \App\Http\Middleware\ValidateRequestOrigin::class,
             'verify.ua' => \App\Http\Middleware\VerifyUserAgent::class,
             'api.ratelimit' => \App\Http\Middleware\RateLimitApiRequests::class,
+            'api.auth' => \App\Http\Middleware\EnsureApiAuthenticated::class,
         ]);
 
         // Headers de seguridad globales

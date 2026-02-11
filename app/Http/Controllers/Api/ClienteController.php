@@ -1,253 +1,158 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Cliente\ClienteCollection;
+use App\Http\Resources\Cliente\ClienteResource;
 use App\Models\Cliente;
-use App\Models\ActivityLog;
-use Illuminate\Http\Request;
+use App\Actions\Cliente\CreateClienteAction;
+use App\Actions\Cliente\UpdateClienteAction;
+use App\Actions\Cliente\DeleteClienteAction;
+use App\Actions\Cliente\ListClientesAction;
+use App\Actions\Cliente\BulkUpdateClientesAction;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ClienteController extends Controller
 {
+    public function __construct(
+        private CreateClienteAction $createClienteAction,
+        private UpdateClienteAction $updateClienteAction,
+        private DeleteClienteAction $deleteClienteAction,
+        private ListClientesAction $listClientesAction,
+        private BulkUpdateClientesAction $bulkUpdateClientesAction
+    ) {}
+
     /**
-     * Display a listing of the resource.
+     * Display a paginated listing of clients with filtering.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        try {
-            $query = Cliente::query();
+        $filters = $request->only([
+            'search', 'estado', 'ci', 'nit', 'con_deuda',
+            'sort', 'direction', 'per_page'
+        ]);
+        
+        $clientes = $this->listClientesAction->execute($filters);
 
-            // Filtros
-            if ($request->has('search') && !empty($request->search)) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('nombre', 'like', "%{$search}%")
-                      ->orWhere('apellido', 'like', "%{$search}%")
-                      ->orWhere('ci', 'like', "%{$search}%")
-                      ->orWhere('telefono', 'like', "%{$search}%");
-                });
-            }
-
-            if ($request->has('estado') && !empty($request->estado)) {
-                $query->where('estado', $request->estado);
-            }
-
-            // Ordenamiento
-            $sortBy = $request->get('sort_by', 'created_at');
-            $sortOrder = $request->get('sort_order', 'desc');
-            $query->orderBy($sortBy, $sortOrder);
-
-            // Paginación
-            $perPage = $request->get('per_page', 15);
-            $clientes = $query->paginate($perPage);
-
-            return response()->json($clientes);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los clientes',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => new ClienteCollection($clientes)
+        ], Response::HTTP_OK);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created client in storage.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'ci' => 'nullable|string|max:20|unique:clientes,ci',
-                'nombre' => 'required|string|max:255',
-                'apellido' => 'required|string|max:255',
-                'telefono' => 'nullable|string|max:20',
-                'estado' => 'sometimes|in:activo,inactivo',
-            ]);
+        $cliente = $this->createClienteAction->execute($request->all());
 
-            $cliente = Cliente::create($validated);
-
-            // Registrar actividad
-            ActivityLog::create([
-                'usuario_id' => Auth::id(),
-                'accion' => 'crear',
-                'modulo' => 'clientes',
-                'descripcion' => "Cliente creado: {$cliente->nombre_completo}",
-                'datos_anteriores' => null,
-                'datos_nuevos' => $cliente->toArray(),
-            ]);
-
-            return response()->json([
-                'message' => 'Cliente creado exitosamente',
-                'data' => $cliente
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al crear el cliente',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Cliente creado exitosamente',
+            'data' => new ClienteResource($cliente)
+        ], Response::HTTP_CREATED);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified client with relationships.
+     * 
+     * @param Cliente $cliente
+     * @return JsonResponse
      */
     public function show(Cliente $cliente): JsonResponse
     {
-        try {
-            return response()->json([
-                'data' => $cliente
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener el cliente',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => new ClienteResource($cliente->loadCount('ventas'))
+        ], Response::HTTP_OK);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified client in storage.
+     * 
+     * @param Request $request
+     * @param Cliente $cliente
+     * @return JsonResponse
      */
     public function update(Request $request, Cliente $cliente): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'ci' => [
-                    'nullable',
-                    'string',
-                    'max:20',
-                    Rule::unique('clientes', 'ci')->ignore($cliente->id)
-                ],
-                'nombre' => 'required|string|max:255',
-                'apellido' => 'required|string|max:255',
-                'telefono' => 'nullable|string|max:20',
-                'estado' => 'sometimes|in:activo,inactivo',
-            ]);
+        $updatedCliente = $this->updateClienteAction->execute($cliente, $request->all());
 
-            $datosAnteriores = $cliente->toArray();
-            $cliente->update($validated);
-
-            // Registrar actividad
-            ActivityLog::create([
-                'usuario_id' => Auth::id(),
-                'accion' => 'actualizar',
-                'modulo' => 'clientes',
-                'descripcion' => "Cliente actualizado: {$cliente->nombre_completo}",
-                'datos_anteriores' => $datosAnteriores,
-                'datos_nuevos' => $cliente->fresh()->toArray(),
-            ]);
-
-            return response()->json([
-                'message' => 'Cliente actualizado exitosamente',
-                'data' => $cliente
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al actualizar el cliente',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Cliente actualizado exitosamente',
+            'data' => new ClienteResource($updatedCliente->loadCount('ventas'))
+        ], Response::HTTP_OK);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified client from storage.
+     * 
+     * @param Cliente $cliente
+     * @return JsonResponse
      */
     public function destroy(Cliente $cliente): JsonResponse
     {
-        try {
-            $datosAnteriores = $cliente->toArray();
-            $nombreCompleto = $cliente->nombre_completo;
-            
-            $cliente->delete();
+        $this->deleteClienteAction->execute($cliente);
 
-            // Registrar actividad
-            ActivityLog::create([
-                'usuario_id' => Auth::id(),
-                'accion' => 'eliminar',
-                'modulo' => 'clientes',
-                'descripcion' => "Cliente eliminado: {$nombreCompleto}",
-                'datos_anteriores' => $datosAnteriores,
-                'datos_nuevos' => null,
-            ]);
-
-            return response()->json([
-                'message' => 'Cliente eliminado exitosamente'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al eliminar el cliente',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Cliente eliminado exitosamente'
+        ], Response::HTTP_OK);
     }
 
     /**
-     * Toggle client status
+     * Bulk update clients status.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function toggleEstado(Cliente $cliente): JsonResponse
+    public function bulkUpdate(Request $request): JsonResponse
     {
-        try {
-            $estadoAnterior = $cliente->estado;
-            $nuevoEstado = $cliente->estado === 'activo' ? 'inactivo' : 'activo';
-            
-            $datosAnteriores = $cliente->toArray();
-            $cliente->update(['estado' => $nuevoEstado]);
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['required', 'string', 'exists:clientes,id'],
+            'estado' => ['required', 'in:activo,inactivo'],
+        ]);
 
-            // Registrar actividad
-            ActivityLog::create([
-                'usuario_id' => Auth::id(),
-                'accion' => 'cambiar_estado',
-                'modulo' => 'clientes',
-                'descripcion' => "Estado del cliente {$cliente->nombre_completo} cambiado de {$estadoAnterior} a {$nuevoEstado}",
-                'datos_anteriores' => $datosAnteriores,
-                'datos_nuevos' => $cliente->fresh()->toArray(),
-            ]);
+        $updatedCount = $this->bulkUpdateClientesAction->execute($validated['ids'], $validated['estado']);
 
-            return response()->json([
-                'message' => "Cliente {$nuevoEstado} exitosamente",
-                'data' => $cliente
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al cambiar el estado del cliente',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Clientes actualizados exitosamente',
+            'data' => [
+                'updated_count' => $updatedCount
+            ]
+        ], Response::HTTP_OK);
     }
 
     /**
-     * Get client statistics
+     * Get clients with outstanding debt.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function stats(): JsonResponse
+    public function conDeuda(Request $request): JsonResponse
     {
-        try {
-            $stats = [
-                'total' => Cliente::count(),
-                'activos' => Cliente::where('estado', 'activo')->count(),
-                'inactivos' => Cliente::where('estado', 'inactivo')->count(),
-                'con_ci' => Cliente::whereNotNull('ci')->count(),
-                'con_telefono' => Cliente::whereNotNull('telefono')->count(),
-            ];
+        $filters = array_merge($request->only(['per_page']), ['con_deuda' => true]);
+        
+        $clientes = $this->listClientesAction->execute($filters);
 
-            return response()->json($stats);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener las estadísticas',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => new ClienteCollection($clientes)
+        ], Response::HTTP_OK);
     }
 }

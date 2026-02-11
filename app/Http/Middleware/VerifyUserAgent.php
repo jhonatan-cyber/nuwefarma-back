@@ -18,13 +18,18 @@ class VerifyUserAgent
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Si usa bearer token (Swagger, Postman, apps móviles), no verificar User-Agent
+        // Esta protección solo aplica a autenticación con cookies/sesiones
+        if ($request->header('Authorization')) {
+            return $next($request);
+        }
+        
+        // Para requests de API sin autenticación, tampoco verificar User-Agent
+        if ($request->is('api/*')) {
+            return $next($request);
+        }
+        
         if ($request->user()) {
-            // Si usa bearer token (Swagger, Postman, apps móviles), no verificar User-Agent
-            // Esta protección solo aplica a autenticación con cookies/sesiones
-            if ($request->header('Authorization')) {
-                return $next($request);
-            }
-            
             $currentUserAgent = $request->header('User-Agent');
             $sessionUserAgent = $request->session()->get('user_agent');
 

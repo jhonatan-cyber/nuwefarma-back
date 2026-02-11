@@ -1,362 +1,155 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Auth\UserResource;
+use App\Http\Resources\Usuario\UsuarioCollection;
+use App\Http\Resources\Usuario\UsuarioResource;
 use App\Models\Usuario;
+use App\Actions\Usuario\CreateUsuarioAction;
+use App\Actions\Usuario\UpdateUsuarioAction;
+use App\Actions\Usuario\DeleteUsuarioAction;
+use App\Actions\Usuario\ListUsuariosAction;
+use App\Actions\Usuario\BulkUpdateUsuariosAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
-use OpenApi\Attributes as OA;
+use Illuminate\Http\Response;
 
-#[OA\Tag(name: 'Usuarios', description: 'Operaciones de gestión de usuarios')]
 class UsuarioController extends Controller
 {
-    #[OA\Get(
-        path: '/api/usuarios',
-        summary: 'Listar todos los usuarios',
-        tags: ['Usuarios'],
-        parameters: [
-            new OA\Parameter(name: 'estado', in: 'query', schema: new OA\Schema(type: 'string'), required: false),
-            new OA\Parameter(name: 'rol_id', in: 'query', schema: new OA\Schema(type: 'string', format: 'uuid'), required: false),
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Lista de usuarios',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(
-                            properties: [
-                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
-                                new OA\Property(property: 'nombre', type: 'string'),
-                                new OA\Property(property: 'apellidos', type: 'string'),
-                                new OA\Property(property: 'ci', type: 'string'),
-                                new OA\Property(property: 'direccion', type: 'string', nullable: true),
-                                new OA\Property(property: 'telefono', type: 'string'),
-                                new OA\Property(property: 'email', type: 'string'),
-                                new OA\Property(property: 'rol_id', type: 'string', format: 'uuid'),
-                                new OA\Property(property: 'sueldo', type: 'number', format: 'float', nullable: true),
-                                new OA\Property(property: 'foto', type: 'string'),
-                                new OA\Property(property: 'estado', type: 'string'),
-                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
-                            ]
-                        )),
-                        new OA\Property(property: 'count', type: 'integer'),
-                    ]
-                )
-            ),
-        ]
-    )]
+    public function __construct(
+        private CreateUsuarioAction $createUsuarioAction,
+        private UpdateUsuarioAction $updateUsuarioAction,
+        private DeleteUsuarioAction $deleteUsuarioAction,
+        private ListUsuariosAction $listUsuariosAction,
+        private BulkUpdateUsuariosAction $bulkUpdateUsuariosAction
+    ) {}
+
+    /**
+     * Display a paginated listing of users with filtering.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = Usuario::with(['rol', 'sucursal']);
-
-        $estado = $request->query('estado');
-        if ($estado !== null && $estado !== '') {
-            $query->where('estado', $estado);
-        }
-
-        $rolId = $request->query('rol_id');
-        if ($rolId !== null && $rolId !== '') {
-            $query->where('rol_id', $rolId);
-        }
-
-        $usuarios = $query->get();
+        $filters = $request->only([
+            'search', 'estado', 'rol_id', 'sucursal_id', 
+            'sort', 'direction', 'per_page'
+        ]);
+        
+        $usuarios = $this->listUsuariosAction->execute($filters);
 
         return response()->json([
             'success' => true,
-            'data' => $usuarios,
-            'count' => $usuarios->count(),
-        ]);
+            'data' => new UsuarioCollection($usuarios)
+        ], Response::HTTP_OK);
     }
 
-    #[OA\Post(
-        path: '/api/usuarios',
-        summary: 'Crear un nuevo usuario',
-        tags: ['Usuarios'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['nombre', 'apellidos', 'ci', 'telefono', 'email', 'rol_id', 'foto', 'estado'],
-                properties: [
-                    new OA\Property(property: 'nombre', type: 'string', example: 'Juan'),
-                    new OA\Property(property: 'apellidos', type: 'string', example: 'Pérez García'),
-                    new OA\Property(property: 'ci', type: 'string', example: '12345678'),
-                    new OA\Property(property: 'direccion', type: 'string', nullable: true, example: 'Av. Siempre Viva 123'),
-                    new OA\Property(property: 'telefono', type: 'string', example: '71234567'),
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan.perez@example.com'),
-                    new OA\Property(property: 'rol_id', type: 'string', format: 'uuid', example: '9a7b8c9d-1234-5678-90ab-cdef12345678'),
-                    new OA\Property(property: 'sueldo', type: 'number', format: 'float', nullable: true, example: 5000.00),
-                    new OA\Property(property: 'foto', type: 'string', example: 'default.jpg'),
-                    new OA\Property(property: 'estado', type: 'string', example: 'activo'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'Usuario creado exitosamente'),
-            new OA\Response(response: 422, description: 'Datos inválidos'),
-        ]
-    )]
+    /**
+     * Store a newly created user in storage.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'nombre' => 'required|string|max:255',
-                'apellidos' => 'required|string|max:255',
-                'ci' => 'required|string|max:20|unique:usuarios',
-                'direccion' => 'nullable|string|max:500',
-                'telefono' => 'required|string|max:20',
-                'email' => 'required|email|unique:usuarios',
-                'rol_id' => 'required|uuid|exists:roles,id',
-                'sucursal_id' => 'nullable|uuid|exists:sucursals,id',
-                'sueldo' => 'nullable|numeric|min:0',
-                'foto' => 'required|string|max:255',
-                'estado' => 'required|string|in:activo,inactivo',
-            ]);
-
-            // Validar que si el rol no es Administrador ni Gerente, debe tener sucursal
-            $rol = \App\Models\Rol::find($validated['rol_id']);
-            if ($rol && $rol->nombre !== 'Administrador' && $rol->nombre !== 'Gerente' && empty($validated['sucursal_id'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Los usuarios de este rol deben tener una sucursal asignada',
-                    'errors' => ['sucursal_id' => ['La sucursal es requerida para este rol']],
-                ], 422);
-            }
-
-            // Si el rol es Gerente (Gerente) y tiene una sucursal asignada, verificar que no exista otro gerente activo
-            if ($rol && $rol->nombre === 'Gerente' && !empty($validated['sucursal_id'])) {
-                $gerenteExistente = Usuario::where('sucursal_id', $validated['sucursal_id'])
-                    ->where('rol_id', $rol->id)
-                    ->where('estado', 'activo')
-                    ->first();
-
-                if ($gerenteExistente) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Esta sucursal ya tiene un gerente asignado',
-                        'errors' => ['sucursal_id' => [
-                            'La sucursal ya tiene un gerente activo: ' . $gerenteExistente->nombre . ' ' . $gerenteExistente->apellidos
-                        ]],
-                    ], 422);
-                }
-            }
-
-            // El modelo automáticamente hasheará el CI como password
-            $usuario = Usuario::create($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuario creado exitosamente',
-                'data' => $usuario->load(['rol', 'sucursal']),
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validación fallida',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
-
-    #[OA\Get(
-        path: '/api/usuarios/{id}',
-        summary: 'Ver detalles de un usuario',
-        tags: ['Usuarios'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Detalles del usuario'),
-            new OA\Response(response: 404, description: 'Usuario no encontrado'),
-        ]
-    )]
-    public function show(string $id): JsonResponse
-    {
-        $usuario = Usuario::with('rol')->find($id);
-
-        if (!$usuario) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Usuario no encontrado',
-            ], 404);
-        }
+        $usuario = $this->createUsuarioAction->execute($request->all());
 
         return response()->json([
             'success' => true,
-            'data' => $usuario,
-        ]);
+            'message' => 'Usuario creado exitosamente',
+            'data' => new UsuarioResource($usuario->load(['rol', 'sucursal']))
+        ], Response::HTTP_CREATED);
     }
 
-    #[OA\Put(
-        path: '/api/usuarios/{id}',
-        summary: 'Actualizar un usuario',
-        tags: ['Usuarios'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-        ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'nombre', type: 'string'),
-                    new OA\Property(property: 'apellidos', type: 'string'),
-                    new OA\Property(property: 'ci', type: 'string'),
-                    new OA\Property(property: 'direccion', type: 'string', nullable: true),
-                    new OA\Property(property: 'telefono', type: 'string'),
-                    new OA\Property(property: 'email', type: 'string', format: 'email'),
-                    new OA\Property(property: 'rol_id', type: 'string', format: 'uuid'),
-                    new OA\Property(property: 'sueldo', type: 'number', format: 'float', nullable: true),
-                    new OA\Property(property: 'foto', type: 'string'),
-                    new OA\Property(property: 'estado', type: 'string'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 200, description: 'Usuario actualizado exitosamente'),
-            new OA\Response(response: 404, description: 'Usuario no encontrado'),
-            new OA\Response(response: 422, description: 'Datos inválidos'),
-        ]
-    )]
-    public function update(Request $request, string $id): JsonResponse
+    /**
+     * Display the specified user with relationships.
+     * 
+     * @param Usuario $usuario
+     * @return JsonResponse
+     */
+    public function show(Usuario $usuario): JsonResponse
     {
-        $usuario = Usuario::find($id);
-
-        if (!$usuario) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Usuario no encontrado',
-            ], 404);
-        }
-
-        try {
-            $validated = $request->validate([
-                'nombre' => 'sometimes|string|max:255',
-                'apellidos' => 'sometimes|string|max:255',
-                'ci' => 'sometimes|string|max:20|unique:usuarios,ci,' . $id,
-                'direccion' => 'nullable|string|max:500',
-                'telefono' => 'sometimes|string|max:20',
-                'email' => 'sometimes|email|unique:usuarios,email,' . $id,
-                'rol_id' => 'sometimes|uuid|exists:roles,id',
-                'sucursal_id' => 'nullable|uuid|exists:sucursals,id',
-                'sueldo' => 'nullable|numeric|min:0',
-                'foto' => 'sometimes|string|max:255',
-                'estado' => 'sometimes|string|in:activo,inactivo',
-            ]);
-
-            // Validar que si el rol no es Administrador ni Gerente, debe tener sucursal
-            $rolId = $validated['rol_id'] ?? $usuario->rol_id;
-            $rol = \App\Models\Rol::find($rolId);
-            if ($rol && $rol->nombre !== 'Administrador' && $rol->nombre !== 'Gerente' && empty($validated['sucursal_id']) && empty($usuario->sucursal_id)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Los usuarios de este rol deben tener una sucursal asignada',
-                    'errors' => ['sucursal_id' => ['La sucursal es requerida para este rol']],
-                ], 422);
-            }
-
-            // Si el rol es Gerente (Gerente) y se está cambiando/asignando una sucursal, verificar que no exista otro gerente activo
-            $sucursalId = $validated['sucursal_id'] ?? $usuario->sucursal_id;
-            if ($rol && $rol->nombre === 'Gerente' && $sucursalId) {
-                $gerenteExistente = Usuario::where('sucursal_id', $sucursalId)
-                    ->where('rol_id', $rol->id)
-                    ->where('estado', 'activo')
-                    ->where('id', '!=', $id)
-                    ->first();
-
-                if ($gerenteExistente) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Esta sucursal ya tiene un gerente asignado',
-                        'errors' => ['sucursal_id' => [
-                            'La sucursal ya tiene un gerente activo: ' . $gerenteExistente->nombre . ' ' . $gerenteExistente->apellidos
-                        ]],
-                    ], 422);
-                }
-            }
-
-            // Si se actualiza el CI, el modelo automáticamente actualizará el password
-            $usuario->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuario actualizado exitosamente',
-                'data' => $usuario->load(['rol', 'sucursal']),
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validación fallida',
-                'errors' => $e->errors(),
-            ], 422);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => new UsuarioResource($usuario->load(['rol', 'sucursal']))
+        ], Response::HTTP_OK);
     }
 
-    #[OA\Delete(
-        path: '/api/usuarios/{id}',
-        summary: 'Eliminar un usuario',
-        tags: ['Usuarios'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Usuario eliminado exitosamente'),
-            new OA\Response(response: 404, description: 'Usuario no encontrado'),
-        ]
-    )]
-    public function destroy(string $id): JsonResponse
+    /**
+     * Update the specified user in storage.
+     * 
+     * @param Request $request
+     * @param Usuario $usuario
+     * @return JsonResponse
+     */
+    public function update(Request $request, Usuario $usuario): JsonResponse
     {
-        $usuario = Usuario::find($id);
-
-        if (!$usuario) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Usuario no encontrado',
-            ], 404);
-        }
-
-        $usuario->delete();
+        $updatedUsuario = $this->updateUsuarioAction->execute($usuario, $request->all());
 
         return response()->json([
             'success' => true,
-            'message' => 'Usuario eliminado exitosamente',
-        ]);
+            'message' => 'Usuario actualizado exitosamente',
+            'data' => new UsuarioResource($updatedUsuario)
+        ], Response::HTTP_OK);
     }
 
-    #[OA\Patch(
-        path: '/api/usuarios/{id}/toggle-estado',
-        summary: 'Cambiar estado de un usuario (activo/inactivo)',
-        tags: ['Usuarios'],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-        ],
-        responses: [
-            new OA\Response(response: 200, description: 'Estado cambiado exitosamente'),
-            new OA\Response(response: 404, description: 'Usuario no encontrado'),
-        ]
-    )]
-    public function toggleEstado(string $id): JsonResponse
+    /**
+     * Remove the specified user from storage.
+     * 
+     * @param Usuario $usuario
+     * @return JsonResponse
+     */
+    public function destroy(Usuario $usuario): JsonResponse
     {
-        $usuario = Usuario::find($id);
-
-        if (!$usuario) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Usuario no encontrado',
-            ], 404);
-        }
-
-        $usuario->estado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
-        $usuario->save();
+        $this->deleteUsuarioAction->execute($usuario);
 
         return response()->json([
             'success' => true,
-            'message' => 'Estado actualizado exitosamente',
-            'data' => $usuario->load('rol'),
-        ]);
+            'message' => 'Usuario eliminado exitosamente'
+        ], Response::HTTP_OK);
     }
-}
+
+    /**
+     * Bulk update users status.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkUpdate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['required', 'string', 'exists:usuarios,id'],
+            'estado' => ['required', 'in:activo,inactivo'],
+        ]);
+
+        $updatedCount = $this->bulkUpdateUsuariosAction->execute($validated['ids'], $validated['estado']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuarios actualizados exitosamente',
+            'data' => [
+                'updated_count' => $updatedCount
+            ]
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Get current authenticated user profile.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function profile(Request $request): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => new UserResource($request->user()->load(['rol', 'sucursal']))
+        ], Response::HTTP_OK);
+    }
+};

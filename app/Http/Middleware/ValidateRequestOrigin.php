@@ -12,15 +12,13 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ValidateRequestOrigin
 {
-    /**
-     * Lista de orígenes permitidos
-     */
-    private array $allowedOrigins = [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-    ];
+    private array $allowedOrigins;
+
+    public function __construct()
+    {
+        $origins = env('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000');
+        $this->allowedOrigins = array_map('trim', explode(',', $origins));
+    }
 
     /**
      * Handle an incoming request.

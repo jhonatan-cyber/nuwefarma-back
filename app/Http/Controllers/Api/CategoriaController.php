@@ -1,380 +1,168 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
+use App\Http\Resources\Categoria\CategoriaCollection;
+use App\Http\Resources\Categoria\CategoriaResource;
 use App\Models\Categoria;
+use App\Actions\Categoria\CreateCategoriaAction;
+use App\Actions\Categoria\UpdateCategoriaAction;
+use App\Actions\Categoria\DeleteCategoriaAction;
+use App\Actions\Categoria\ListCategoriasAction;
+use App\Actions\Categoria\BulkUpdateCategoriasAction;
+use App\DTOs\Categoria\CreateCategoriaDTO;
+use App\DTOs\Categoria\UpdateCategoriaDTO;
+use App\DTOs\Categoria\ListCategoriasDTO;
+use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use OpenApi\Attributes as OA;
+use Illuminate\Http\Response;
 
-#[OA\Tag(name: 'Categorías', description: 'Gestión de categorías de productos')]
 class CategoriaController extends Controller
 {
-    #[OA\Get(
-        path: '/api/categorias',
-        summary: 'Listar categorías',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        parameters: [
-            new OA\Parameter(
-                name: 'estado',
-                in: 'query',
-                description: 'Filtrar por estado',
-                schema: new OA\Schema(type: 'string', enum: ['activo', 'inactivo'])
-            ),
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Lista de categorías',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(
-                            property: 'data',
-                            type: 'array',
-                            items: new OA\Items(
-                                properties: [
-                                    new OA\Property(property: 'id', type: 'string', format: 'uuid'),
-                                    new OA\Property(property: 'nombre', type: 'string'),
-                                    new OA\Property(property: 'descripcion', type: 'string'),
-                                    new OA\Property(property: 'estado', type: 'string'),
-                                    new OA\Property(property: 'created_at', type: 'string'),
-                                    new OA\Property(property: 'updated_at', type: 'string'),
-                                ],
-                                type: 'object'
-                            )
-                        ),
-                    ]
-                )
-            ),
-        ]
-    )]
+    public function __construct(
+        private CreateCategoriaAction $createCategoriaAction,
+        private UpdateCategoriaAction $updateCategoriaAction,
+        private DeleteCategoriaAction $deleteCategoriaAction,
+        private ListCategoriasAction $listCategoriasAction,
+        private BulkUpdateCategoriasAction $bulkUpdateCategoriasAction
+    ) {}
+
+    /**
+     * Display a paginated listing of categories with filtering.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = Categoria::query();
-
-        // Filtro por estado
-        $estado = $request->query('estado');
-        if ($estado !== null && $estado !== '') {
-            $query->where('estado', $estado);
-        }
-
-        $categorias = $query->orderBy('nombre')->get();
+        $filters = new ListCategoriasDTO(
+            search: $request->string('search')?->toString(),
+            estado: $request->string('estado')?->toString(),
+            sort: $request->string('sort', 'nombre')?->toString(),
+            direction: $request->string('direction', 'asc')?->toString(),
+            per_page: $request->integer('per_page', 15)
+        );
+        
+        $categorias = $this->listCategoriasAction->execute($filters);
 
         return response()->json([
             'success' => true,
-            'data' => $categorias,
-        ]);
+            'data' => new CategoriaCollection($categorias)
+        ], Response::HTTP_OK);
     }
 
-    #[OA\Post(
-        path: '/api/categorias',
-        summary: 'Crear nueva categoría',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['nombre'],
-                properties: [
-                    new OA\Property(property: 'nombre', type: 'string', example: 'Antibióticos'),
-                    new OA\Property(property: 'descripcion', type: 'string', example: 'Medicamentos antibióticos'),
-                    new OA\Property(property: 'estado', type: 'string', enum: ['activo', 'inactivo'], example: 'activo'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 201,
-                description: 'Categoría creada exitosamente',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string'),
-                        new OA\Property(property: 'data', type: 'object'),
-                    ]
-                )
-            ),
-            new OA\Response(response: 422, description: 'Error de validación'),
-        ]
-    )]
+    /**
+     * Store a newly created category in storage.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'nombre' => 'required|string|max:255|unique:categorias,nombre',
-                'descripcion' => 'nullable|string',
-                'estado' => 'nullable|in:activo,inactivo',
-            ]);
-
-            $categoria = Categoria::create($validated);
-
-            // Registrar actividad
-            ActivityLog::registrar(
-                accion: 'create',
-                modulo: 'categorias',
-                registroId: $categoria->id,
-                descripcion: "Categoría creada: {$categoria->nombre}",
-                datosNuevos: $categoria->toArray()
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Categoría creada exitosamente',
-                'data' => $categoria,
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
-
-    #[OA\Get(
-        path: '/api/categorias/{id}',
-        summary: 'Ver detalles de una categoría',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        parameters: [
-            new OA\Parameter(
-                name: 'id',
-                in: 'path',
-                required: true,
-                schema: new OA\Schema(type: 'string', format: 'uuid')
-            ),
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Detalles de la categoría',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'data', type: 'object'),
-                    ]
-                )
-            ),
-            new OA\Response(response: 404, description: 'Categoría no encontrada'),
-        ]
-    )]
-    public function show(string $id): JsonResponse
-    {
-        $categoria = Categoria::find($id);
-
-        if (!$categoria) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Categoría no encontrada',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $categoria,
-        ]);
-    }
-
-    #[OA\Put(
-        path: '/api/categorias/{id}',
-        summary: 'Actualizar categoría',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        parameters: [
-            new OA\Parameter(
-                name: 'id',
-                in: 'path',
-                required: true,
-                schema: new OA\Schema(type: 'string', format: 'uuid')
-            ),
-        ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'nombre', type: 'string', example: 'Antibióticos'),
-                    new OA\Property(property: 'descripcion', type: 'string'),
-                    new OA\Property(property: 'estado', type: 'string', enum: ['activo', 'inactivo']),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Categoría actualizada exitosamente',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string'),
-                        new OA\Property(property: 'data', type: 'object'),
-                    ]
-                )
-            ),
-            new OA\Response(response: 404, description: 'Categoría no encontrada'),
-            new OA\Response(response: 422, description: 'Error de validación'),
-        ]
-    )]
-    public function update(Request $request, string $id): JsonResponse
-    {
-        $categoria = Categoria::find($id);
-
-        if (!$categoria) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Categoría no encontrada',
-            ], 404);
-        }
-
-        try {
-            $validated = $request->validate([
-                'nombre' => 'sometimes|required|string|max:255|unique:categorias,nombre,' . $id,
-                'descripcion' => 'nullable|string',
-                'estado' => 'sometimes|in:activo,inactivo',
-            ]);
-
-            $datosAnteriores = $categoria->toArray();
-            $categoria->update($validated);
-
-            // Registrar actividad
-            ActivityLog::registrar(
-                accion: 'update',
-                modulo: 'categorias',
-                registroId: $categoria->id,
-                descripcion: "Categoría actualizada: {$categoria->nombre}",
-                datosAnteriores: $datosAnteriores,
-                datosNuevos: $categoria->toArray()
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Categoría actualizada exitosamente',
-                'data' => $categoria,
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
-
-    #[OA\Delete(
-        path: '/api/categorias/{id}',
-        summary: 'Eliminar categoría',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        parameters: [
-            new OA\Parameter(
-                name: 'id',
-                in: 'path',
-                required: true,
-                schema: new OA\Schema(type: 'string', format: 'uuid')
-            ),
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Categoría eliminada exitosamente',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string'),
-                    ]
-                )
-            ),
-            new OA\Response(response: 404, description: 'Categoría no encontrada'),
-        ]
-    )]
-    public function destroy(string $id): JsonResponse
-    {
-        $categoria = Categoria::find($id);
-
-        if (!$categoria) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Categoría no encontrada',
-            ], 404);
-        }
-
-        $datosAnteriores = $categoria->toArray();
-        $categoria->delete();
-
-        // Registrar actividad
-        ActivityLog::registrar(
-            accion: 'delete',
-            modulo: 'categorias',
-            registroId: $id,
-            descripcion: "Categoría eliminada: {$datosAnteriores['nombre']}",
-            datosAnteriores: $datosAnteriores
+        $dto = new CreateCategoriaDTO(
+            nombre: $request->string('nombre')?->toString(),
+            descripcion: $request->string('descripcion')?->toString(),
+            estado: $request->string('estado', 'activo')?->toString()
         );
 
+        $categoria = $this->createCategoriaAction->execute($dto);
+
         return response()->json([
             'success' => true,
-            'message' => 'Categoría eliminada exitosamente',
-        ]);
+            'message' => 'Categoría creada exitosamente',
+            'data' => new CategoriaResource($categoria->loadCount('productos'))
+        ], Response::HTTP_CREATED);
     }
 
-    #[OA\Patch(
-        path: '/api/categorias/{id}/toggle-estado',
-        summary: 'Activar/Desactivar categoría',
-        security: [['bearerAuth' => []]],
-        tags: ['Categorías'],
-        parameters: [
-            new OA\Parameter(
-                name: 'id',
-                in: 'path',
-                required: true,
-                schema: new OA\Schema(type: 'string', format: 'uuid')
-            ),
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Estado actualizado exitosamente',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string'),
-                        new OA\Property(property: 'data', type: 'object'),
-                    ]
-                )
-            ),
-            new OA\Response(response: 404, description: 'Categoría no encontrada'),
-        ]
-    )]
-    public function toggleEstado(string $id): JsonResponse
+    /**
+     * Display the specified category with relationships.
+     * 
+     * @param Request $request
+     * @param Categoria $categoria
+     * @return JsonResponse
+     */
+    public function show(Request $request, Categoria $categoria): JsonResponse
     {
-        $categoria = Categoria::find($id);
-
-        if (!$categoria) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Categoría no encontrada',
-            ], 404);
+        // Laravel 12+: Conditional eager loading
+        $includes = $request->collect('include', []);
+        
+        if ($includes->contains('productos')) {
+            $categoria->load(['productos' => fn($query) => 
+                $query->select('id', 'nombre', 'precio', 'stock', 'categoria_id')
+            ]);
         }
-
-        $estadoAnterior = $categoria->estado;
-        $categoria->estado = $categoria->estado === 'activo' ? 'inactivo' : 'activo';
-        $categoria->save();
-
-        // Registrar actividad
-        ActivityLog::registrar(
-            accion: 'toggle_estado',
-            modulo: 'categorias',
-            registroId: $categoria->id,
-            descripcion: "Estado de categoría cambiado: {$categoria->nombre} de {$estadoAnterior} a {$categoria->estado}"
-        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Estado actualizado exitosamente',
-            'data' => $categoria,
-        ]);
+            'data' => new CategoriaResource($categoria->loadCount('productos'))
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Update the specified category in storage.
+     * 
+     * @param Request $request
+     * @param Categoria $categoria
+     * @return JsonResponse
+     */
+    public function update(Request $request, Categoria $categoria): JsonResponse
+    {
+        $dto = new UpdateCategoriaDTO(
+            nombre: $request->filled('nombre') ? $request->string('nombre')?->toString() : null,
+            descripcion: $request->filled('descripcion') ? $request->string('descripcion')?->toString() : null,
+            estado: $request->filled('estado') ? $request->string('estado')?->toString() : null
+        );
+
+        $updatedCategoria = $this->updateCategoriaAction->execute($categoria, $dto);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría actualizada exitosamente',
+            'data' => new CategoriaResource($updatedCategoria->loadCount('productos'))
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Remove the specified category from storage.
+     * 
+     * @param Categoria $categoria
+     * @return JsonResponse
+     */
+    public function destroy(Categoria $categoria): JsonResponse
+    {
+        $this->deleteCategoriaAction->execute($categoria);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría eliminada exitosamente'
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Bulk update categories status.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function bulkUpdate(Request $request): JsonResponse
+    {
+        $dto = new BulkUpdateCategoriasDTO(
+            ids: $request->array('ids'),
+            estado: $request->string('estado')?->toString()
+        );
+
+        $updatedCount = $this->bulkUpdateCategoriasAction->execute($dto->ids, $dto->estado);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categorías actualizadas exitosamente',
+            'data' => [
+                'updated_count' => $updatedCount
+            ]
+        ], Response::HTTP_OK);
     }
 }

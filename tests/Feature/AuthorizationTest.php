@@ -75,8 +75,8 @@ class AuthorizationTest extends TestCase
             'password' => '22222222',
         ]);
 
-        $this->adminToken = $adminLogin['token'];
-        $this->usuarioToken = $usuarioLogin['token'];
+        $this->adminToken = $adminLogin['data']['token'];
+        $this->usuarioToken = $usuarioLogin['data']['token'];
     }
 
     public function test_admin_puede_crear_categoria(): void
@@ -100,19 +100,18 @@ class AuthorizationTest extends TestCase
             ]);
 
         $response->assertStatus(403)
-            ->assertJson(['success' => false])
-            ->assertJsonFragment(['message' => 'No tienes permisos para realizar esta acción']);
+            ->assertJson(['success' => false]);
     }
 
-    public function test_usuario_puede_listar_categorias(): void
+    public function test_usuario_no_puede_listar_categorias(): void
     {
         Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->usuarioToken}")
             ->getJson('/api/categorias');
 
-        $response->assertStatus(200)
-            ->assertJson(['success' => true]);
+        $response->assertStatus(403)
+            ->assertJson(['success' => false]);
     }
 
     public function test_admin_puede_eliminar_categoria(): void

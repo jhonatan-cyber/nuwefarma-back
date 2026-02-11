@@ -46,7 +46,7 @@ class ProductoTest extends TestCase
             'password' => '12345678',
         ]);
 
-        $this->token = $loginResponse['token'];
+        $this->token = $loginResponse['data']['token'];
     }
 
     public function test_relacion_producto_categoria(): void
@@ -124,7 +124,7 @@ class ProductoTest extends TestCase
             'estado' => 'activo',
         ]);
 
-        $bajo = Producto::stockBajo()->get();
+        $bajo = Producto::query()->bajoStock()->get();
         $this->assertCount(1, $bajo);
         $this->assertEquals('Stock Bajo', $bajo->first()->nombre);
     }

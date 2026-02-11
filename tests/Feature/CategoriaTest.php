@@ -3,50 +3,24 @@
 namespace Tests\Feature;
 
 use App\Models\Categoria;
-use App\Models\Rol;
-use App\Models\Usuario;
+use Tests\Concerns\CreatesAuthenticatedUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class CategoriaTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesAuthenticatedUser;
 
     private string $token;
-    private Usuario $usuario;
+    private \App\Models\Usuario $usuario;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Crear rol y usuario
-        $rol = Rol::create([
-            'nombre' => 'Administrador',
-            'descripcion' => 'Acceso completo',
-            'permiso_id' => [],
-            'estado' => 'activo',
-        ]);
-
-        $this->usuario = Usuario::create([
-            'nombre' => 'Test',
-            'apellidos' => 'User',
-            'ci' => '12345678',
-            'password' => Hash::make('12345678'),
-            'telefono' => '70000000',
-            'email' => 'test@example.com',
-            'rol_id' => $rol->id,
-            'foto' => 'default.jpg',
-            'estado' => 'activo',
-        ]);
-
-        // Login y obtener token
-        $loginResponse = $this->postJson('/api/auth/login', [
-            'email' => 'test@example.com',
-            'password' => '12345678',
-        ]);
-
-        $this->token = $loginResponse['token'];
+        
+        // Crear usuario autenticado y obtener token
+        $this->usuario = $this->createAuthenticatedUser();
+        $this->token = $this->authenticateUser($this->usuario);
     }
 
     public function test_listar_categorias(): void

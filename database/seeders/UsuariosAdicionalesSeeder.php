@@ -97,9 +97,9 @@ class UsuariosAdicionalesSeeder extends Seeder
                 [
                     'nombre' => 'Luis',
                     'apellidos' => 'Fernández Castro',
-                    'ci' => '12345678',
+                    'ci' => '12345670',
                     'telefono' => '72345678',
-                    'email' => 'luis.fernandez@nuwefarma.com',
+                    'email' => 'luis.castro@nuwefarma.com',
                     'direccion' => 'Av. 6 de Agosto #456, San Miguel',
                     'sueldo' => '3100'
                 ],

@@ -1,188 +1,355 @@
 <?php
 
-use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CategoriaController;
-use App\Http\Controllers\Api\ClienteController;
-use App\Http\Controllers\Api\ProveedorController;
-use App\Http\Controllers\Api\ProductoController;
-use App\Http\Controllers\Api\ProductoStatsController;
-use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\PasswordResetController;
-use App\Http\Controllers\Api\RolController;
-use App\Http\Controllers\Api\UsuarioController;
-use App\Http\Controllers\Api\GastoController;
-use App\Http\Controllers\Api\SucursalController;
-use App\Http\Controllers\Api\CotizacionController;
+use App\Http\Controllers\Api\V2\ProductoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', HealthController::class);
+/*
+|--------------------------------------------------------------------------
+| API Routes - Authentication
+|--------------------------------------------------------------------------
+|
+| Basic authentication routes without authentication middleware
+|
+*/
 
-// Rutas públicas de autenticación
-Route::prefix('/auth')->group(function () {
-    // Rate limiting: máximo 5 intentos por minuto
-    Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1');
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 
-    // Recuperación de contraseña
-    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])
-        ->middleware('throttle:3,1'); // Máximo 3 intentos por minuto
-    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
-        ->middleware('throttle:3,1');
+/*
+|--------------------------------------------------------------------------
+| API Routes - Categories
+|--------------------------------------------------------------------------
+|
+| Category CRUD operations with role-based authorization
+|
+*/
+
+Route::apiResource('categorias', \App\Http\Controllers\Api\CategoriaController::class)
+    ->middleware(['auth:sanctum', 'role:Administrador,Gerente']);
+
+// Additional category routes with specific role requirements
+Route::prefix('categorias')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/bulk-update', [\App\Http\Controllers\Api\CategoriaController::class, 'bulkUpdate'])
+        ->middleware('role:Administrador,Gerente');
+    
+    Route::get('/', [\App\Http\Controllers\Api\CategoriaController::class, 'index'])
+        ->middleware('role:Administrador,Gerente,Vendedor,Almacenero');
 });
 
-// Rutas protegidas con autenticación
-Route::middleware(['auth:sanctum', 'verify.origin', 'verify.ua', 'api.ratelimit'])->group(function () {
-    // Auth
-    Route::prefix('/auth')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::get('/sessions', [AuthController::class, 'sessions']);
-        Route::delete('/sessions/{tokenId}', [AuthController::class, 'revokeSession']);
-        Route::post('/sessions/revoke-all', [AuthController::class, 'revokeAllSessions']);
-    });
+/*
+|--------------------------------------------------------------------------
+| API Routes - (Laravel 12+ Advanced Features)
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
 
-    // Rutas de roles (solo admin puede crearlas/editarlas)
-    Route::prefix('/roles')->group(function () {
-        Route::get('/', [RolController::class, 'index']);
-        Route::get('/{id}', [RolController::class, 'show']);
-        Route::get('/{id}/usuarios-count', [RolController::class, 'getUsuariosCount']);
+Route::prefix('v2')->middleware(['api', 'auth:sanctum', 'throttle:api'])->group(function () {
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Product Routes - Advanced Laravel 12+ Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('productos')->group(function () {
+        // Standard CRUD with advanced features
+        Route::apiResource('productos', ProductoController::class)->parameters([
+            'productos' => 'producto'
+        ]);
 
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [RolController::class, 'store']);
-            Route::put('/{id}', [RolController::class, 'update']);
-            Route::delete('/{id}', [RolController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [RolController::class, 'toggleEstado']);
+        // Advanced search and filtering
+        Route::get('/productos/advanced-search', [ProductoController::class, 'advancedSearch'])
+            ->name('productos.advanced-search');
+        
+        Route::get('/productos/analytics', [ProductoController::class, 'analytics'])
+            ->name('productos.analytics');
+        
+        Route::get('/productos/real-time-inventory', [ProductoController::class, 'realTime-inventory'])
+            ->name('productos.real-time-inventory');
+
+        // Product recommendations and AI features
+        Route::get('/productos/{producto}/recommendations', [ProductoController::class, 'recommendations'])
+            ->name('productos.recommendations');
+        
+        Route::get('/productos/ai-suggestions', [ProductoController::class, 'aiSuggestions'])
+            ->name('productos.ai-suggestions');
+
+        // Bulk operations
+        Route::post('/productos/bulk-update-stock', [ProductoController::class, 'bulkUpdateStock'])
+            ->name('productos.bulk-update-stock');
+
+        // Advanced filtering with JSON
+        Route::post('/productos/filter-by-json', [ProductoController::class, 'filterByJson'])
+            ->name('productos.filter-by-json');
+
+        // State machine operations
+        Route::patch('/productos/{producto}/toggle-status', [ProductoController::class, 'toggleStatus'])
+            ->name('productos.toggle-status');
+        
+        Route::get('/productos/{producto}/state-transitions', [ProductoController::class, 'getStateTransitions'])
+            ->name('productos.state-transitions');
+
+        // Stock management
+        Route::patch('/productos/{producto}/update-stock', [ProductoController::class, 'updateStock'])
+            ->name('productos.update-stock');
+
+        // Export functionality
+        Route::post('/productos/export', [ProductoController::class, 'export'])
+            ->name('productos.export');
+
+        // Nested resources
+        Route::prefix('/productos/{producto}')->group(function () {
+            Route::get('/lotes', [ProductoLoteController::class, 'index'])
+                ->name('productos.lotes.index');
+            
+            Route::get('/historial', [ProductoHistorialController::class, 'index'])
+                ->name('productos.historial');
+            
+            Route::get('/movimientos', [ProductoMovimientoController::class, 'index'])
+                ->name('productos.movimientos');
+            
+            Route::get('/imagenes', [ProductoImagenController::class, 'index'])
+                ->name('productos.imagenes.index');
+            
+            Route::post('/imagenes', [ProductoImagenController::class, 'store'])
+                ->name('productos.imagenes.store');
         });
     });
 
-    // Rutas de usuarios (solo admin puede crearlos/editarlos)
-    Route::prefix('/usuarios')->group(function () {
-        Route::get('/', [UsuarioController::class, 'index']);
-        Route::get('/{id}', [UsuarioController::class, 'show']);
-
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [UsuarioController::class, 'store']);
-            Route::put('/{id}', [UsuarioController::class, 'update']);
-            Route::delete('/{id}', [UsuarioController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [UsuarioController::class, 'toggleEstado']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Category Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('categorias')->group(function () {
+        Route::apiResource('categorias', CategoriaController::class);
+        
+        Route::get('/categorias/{categoria}/productos', [CategoriaController::class, 'productos'])
+            ->name('categorias.productos');
+        
+        Route::get('/categorias/{categoria}/analytics', [CategoriaController::class, 'analytics'])
+            ->name('categorias.analytics');
+        
+        Route::get('/categorias/tree', [CategoriaController::class, 'tree'])
+            ->name('categorias.tree');
     });
 
-    // Rutas de logs de actividad (solo lectura)
-    Route::prefix('/activity-logs')->group(function () {
-        Route::get('/', [ActivityLogController::class, 'index']);
-        Route::get('/me', [ActivityLogController::class, 'myLogs']);
-        Route::get('/{id}', [ActivityLogController::class, 'show']);
+    /*
+    |--------------------------------------------------------------------------
+    | Provider Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('proveedores')->group(function () {
+        Route::apiResource('proveedores', ProveedorController::class);
+        
+        Route::get('/proveedores/{proveedor}/productos', [ProveedorController::class, 'productos'])
+            ->name('proveedores.productos');
+        
+        Route::get('/proveedores/{proveedor}/analytics', [ProveedorController::class, 'analytics'])
+            ->name('proveedores.analytics');
+        
+        Route::get('/proveedores/{proveedor}/ordenes', [ProveedorController::class, 'ordenes'])
+            ->name('proveedores.ordenes');
     });
 
-    // Rutas de categorías (solo admin puede crear/editar/eliminar)
-    Route::prefix('/categorias')->group(function () {
-        Route::get('/', [CategoriaController::class, 'index']);
-        Route::get('/{id}', [CategoriaController::class, 'show']);
-
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [CategoriaController::class, 'store']);
-            Route::put('/{id}', [CategoriaController::class, 'update']);
-            Route::delete('/{id}', [CategoriaController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [CategoriaController::class, 'toggleEstado']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Sales Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('ventas')->group(function () {
+        Route::apiResource('ventas', VentaController::class);
+        
+        Route::get('/ventas/analytics', [VentaController::class, 'analytics'])
+            ->name('ventas.analytics');
+        
+        Route::get('/ventas/dashboard', [VentaController::class, 'dashboard'])
+            ->name('ventas.dashboard');
+        
+        Route::post('/ventas/{venta}/anular', [VentaController::class, 'anular'])
+            ->name('ventas.anular');
+        
+        Route::post('/ventas/{venta}/devolucion', [VentaController::class, 'devolucion'])
+            ->name('ventas.devolucion');
     });
 
-    // Rutas de productos (solo admin puede crear/editar/eliminar)
-    Route::prefix('/productos')->group(function () {
-        Route::get('/', [ProductoController::class, 'index']);
-        Route::get('/{id}', [ProductoController::class, 'show']);
-        // Stats de productos (solo lectura)
-        Route::get('/stats/overview', [ProductoStatsController::class, 'overview']);
-
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [ProductoController::class, 'store']);
-            Route::put('/{id}', [ProductoController::class, 'update']);
-            Route::patch('/{id}', [ProductoController::class, 'update']);
-            Route::delete('/{id}', [ProductoController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [ProductoController::class, 'toggleEstado']);
-            // Subida de imágenes de producto
-            Route::post('/upload-image', [ProductoController::class, 'uploadImage']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Inventory Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('inventario')->group(function () {
+        Route::get('/inventario/resumen', [InventarioController::class, 'resumen'])
+            ->name('inventario.resumen');
+        
+        Route::get('/inventario/movimientos', [InventarioController::class, 'movimientos'])
+            ->name('inventario.movimientos');
+        
+        Route::get('/inventario/ajustes', [InventarioController::class, 'ajustes'])
+            ->name('inventario.ajustes');
+        
+        Route::post('/inventario/ajustes', [InventarioController::class, 'crearAjuste'])
+            ->name('inventario.ajustes.store');
+        
+        Route::get('/inventario/reportes', [InventarioController::class, 'reportes'])
+            ->name('inventario.reportes');
+        
+        Route::get('/inventario/alertas', [InventarioController::class, 'alertas'])
+            ->name('inventario.alertas');
     });
 
-    // Rutas de proveedores (solo admin puede crear/editar/eliminar)
-    Route::prefix('/proveedores')->group(function () {
-        Route::get('/', [ProveedorController::class, 'index']);
-        Route::get('/{id}', [ProveedorController::class, 'show']);
-
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [ProveedorController::class, 'store']);
-            Route::put('/{id}', [ProveedorController::class, 'update']);
-            Route::delete('/{id}', [ProveedorController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [ProveedorController::class, 'toggleEstado']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Reports Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('reportes')->group(function () {
+        Route::get('/reportes/inventario', [ReporteController::class, 'inventario'])
+            ->name('reportes.inventario');
+        
+        Route::get('/reportes/ventas', [ReporteController::class, 'ventas'])
+            ->name('reportes.ventas');
+        
+        Route::get('/reportes/financiero', [ReporteController::class, 'financiero'])
+            ->name('reportes.financiero');
+        
+        Route::post('/reportes/generar', [ReporteController::class, 'generar'])
+            ->name('reportes.generar');
+        
+        Route::get('/reportes/{reporte}/descargar', [ReporteController::class, 'descargar'])
+            ->name('reportes.descargar');
     });
 
-    // Rutas de gastos (solo admin puede crear/editar/eliminar)
-    Route::prefix('/gastos')->group(function () {
-        Route::get('/', [GastoController::class, 'index']);
-        Route::get('/{id}', [GastoController::class, 'show']);
-
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [GastoController::class, 'store']);
-            Route::put('/{id}', [GastoController::class, 'update']);
-            Route::patch('/{id}', [GastoController::class, 'update']);
-            Route::delete('/{id}', [GastoController::class, 'destroy']);
-            Route::patch('/{id}/toggle-estado', [GastoController::class, 'toggleEstado']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/dashboard/general', [DashboardController::class, 'general'])
+            ->name('dashboard.general');
+        
+        Route::get('/dashboard/ventas', [DashboardController::class, 'ventas'])
+            ->name('dashboard.ventas');
+        
+        Route::get('/dashboard/inventario', [DashboardController::class, 'inventario'])
+            ->name('dashboard.inventario');
+        
+        Route::get('/dashboard/financiero', [DashboardController::class, 'financiero'])
+            ->name('dashboard.financiero');
+        
+        Route::get('/dashboard/alertas', [DashboardController::class, 'alertas'])
+            ->name('dashboard.alertas');
     });
 
-    // Rutas de sucursales (solo admin puede crear/editar/eliminar)
-    Route::prefix('/sucursales')->group(function () {
-        Route::get('/', [SucursalController::class, 'index']);
-        Route::get('/{sucursal}', [SucursalController::class, 'show']);
-
-        // Protegidas: Administrador puede hacer todo, Gerentes pueden editar sus propias sucursales
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', [SucursalController::class, 'store'])->middleware('role:Administrador');
-            Route::put('/{sucursal}', [SucursalController::class, 'update']);
-            Route::patch('/{sucursal}', [SucursalController::class, 'update']);
-            Route::delete('/{sucursal}', [SucursalController::class, 'destroy'])->middleware('role:Administrador');
-            Route::patch('/{sucursal}/toggle-estado', [SucursalController::class, 'toggleEstado'])->middleware('role:Administrador');
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | System Routes - Advanced Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('system')->group(function () {
+        Route::get('/system/health', [SystemController::class, 'health'])
+            ->name('system.health');
+        
+        Route::get('/system/metrics', [SystemController::class, 'metrics'])
+            ->name('system.metrics');
+        
+        Route::get('/system/performance', [SystemController::class, 'performance'])
+            ->name('system.performance');
+        
+        Route::get('/system/logs', [SystemController::class, 'logs'])
+            ->name('system.logs');
+        
+        Route::post('/system/cache/clear', [SystemController::class, 'clearCache'])
+            ->name('system.cache.clear');
     });
 
-    // Rutas de cotizaciones (users autenticados pueden crear)
-    Route::prefix('/cotizaciones')->group(function () {
-        Route::get('/', [CotizacionController::class, 'index']);
-        Route::get('/{id}', [CotizacionController::class, 'show']);
-
-        // Protegidas: usuarios autenticados pueden crear/editar sus cotizaciones
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', [CotizacionController::class, 'store']);
-            Route::put('/{id}', [CotizacionController::class, 'update']);
-            Route::patch('/{id}', [CotizacionController::class, 'update']);
-            Route::delete('/{id}', [CotizacionController::class, 'destroy']);
-            Route::patch('/{id}/cambiar-estado', [CotizacionController::class, 'cambiarEstado'])->middleware('role:Administrador');
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | AI Routes - Laravel 12+ AI Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('ai')->group(function () {
+        Route::post('/ai/chat', [AIController::class, 'chat'])
+            ->name('ai.chat');
+        
+        Route::post('/ai/analyze', [AIController::class, 'analyze'])
+            ->name('ai.analyze');
+        
+        Route::post('/ai/predict', [AIController::class, 'predict'])
+            ->name('ai.predict');
+        
+        Route::post('/ai/recommend', [AIController::class, 'recommend'])
+            ->name('ai.recommend');
     });
 
-    // Rutas de clientes (solo admin puede crear/editar/eliminar)
-    Route::prefix('/clientes')->group(function () {
-        Route::get('/', [ClienteController::class, 'index']);
-        Route::get('/{cliente}', [ClienteController::class, 'show']);
-        Route::get('/stats/overview', [ClienteController::class, 'stats']);
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Routes - Laravel 12+ Webhook Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('webhooks')->group(function () {
+        Route::post('/webhooks/stripe', [WebhookController::class, 'stripe'])
+            ->name('webhooks.stripe');
+        
+        Route::post('/webhooks/github', [WebhookController::class, 'github'])
+            ->name('webhooks.github');
+        
+        Route::post('/webhooks/custom', [WebhookController::class, 'custom'])
+            ->name('webhooks.custom');
+    });
 
-        // Protegidas: solo Administrador
-        Route::middleware('role:Administrador')->group(function () {
-            Route::post('/', [ClienteController::class, 'store']);
-            Route::put('/{cliente}', [ClienteController::class, 'update']);
-            Route::patch('/{cliente}', [ClienteController::class, 'update']);
-            Route::delete('/{cliente}', [ClienteController::class, 'destroy']);
-            Route::patch('/{cliente}/toggle-estado', [ClienteController::class, 'toggleEstado']);
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Real-time Routes - Laravel 12+ Broadcasting Features
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('realtime')->group(function () {
+        Route::get('/realtime/notifications', [RealtimeController::class, 'notifications'])
+            ->name('realtime.notifications');
+        
+        Route::post('/realtime/broadcast', [RealtimeController::class, 'broadcast'])
+            ->name('realtime.broadcast');
+        
+        Route::get('/realtime/channels', [RealtimeController::class, 'channels'])
+            ->name('realtime.channels');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| API Version Information
+|--------------------------------------------------------------------------
+*/
+Route::get('/api/info', function () {
+    return response()->json([
+        'name' => 'NuweFarma API',
+        'version' => '2.0',
+        'laravel_version' => app()->version(),
+        'php_version' => PHP_VERSION,
+        'features' => [
+            'laravel_12_plus' => true,
+            'advanced_scopes' => true,
+            'ai_integration' => true,
+            'real_time' => true,
+            'webhooks' => true,
+            'advanced_analytics' => true,
+            'json_operations' => true,
+            'window_functions' => true,
+            'cte_support' => true,
+        ],
+        'endpoints' => [
+            'v1' => '/api/v1',
+            'v2' => '/api/v2',
+        ],
+        'documentation' => [
+            'swagger' => '/api/documentation',
+            'postman' => '/api/postman',
+        ],
+    ]);
+})->name('api.info');

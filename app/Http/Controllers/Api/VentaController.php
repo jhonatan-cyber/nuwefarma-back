@@ -140,6 +140,34 @@ class VentaController extends Controller
     }
 
     /**
+     * Cancel a pending sale.
+     * 
+     * @param Request $request
+     * @param Venta $venta
+     * @return JsonResponse
+     */
+    public function cancelar(Request $request, Venta $venta): JsonResponse
+    {
+        $request->validate([
+            'motivo' => ['required', 'string', 'max:255']
+        ]);
+
+        $venta->update([
+            'estado' => 'cancelada',
+            'motivo_cancelacion' => $request->motivo,
+            'fecha_cancelacion' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Venta cancelada exitosamente',
+            'data' => new VentaResource($venta->load([
+                'cliente', 'usuario', 'caja'
+            ]))
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * Get sales with pending balance.
      * 
      * @param Request $request

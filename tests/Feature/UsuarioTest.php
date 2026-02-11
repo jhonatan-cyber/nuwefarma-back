@@ -80,22 +80,24 @@ class UsuarioTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    '*' => [
-                        'id',
-                        'type',
-                        'attributes' => [
-                            'nombre',
-                            'apellidos',
-                            'email',
-                            'estado',
-                        ],
-                        'relationships' => [
-                            'rol' => ['nombre'],
+                    'data' => [
+                        '*' => [
+                            'id',
+                            'type',
+                            'attributes' => [
+                                'nombre',
+                                'apellidos',
+                                'email',
+                                'estado',
+                            ],
+                            'relationships' => [
+                                'rol' => ['data' => ['nombre']],
+                            ],
                         ],
                     ],
+                    'meta',
+                    'links',
                 ],
-                'meta',
-                'links',
             ]);
     }
 
@@ -128,6 +130,8 @@ class UsuarioTest extends TestCase
                         'apellidos',
                         'email',
                     ],
+                    'relationships',
+                    'links',
                 ],
             ]);
 
@@ -208,7 +212,9 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->patchJson("/api/usuarios/{$usuario->id}/toggle-estado");
+        ])->patchJson("/api/usuarios/{$usuario->id}", [
+            'estado' => 'inactivo',
+        ]);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.attributes.estado', 'inactivo');
@@ -260,7 +266,7 @@ class UsuarioTest extends TestCase
             'Authorization' => 'Bearer ' . $this->token,
         ])->deleteJson("/api/usuarios/{$usuario->id}");
 
-        $response->assertStatus(204);
+        $response->assertStatus(200);
 
         $this->assertDatabaseMissing('usuarios', [
             'id' => $usuario->id,

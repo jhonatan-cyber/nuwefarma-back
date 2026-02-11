@@ -140,6 +140,28 @@ class UsuarioController extends Controller
     }
 
     /**
+     * Assign a role to a user.
+     * 
+     * @param Request $request
+     * @param Usuario $usuario
+     * @return JsonResponse
+     */
+    public function assignRole(Request $request, Usuario $usuario): JsonResponse
+    {
+        $validated = $request->validate([
+            'rol_id' => ['required', 'string', 'exists:roles,id'],
+        ]);
+
+        $usuario->update(['rol_id' => $validated['rol_id']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rol asignado exitosamente',
+            'data' => new UsuarioResource($usuario->load(['rol', 'sucursal']))
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * Get current authenticated user profile.
      * 
      * @param Request $request

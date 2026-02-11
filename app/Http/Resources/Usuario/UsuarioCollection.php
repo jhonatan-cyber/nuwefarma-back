@@ -18,9 +18,25 @@ class UsuarioCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection,
+            'data' => $this->collection->map(fn($usuario) => [
+                'id' => $usuario->id,
+                'type' => 'usuarios',
+                'attributes' => [
+                    'nombre' => $usuario->nombre,
+                    'apellidos' => $usuario->apellidos,
+                    'email' => $usuario->email,
+                    'estado' => $usuario->estado,
+                ],
+                'relationships' => [
+                    'rol' => [
+                        'data' => [
+                            'nombre' => $usuario->rol->nombre ?? null,
+                        ],
+                    ],
+                ],
+            ]),
             'meta' => [
-                'total' => $this->count(),
+                'total' => $this->total(),
                 'count' => $this->collection->count(),
                 'per_page' => $this->perPage() ?? null,
                 'current_page' => $this->currentPage() ?? null,

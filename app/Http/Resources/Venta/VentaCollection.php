@@ -18,9 +18,18 @@ class VentaCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection,
+            'data' => $this->collection->map(fn($venta) => [
+                'id' => $venta->id,
+                'type' => 'ventas',
+                'attributes' => [
+                    'numero_venta' => $venta->numero_venta,
+                    'total' => $venta->total,
+                    'metodo_pago' => $venta->metodo_pago,
+                    'estado' => $venta->estado,
+                ],
+            ]),
             'meta' => [
-                'total' => $this->count(),
+                'total' => $this->total(),
                 'count' => $this->collection->count(),
                 'per_page' => $this->perPage() ?? null,
                 'current_page' => $this->currentPage() ?? null,

@@ -37,10 +37,18 @@ class CategoriaTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    '*' => ['id', 'nombre', 'estado', 'created_at'],
+                    'data' => [
+                        '*' => [
+                            'id',
+                            'type',
+                            'attributes' => ['nombre', 'estado', 'created_at'],
+                        ],
+                    ],
+                    'meta',
+                    'links',
                 ],
             ])
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data');
     }
 
     public function test_crear_categoria(): void

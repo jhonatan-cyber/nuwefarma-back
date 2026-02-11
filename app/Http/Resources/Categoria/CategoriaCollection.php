@@ -18,9 +18,21 @@ class CategoriaCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection,
+            'data' => $this->collection->map(fn($categoria) => [
+                'id' => $categoria->id,
+                'type' => 'categorias',
+                'attributes' => [
+                    'nombre' => $categoria->nombre,
+                    'descripcion' => $categoria->descripcion,
+                    'estado' => $categoria->estado,
+                    'created_at' => $categoria->created_at,
+                ],
+                'relationships' => [
+                    'productos_count' => $categoria->productos_count ?? 0,
+                ],
+            ]),
             'meta' => [
-                'total' => $this->count(),
+                'total' => $this->total(),
                 'count' => $this->collection->count(),
                 'per_page' => $this->perPage() ?? null,
                 'current_page' => $this->currentPage() ?? null,

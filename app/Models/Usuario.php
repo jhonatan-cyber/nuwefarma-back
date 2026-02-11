@@ -87,4 +87,28 @@ class Usuario extends Authenticatable
     {
         return $this->belongsTo(Sucursal::class, 'sucursal_id');
     }
+
+    /**
+     * Relación con Ventas realizadas
+     */
+    public function ventas()
+    {
+        return $this->hasMany(\App\Models\Venta::class, 'usuario_id');
+    }
+
+    /**
+     * Relación con Compras realizadas
+     */
+    public function compras()
+    {
+        return $this->hasMany(\App\Models\Compra::class, 'usuario_id');
+    }
+
+    /**
+     * Relación con Sucursales que gerencia
+     */
+    public function sucursalesGerenciadas()
+    {
+        return $this->hasMany(Sucursal::class, 'gerente_id');
+    }
 }

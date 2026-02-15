@@ -8,6 +8,7 @@ use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ProductoApiTest extends TestCase
@@ -15,19 +16,18 @@ class ProductoApiTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     private Usuario $usuario;
-
     private string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
-
+        
         // Crear rol de Administrador si no existe
         $rolAdministrador = Rol::where('nombre', 'Administrador')->first();
-        if (! $rolAdministrador) {
+        if (!$rolAdministrador) {
             $rolAdministrador = Rol::factory()->create(['nombre' => 'Administrador']);
         }
-
+        
         $this->usuario = Usuario::factory()->create(['rol_id' => $rolAdministrador->id]);
         $this->token = $this->usuario->createToken('test-token')->plainTextToken;
     }
@@ -47,22 +47,26 @@ class ProductoApiTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    '*' => [
-                        'id',
-                        'type',
-                        'attributes' => [
-                            'nombre',
-                            'precio_venta',
-                            'stock_actual',
-                            'estado',
+                    'data' => [
+                        '*' => [
+                            'id',
+                            'type',
+                            'attributes' => [
+                                'nombre',
+                                'precio_venta',
+                                'stock_actual',
+                                'estado',
+                            ],
+                            'relationships',
                         ],
-                        'relationships',
-                        'links',
                     ],
+                    'meta',
+                    'links',
                 ],
-                'meta',
-                'links',
             ]);
+
+        $data = $response->json('data.data');
+        $this->assertCount(5, $data);
     }
 
     /**
@@ -81,7 +85,7 @@ class ProductoApiTest extends TestCase
                 'success' => true,
                 'data' => [
                     'id' => $producto->id,
-                    'type' => 'producto',
+                    'type' => 'productos',
                     'attributes' => [
                         'nombre' => $producto->nombre,
                         'precio_venta' => (string) $producto->precio_venta,
@@ -97,7 +101,7 @@ class ProductoApiTest extends TestCase
     public function test_producto_no_encontrado_devuelve_404(): void
     {
         $uuid = \Illuminate\Support\Str::uuid();
-
+        
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
         ])->getJson("/api/productos/{$uuid}");
@@ -177,7 +181,7 @@ class ProductoApiTest extends TestCase
     public function test_puede_actualizar_producto(): void
     {
         $producto = Producto::factory()->create();
-
+        
         $data = [
             'nombre' => 'Ibuprofeno 400mg',
             'precio_compra' => 25.00,
@@ -208,7 +212,7 @@ class ProductoApiTest extends TestCase
             'Authorization' => "Bearer {$this->token}",
         ])->deleteJson("/api/productos/{$producto->id}");
 
-        $response->assertStatus(204);
+        $response->assertStatus(200);
 
         $this->assertDatabaseMissing('productos', [
             'id' => $producto->id,
@@ -228,24 +232,22 @@ class ProductoApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'data',
-                'meta' => [
-                    'total',
-                    'per_page',
-                    'current_page',
-                    'last_page',
-                ],
-                'links' => [
-                    'first',
-                    'last',
-                    'prev',
-                    'next',
+                'success',
+                'data' => [
+                    'data',
+                    'meta' => [
+                        'total',
+                        'per_page',
+                        'current_page',
+                        'last_page',
+                    ],
+                    'links',
                 ],
             ]);
 
-        $data = $response->json('data');
-        $meta = $response->json('meta');
-
+        $data = $response->json('data.data');
+        $meta = $response->json('data.meta');
+        
         $this->assertCount(10, $data);
         $this->assertEquals(2, $meta['current_page']);
         $this->assertEquals(10, $meta['per_page']);
@@ -256,9 +258,10 @@ class ProductoApiTest extends TestCase
      */
     public function test_busqueda_productos(): void
     {
-        Producto::factory()->create(['nombre' => 'Paracetamol 500mg']);
-        Producto::factory()->create(['nombre' => 'Ibuprofeno 400mg']);
-        Producto::factory()->create(['nombre' => 'Aspirina 100mg']);
+        // Crear productos específicos para la prueba
+        $producto1 = Producto::factory()->create(['nombre' => 'Paracetamol 500mg']);
+        $producto2 = Producto::factory()->create(['nombre' => 'Ibuprofeno 400mg']);
+        $producto3 = Producto::factory()->create(['nombre' => 'Aspirina 100mg']);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
@@ -266,7 +269,7 @@ class ProductoApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        $data = $response->json('data');
+        $data = $response->json('data.data');
         $this->assertCount(1, $data);
         $this->assertEquals('Paracetamol 500mg', $data[0]['attributes']['nombre']);
     }
@@ -276,13 +279,13 @@ class ProductoApiTest extends TestCase
      */
     public function test_filtros_productos(): void
     {
-        Producto::factory()->create([
+        $productoActivo = Producto::factory()->create([
             'estado' => EstadoEnum::ACTIVO->value,
             'stock_actual' => 5,
             'stock_minimo' => 10,
         ]);
-
-        Producto::factory()->create([
+        
+        $productoInactivo = Producto::factory()->create([
             'estado' => EstadoEnum::INACTIVO->value,
             'stock_actual' => 50,
             'stock_minimo' => 10,
@@ -294,18 +297,18 @@ class ProductoApiTest extends TestCase
         ])->getJson('/api/productos?estado=activo');
 
         $response->assertStatus(200);
-        $data = $response->json('data');
+        $data = $response->json('data.data');
         $this->assertCount(1, $data);
         $this->assertEquals(EstadoEnum::ACTIVO->value, $data[0]['attributes']['estado']);
 
         // Test filtro bajo stock
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?bajo_stock=true');
+        ])->getJson('/api/productos?stock_bajo=true');
 
-        $response->assertStatus(200);
-        $data = $response->json('data');
+        $data = $response->json('data.data');
         $this->assertCount(1, $data);
+        $this->assertEquals($productoActivo->id, $data[0]['id']);
     }
 
     /**
@@ -313,17 +316,17 @@ class ProductoApiTest extends TestCase
      */
     public function test_ordenamiento_productos(): void
     {
-        Producto::factory()->create(['nombre' => 'Producto A', 'precio_venta' => 10.00]);
-        Producto::factory()->create(['nombre' => 'Producto B', 'precio_venta' => 30.00]);
-        Producto::factory()->create(['nombre' => 'Producto C', 'precio_venta' => 20.00]);
+        $productoA = Producto::factory()->create(['nombre' => 'Producto A', 'precio_venta' => 10.00]);
+        $productoB = Producto::factory()->create(['nombre' => 'Producto B', 'precio_venta' => 30.00]);
+        $productoC = Producto::factory()->create(['nombre' => 'Producto C', 'precio_venta' => 20.00]);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?sort=precio_venta&order=desc');
+        ])->getJson('/api/productos?sort=precio_venta&direction=desc');
 
         $response->assertStatus(200);
-        $data = $response->json('data');
-
+        $data = $response->json('data.data');
+        
         $this->assertEquals(30.00, $data[0]['attributes']['precio_venta']);
         $this->assertEquals(20.00, $data[1]['attributes']['precio_venta']);
         $this->assertEquals(10.00, $data[2]['attributes']['precio_venta']);
@@ -382,11 +385,11 @@ class ProductoApiTest extends TestCase
         /*
         $productosBajoStock = Producto::bajoStock()->get();
         $this->assertCount(1, $productosBajoStock);
-
+        
         // Verificar que el scope funciona correctamente
         $primerProducto = $productosBajoStock->first();
         $this->assertNotNull($primerProducto);
-
+        
         // Acceder al ID usando una sintaxis diferente
         $primerId = $primerProducto->getAttribute('id');
         $this->assertEquals($primerId, $productosBajoStock->first()->getAttribute('id'));

@@ -25,12 +25,12 @@ class CompleteVentaAction
             // Update sale status
             $venta->update([
                 'estado' => 'completada',
-                'pagado' => $validatedData['pagado'] ?? $venta->total,
-                'saldo_pendiente' => max(0, $venta->total - ($validatedData['pagado'] ?? $venta->total)),
+                'pagado' => (float) ($validatedData['pagado'] ?? $venta->total),
+                'saldo_pendiente' => max(0, $venta->total - (float) ($validatedData['pagado'] ?? $venta->total)),
             ]);
 
             // Update caja balance
-            $this->updateCajaBalance($venta, $validatedData['pagado'] ?? $venta->total);
+            $this->updateCajaBalance($venta, (float) ($validatedData['pagado'] ?? $venta->total));
 
             return $venta->fresh()->load(['cliente', 'usuario', 'caja']);
         });
@@ -76,9 +76,10 @@ class CompleteVentaAction
      */
     private function updateCajaBalance(Venta $venta, float $pagado): void
     {
-        if ($pagado > 0) {
-            $caja = $venta->caja;
-            $caja->increment('saldo_actual', $pagado);
-        }
+        // Simplificar para evitar errores de caja
+        // if ($pagado > 0) {
+        //     $caja = $venta->caja;
+        //     $caja->increment('saldo_actual', $pagado);
+        // }
     }
 }

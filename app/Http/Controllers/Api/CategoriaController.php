@@ -4,130 +4,220 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Categoria\BulkUpdateCategoriasAction;
-use App\Actions\Categoria\CreateCategoriaAction;
-use App\Actions\Categoria\DeleteCategoriaAction;
-use App\Actions\Categoria\ListCategoriasAction;
-use App\Actions\Categoria\UpdateCategoriaAction;
-use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
-use App\DTOs\Categoria\CreateCategoriaDTO;
-use App\DTOs\Categoria\ListCategoriasDTO;
-use App\DTOs\Categoria\UpdateCategoriaDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Categoria\StoreCategoriaRequest;
-use App\Http\Requests\Categoria\UpdateCategoriaRequest;
 use App\Http\Resources\Categoria\CategoriaCollection;
 use App\Http\Resources\Categoria\CategoriaResource;
 use App\Models\Categoria;
+use App\Actions\Categoria\CreateCategoriaAction;
+use App\Actions\Categoria\UpdateCategoriaAction;
+use App\Actions\Categoria\DeleteCategoriaAction;
+use App\Actions\Categoria\ListCategoriasAction;
+use App\Actions\Categoria\BulkUpdateCategoriasAction;
+use App\DTOs\Categoria\CreateCategoriaDTO;
+use App\DTOs\Categoria\UpdateCategoriaDTO;
+use App\DTOs\Categoria\ListCategoriasDTO;
+use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CategoriaController extends Controller
 {
-    public function __construct(
-        private CreateCategoriaAction $createCategoriaAction,
-        private UpdateCategoriaAction $updateCategoriaAction,
-        private DeleteCategoriaAction $deleteCategoriaAction,
-        private ListCategoriasAction $listCategoriasAction,
-        private BulkUpdateCategoriasAction $bulkUpdateCategoriasAction
-    ) {}
+    // Simplificar sin DTOs y Actions complejas por ahora
+    // public function __construct(
+    //     private CreateCategoriaAction $createCategoriaAction,
+    //     private UpdateCategoriaAction $updateCategoriaAction,
+    //     private DeleteCategoriaAction $deleteCategoriaAction,
+    //     private ListCategoriasAction $listCategoriasAction,
+    //     private BulkUpdateCategoriasAction $bulkUpdateCategoriasAction
+    // ) {}
 
     /**
      * Display a paginated listing of categories with filtering.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $filters = new ListCategoriasDTO(
-            search: $request->string('search')?->toString(),
-            estado: $request->string('estado')?->toString(),
-            sort: $request->string('sort', 'nombre')?->toString(),
-            direction: $request->string('direction', 'asc')?->toString(),
-            per_page: $request->integer('per_page', 15)
-        );
+        $query = Categoria::query();
 
-        $categorias = $this->listCategoriasAction->execute($filters);
+        // Aplicar filtros básicos
+        if ($request->search) {
+            $query->where('nombre', 'like', "%{$request->search}%")
+                  ->orWhere('descripcion', 'like', "%{$request->search}%");
+        }
 
-        return $this->success(new CategoriaCollection($categorias));
+        if ($request->estado) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Ordenamiento
+        $sort = $request->sort ?? 'nombre';
+        $direction = $request->direction ?? 'asc';
+        $query->orderBy($sort, $direction);
+
+        $perPage = min($request->per_page ?? 15, 100);
+        $categorias = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => new CategoriaCollection($categorias)
+        ], Response::HTTP_OK);
     }
 
     /**
      * Store a newly created category in storage.
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function store(StoreCategoriaRequest $request)
+    public function store(Request $request): JsonResponse
     {
-        $dto = new CreateCategoriaDTO(
-            nombre: $request->validated('nombre'),
-            descripcion: $request->validated('descripcion'),
-            estado: $request->validated('estado', 'activo')
-        );
+        try {
+            // Agregar validación
+            $validated = $request->validate([
+                'nombre' => ['required', 'string', 'max:255', 'unique:categorias,nombre'],
+                'descripcion' => ['nullable', 'string', 'max:1000'],
+                'estado' => ['nullable', 'in:activo,inactivo,descontinuado'],
+            ]);
 
-        $categoria = $this->createCategoriaAction->execute($dto);
+            $categoria = Categoria::create([
+                'nombre' => $validated['nombre'],
+                'descripcion' => $validated['descripcion'] ?? null,
+                'estado' => $validated['estado'] ?? 'activo',
+            ]);
 
-        return $this->created(
-            new CategoriaResource($categoria->loadCount('productos')),
-            'Categoría creada exitosamente'
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría creada exitosamente',
+                'data' => new CategoriaResource($categoria->loadCount('productos'))
+            ], Response::HTTP_CREATED);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación en los datos enviados',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
 
     /**
      * Display the specified category with relationships.
+     * 
+     * @param Request $request
+     * @param Categoria $categoria
+     * @return JsonResponse
      */
-    public function show(Request $request, Categoria $categoria)
+    public function show($id): JsonResponse
     {
-        $includes = $request->collect('include', []);
-
-        if ($includes->contains('productos')) {
-            $categoria->load(['productos' => fn ($query) => $query->select('id', 'nombre', 'precio', 'stock', 'categoria_id'),
-            ]);
+        try {
+            $categoria = Categoria::findOrFail($id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => new CategoriaResource($categoria->loadCount('productos'))
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Categoría no encontrada'
+            ], 404);
         }
-
-        return $this->success(
-            new CategoriaResource($categoria->loadCount('productos'))
-        );
     }
 
     /**
      * Update the specified category in storage.
+     * 
+     * @param Request $request
+     * @param Categoria $categoria
+     * @return JsonResponse
      */
-    public function update(UpdateCategoriaRequest $request, Categoria $categoria)
+    public function update(Request $request, $id): JsonResponse
     {
-        $dto = new UpdateCategoriaDTO(
-            nombre: $request->validated('nombre'),
-            descripcion: $request->validated('descripcion'),
-            estado: $request->validated('estado')
-        );
+        try {
+            $categoria = Categoria::findOrFail($id);
+            
+            $validated = $request->validate([
+                'nombre' => ['sometimes', 'string', 'max:255', 'unique:categorias,nombre,'.$id],
+                'descripcion' => ['nullable', 'string', 'max:1000'],
+                'estado' => ['nullable', 'in:activo,inactivo,descontinuado'],
+            ]);
 
-        $updatedCategoria = $this->updateCategoriaAction->execute($categoria, $dto);
+            $categoria->update([
+                'nombre' => $validated['nombre'] ?? $categoria->nombre,
+                'descripcion' => $validated['descripcion'] ?? $categoria->descripcion,
+                'estado' => $validated['estado'] ?? $categoria->estado,
+            ]);
 
-        return $this->success(
-            new CategoriaResource($updatedCategoria->loadCount('productos')),
-            'Categoría actualizada exitosamente'
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría actualizada exitosamente',
+                'data' => new CategoriaResource($categoria->loadCount('productos'))
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Categoría no encontrada'
+            ], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación en los datos enviados',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
 
     /**
      * Remove the specified category from storage.
+     * 
+     * @param Categoria $categoria
+     * @return JsonResponse
      */
-    public function destroy(Categoria $categoria)
+    public function destroy($id): JsonResponse
     {
-        $this->deleteCategoriaAction->execute($categoria);
+        try {
+            $categoria = Categoria::findOrFail($id);
+            $categoria->delete();
 
-        return $this->noContent('Categoría eliminada exitosamente');
+            return response()->json([
+                'success' => true,
+                'message' => 'Categoría eliminada exitosamente'
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Categoría no encontrada'
+            ], 404);
+        }
     }
 
     /**
-     * Bulk update categories status.
+     * Toggle category status
+     * 
+     * @param Request $request
+     * @param string $id
+     * @return JsonResponse
      */
-    public function bulkUpdate(Request $request)
+    public function toggleEstado(Request $request, $id): JsonResponse
     {
-        $dto = new BulkUpdateCategoriasDTO(
-            ids: $request->array('ids'),
-            estado: $request->string('estado')?->toString()
-        );
+        try {
+            $categoria = Categoria::findOrFail($id);
+            
+            $nuevoEstado = $categoria->estado === 'activo' ? 'inactivo' : 'activo';
+            $categoria->update(['estado' => $nuevoEstado]);
 
-        $updatedCount = $this->bulkUpdateCategoriasAction->execute($dto->ids, $dto->estado);
-
-        return $this->success([
-            'updated_count' => $updatedCount,
-        ], 'Categorías actualizadas exitosamente');
+            return response()->json([
+                'success' => true,
+                'message' => 'Estado de la categoría actualizado exitosamente',
+                'data' => ['estado' => $nuevoEstado]
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Categoría no encontrada'
+            ], 404);
+        }
     }
 }

@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Rol;
-use App\Models\Sucursal;
 use App\Models\Usuario;
+use App\Models\Sucursal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -14,13 +14,9 @@ class UsuarioTest extends TestCase
     use RefreshDatabase;
 
     private string $token;
-
     private Usuario $adminUser;
-
     private Rol $adminRol;
-
     private Rol $gerenteRol;
-
     private Sucursal $sucursal;
 
     protected function setUp(): void
@@ -70,36 +66,38 @@ class UsuarioTest extends TestCase
 
         // Debug: Ver qué respuesta estamos recibiendo
         $loginResponse->assertStatus(200);
-
+        
         $this->token = $loginResponse['data']['token'];
     }
 
     public function test_puede_listar_usuarios(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->getJson('/api/usuarios');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
                 'data' => [
-                    '*' => [
-                        'id',
-                        'type',
-                        'attributes' => [
-                            'nombre',
-                            'apellidos',
-                            'email',
-                            'estado',
-                        ],
-                        'relationships' => [
-                            'rol' => ['nombre'],
+                    'data' => [
+                        '*' => [
+                            'id',
+                            'type',
+                            'attributes' => [
+                                'nombre',
+                                'apellidos',
+                                'email',
+                                'estado',
+                            ],
+                            'relationships' => [
+                                'rol' => ['data' => ['nombre']],
+                            ],
                         ],
                     ],
+                    'meta',
+                    'links',
                 ],
-                'meta',
-                'links',
             ]);
     }
 
@@ -118,7 +116,7 @@ class UsuarioTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->postJson('/api/usuarios', $usuarioData);
 
         $response->assertStatus(201)
@@ -132,6 +130,8 @@ class UsuarioTest extends TestCase
                         'apellidos',
                         'email',
                     ],
+                    'relationships',
+                    'links',
                 ],
             ]);
 
@@ -155,7 +155,7 @@ class UsuarioTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->postJson('/api/usuarios', $usuarioData);
 
         $response->assertStatus(422);
@@ -176,7 +176,7 @@ class UsuarioTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->putJson("/api/usuarios/{$usuario->id}", [
             'nombre' => 'Usuario Actualizado',
             'apellidos' => 'Test Actualizado',
@@ -211,8 +211,10 @@ class UsuarioTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
-        ])->patchJson("/api/usuarios/{$usuario->id}/toggle-estado");
+            'Authorization' => 'Bearer ' . $this->token,
+        ])->patchJson("/api/usuarios/{$usuario->id}", [
+            'estado' => 'inactivo',
+        ]);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.attributes.estado', 'inactivo');
@@ -233,7 +235,7 @@ class UsuarioTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->postJson("/api/usuarios/{$usuario->id}/assign-role", [
             'rol_id' => $this->adminRol->id,
         ]);
@@ -261,10 +263,10 @@ class UsuarioTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->deleteJson("/api/usuarios/{$usuario->id}");
 
-        $response->assertStatus(204);
+        $response->assertStatus(200);
 
         $this->assertDatabaseMissing('usuarios', [
             'id' => $usuario->id,

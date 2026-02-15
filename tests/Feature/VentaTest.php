@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\Caja;
 use App\Models\Categoria;
-use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Rol;
-use App\Models\Sucursal;
 use App\Models\Usuario;
+use App\Models\Cliente;
+use App\Models\Sucursal;
+use App\Models\Caja;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -18,15 +18,10 @@ class VentaTest extends TestCase
     use RefreshDatabase;
 
     private string $token;
-
     private Usuario $adminUser;
-
     private Sucursal $sucursal;
-
     private Caja $caja;
-
     private Cliente $cliente;
-
     private Producto $producto;
 
     protected function setUp(): void
@@ -105,37 +100,57 @@ class VentaTest extends TestCase
     public function test_puede_listar_ventas(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->getJson('/api/ventas');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
-                'data',
-                'meta',
-                'links',
+                'data' => [
+                    'data' => [
+                        '*' => [
+                            'id',
+                            'type',
+                            'attributes' => [
+                                'numero_venta',
+                                'total',
+                                'metodo_pago',
+                                'estado',
+                            ],
+                        ],
+                    ],
+                    'meta',
+                    'links',
+                ],
             ]);
     }
 
     public function test_puede_crear_venta(): void
     {
         $ventaData = [
+            'numero_venta' => 'VNT-000001',
             'cliente_id' => $this->cliente->id,
             'sucursal_id' => $this->sucursal->id,
             'caja_id' => $this->caja->id,
+            'usuario_id' => $this->adminUser->id,
             'metodo_pago' => 'efectivo',
+            'tipo_pago' => 'contado',
+            'subtotal' => 20.00,
+            'impuesto' => 0,
+            'total' => 20.00,
+            'estado' => 'pendiente',
             'productos' => [
                 [
                     'producto_id' => $this->producto->id,
                     'cantidad' => 2,
                     'precio_unitario' => 10.00,
-                    'descuento_unitario' => 0,
+                    'descuento' => 0,
                 ],
             ],
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->postJson('/api/ventas', $ventaData);
 
         $response->assertStatus(201)
@@ -173,7 +188,7 @@ class VentaTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->postJson('/api/ventas', $ventaData);
 
         $response->assertStatus(422);
@@ -183,9 +198,13 @@ class VentaTest extends TestCase
     {
         $venta = \App\Models\Venta::create([
             'numero_venta' => 'VNT-000001',
-            'total' => 20.00,
+            'subtotal' => 20.00,
             'descuento' => 0,
             'impuestos' => 0,
+            'total' => 20.00,
+            'pagado' => 0,
+            'saldo_pendiente' => 20.00,
+            'tipo_pago' => 'contado',
             'metodo_pago' => 'efectivo',
             'estado' => 'pendiente',
             'cliente_id' => $this->cliente->id,
@@ -195,12 +214,12 @@ class VentaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
         ])->patchJson("/api/ventas/{$venta->id}/completar");
 
         // Debug: Ver qué respuesta estamos recibiendo
         if ($response->status() !== 200) {
-            dd($response->json());
+            dump($response->json());
         }
 
         $response->assertStatus(200)
@@ -211,9 +230,13 @@ class VentaTest extends TestCase
     {
         $venta = \App\Models\Venta::create([
             'numero_venta' => 'VNT-000002',
-            'total' => 20.00,
+            'subtotal' => 20.00,
             'descuento' => 0,
             'impuestos' => 0,
+            'total' => 20.00,
+            'pagado' => 0,
+            'saldo_pendiente' => 20.00,
+            'tipo_pago' => 'contado',
             'metodo_pago' => 'efectivo',
             'estado' => 'pendiente',
             'cliente_id' => $this->cliente->id,
@@ -223,8 +246,10 @@ class VentaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
-        ])->patchJson("/api/ventas/{$venta->id}/cancelar");
+            'Authorization' => 'Bearer ' . $this->token,
+        ])->patchJson("/api/ventas/{$venta->id}/cancelar", [
+            'motivo' => 'Cancelación de prueba',
+        ]);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.attributes.estado', 'cancelada');

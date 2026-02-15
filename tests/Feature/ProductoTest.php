@@ -202,11 +202,17 @@ class ProductoTest extends TestCase
             'estado' => 'activo',
         ]);
 
+        // Probar el endpoint específico
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/productos?bajo_stock=true');
+            ->getJson('/api/productos/bajo-stock');
+
+        // Debug: ver qué está recibiendo
+        if ($response->status() !== 200) {
+            dump($response->json());
+        }
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(1, 'data.data')
             ->assertJsonFragment(['nombre' => 'Stock Bajo']);
     }
 
@@ -237,10 +243,10 @@ class ProductoTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/productos?proximo_vencer=true&dias_alerta=60');
+            ->getJson('/api/productos/proximos-vencer');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
+            ->assertJsonCount(1, 'data.data')
             ->assertJsonFragment(['nombre' => 'Vence Pronto']);
     }
 }

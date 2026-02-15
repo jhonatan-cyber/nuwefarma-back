@@ -17,10 +17,10 @@ class EnsureApiAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         // Log para debugging
-        \Log::info('EnsureApiAuthenticated: ' . $request->path() . ' - User: ' . ($request->user() ? 'authenticated' : 'not authenticated'));
-        
+        \Log::info('EnsureApiAuthenticated: '.$request->path().' - User: '.($request->user() ? 'authenticated' : 'not authenticated'));
+
         // Si no hay token de autorización, devolver 401 inmediatamente
-        if (!$request->header('Authorization')) {
+        if (! $request->header('Authorization')) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado. Token requerido.',

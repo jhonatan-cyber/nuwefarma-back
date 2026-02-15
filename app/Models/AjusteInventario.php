@@ -13,8 +13,11 @@ class AjusteInventario extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'ajustes_inventario';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -31,6 +34,7 @@ class AjusteInventario extends Model
     ];
 
     public const TIPO_INCREMENTO = 'incremento';
+
     public const TIPO_DECREMENTO = 'decremento';
 
     public function usuario(): BelongsTo

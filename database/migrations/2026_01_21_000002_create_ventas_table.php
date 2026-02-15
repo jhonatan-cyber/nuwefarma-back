@@ -32,7 +32,7 @@ return new class extends Migration
             $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
             $table->foreign('sucursal_id')->references('id')->on('sucursals')->onDelete('set null');
             $table->foreign('caja_id')->references('id')->on('cajas')->onDelete('set null');
-            
+
             $table->index(['estado', 'fecha_venta']);
             $table->index(['cliente_id']);
             $table->index(['usuario_id']);

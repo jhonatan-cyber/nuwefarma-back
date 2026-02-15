@@ -3,7 +3,6 @@
 namespace App\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 trait HasAdvancedScopes
@@ -41,6 +40,7 @@ trait HasAdvancedScopes
         foreach ($relations as $relation) {
             $query->withCount($relation);
         }
+
         return $query;
     }
 
@@ -49,6 +49,7 @@ trait HasAdvancedScopes
         foreach ($relations as $relation => $column) {
             $query->withSum($relation, $column);
         }
+
         return $query;
     }
 
@@ -57,15 +58,16 @@ trait HasAdvancedScopes
         foreach ($orders as $column => $direction) {
             $query->orderBy($column, $direction);
         }
+
         return $query;
     }
 
-    public function scopeWhereHasRelation(Builder $query, string $relation, callable $callback = null): Builder
+    public function scopeWhereHasRelation(Builder $query, string $relation, ?callable $callback = null): Builder
     {
         return $query->whereHas($relation, $callback);
     }
 
-    public function scopeWhereDoesntHaveRelation(Builder $query, string $relation, callable $callback = null): Builder
+    public function scopeWhereDoesntHaveRelation(Builder $query, string $relation, ?callable $callback = null): Builder
     {
         return $query->whereDoesntHave($relation, $callback);
     }
@@ -75,6 +77,7 @@ trait HasAdvancedScopes
         foreach ($relations as $relation) {
             $query->whereNull($relation);
         }
+
         return $query;
     }
 
@@ -83,6 +86,7 @@ trait HasAdvancedScopes
         foreach ($relations as $relation) {
             $query->whereNotNull($relation);
         }
+
         return $query;
     }
 
@@ -103,6 +107,7 @@ trait HasAdvancedScopes
         if ($to) {
             $query->where($column, '<=', $to);
         }
+
         return $query;
     }
 
@@ -114,6 +119,7 @@ trait HasAdvancedScopes
         if ($max !== null) {
             $query->where($column, '<=', $max);
         }
+
         return $query;
     }
 
@@ -124,11 +130,12 @@ trait HasAdvancedScopes
                 continue;
             }
 
-            $method = 'scope' . Str::studly($filter);
+            $method = 'scope'.Str::studly($filter);
             if (method_exists($this, $method)) {
                 $this->$method($query, $value);
             }
         }
+
         return $query;
     }
 
@@ -159,6 +166,7 @@ trait HasAdvancedScopes
                 $query->selectRaw("{$type}({$column}) as {$alias}");
             }
         }
+
         return $query;
     }
 
@@ -230,14 +238,14 @@ trait HasAdvancedScopes
     {
         return [
             'id', 'created_at', 'updated_at', 'name', 'title', 'status',
-            'price', 'amount', 'quantity', 'total'
+            'price', 'amount', 'quantity', 'total',
         ];
     }
 
     protected function getSearchableColumns(): array
     {
         return [
-            'name', 'title', 'description', 'content', 'notes'
+            'name', 'title', 'description', 'content', 'notes',
         ];
     }
 
@@ -257,11 +265,12 @@ trait HasAdvancedScopes
     /**
      * Laravel 12+ performance optimization scopes
      */
-    public function scopeOptimizedSelect(Builder $query, array $columns = null): Builder
+    public function scopeOptimizedSelect(Builder $query, ?array $columns = null): Builder
     {
         if ($columns === null) {
             $columns = $this->getOptimizedSelectColumns();
         }
+
         return $query->select($columns);
     }
 
@@ -277,13 +286,14 @@ trait HasAdvancedScopes
                 };
             }
         }
+
         return $query->with($optimizedRelations);
     }
 
     protected function getOptimizedSelectColumns(): array
     {
         return [
-            'id', 'name', 'status', 'created_at', 'updated_at'
+            'id', 'name', 'status', 'created_at', 'updated_at',
         ];
     }
 }

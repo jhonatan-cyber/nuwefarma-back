@@ -3,9 +3,6 @@
 namespace Tests\Concerns;
 
 use App\Models\Rol;
-use App\Models\Usuario;
-use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
 
 trait CreatesAuthenticatedUser
 {
@@ -13,10 +10,10 @@ trait CreatesAuthenticatedUser
     {
         // Crear rol de Administrador si no existe
         $rolAdministrador = \App\Models\Rol::where('nombre', 'Administrador')->first();
-        if (!$rolAdministrador) {
+        if (! $rolAdministrador) {
             $rolAdministrador = \App\Models\Rol::factory()->create(['nombre' => 'Administrador']);
         }
-        
+
         $userData = array_merge([
             'nombre' => 'Jhonatan',
             'apellidos' => 'Ancasi',
@@ -28,17 +25,17 @@ trait CreatesAuthenticatedUser
             'rol_id' => $rolAdministrador->id,
             'estado' => 'activo',
         ], $overrides);
-        
+
         return \App\Models\Usuario::factory()->create($userData);
     }
-    
+
     protected function authenticateUser(\App\Models\Usuario $user): string
     {
         $loginResponse = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => '10571705', // Usar la contraseña original
         ]);
-        
+
         return $loginResponse['data']['token'];
     }
 }

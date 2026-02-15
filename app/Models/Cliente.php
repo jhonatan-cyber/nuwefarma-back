@@ -2,18 +2,25 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditoria;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Cliente extends Model
 {
-    use HasFactory, HasUuids;
+    use HasAuditoria, HasFactory, HasUuids;
+
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'ci',
         'nombre',
-        'apellido',
+        'apellidos',
         'telefono',
         'estado',
     ];
@@ -43,6 +50,6 @@ class Cliente extends Model
      */
     public function getNombreCompletoAttribute()
     {
-        return $this->nombre . ' ' . $this->apellido;
+        return $this->nombre.' '.$this->apellidos;
     }
 }

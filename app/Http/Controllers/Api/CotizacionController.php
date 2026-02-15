@@ -46,7 +46,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener cotizaciones: ' . $e->getMessage(),
+                'message' => 'Error al obtener cotizaciones: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -131,7 +131,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear la cotización: ' . $e->getMessage(),
+                'message' => 'Error al crear la cotización: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -160,7 +160,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener la cotización: ' . $e->getMessage(),
+                'message' => 'Error al obtener la cotización: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -174,7 +174,7 @@ class CotizacionController extends Controller
         ],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent()
+            content: new OA\JsonContent
         ),
         responses: [
             new OA\Response(response: 200, description: 'Cotización actualizada'),
@@ -185,7 +185,7 @@ class CotizacionController extends Controller
     {
         try {
             $validated = $request->validate([
-                'numero_cotizacion' => 'sometimes|required|string|unique:cotizacions,numero_cotizacion,' . $cotizacion->id,
+                'numero_cotizacion' => 'sometimes|required|string|unique:cotizacions,numero_cotizacion,'.$cotizacion->id,
                 'cliente' => 'sometimes|required|string',
                 'fecha' => 'sometimes|required|date',
                 'fecha_vencimiento' => 'sometimes|required|date',
@@ -235,7 +235,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al actualizar la cotización: ' . $e->getMessage(),
+                'message' => 'Error al actualizar la cotización: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -264,7 +264,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al eliminar la cotización: ' . $e->getMessage(),
+                'message' => 'Error al eliminar la cotización: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -307,7 +307,7 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cambiar el estado: ' . $e->getMessage(),
+                'message' => 'Error al cambiar el estado: '.$e->getMessage(),
             ], 500);
         }
     }

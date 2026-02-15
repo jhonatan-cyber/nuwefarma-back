@@ -12,8 +12,7 @@ class CreateRolAction
     /**
      * Create a new role.
      *
-     * @param array<string, mixed> $data
-     * @return Rol
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Rol
     {
@@ -25,7 +24,7 @@ class CreateRolAction
     /**
      * Validate the role data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

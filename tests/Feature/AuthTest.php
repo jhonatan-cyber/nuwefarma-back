@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -14,6 +13,7 @@ class AuthTest extends TestCase
     use RefreshDatabase;
 
     private Rol $adminRol;
+
     private Usuario $usuario;
 
     protected function setUp(): void
@@ -56,8 +56,8 @@ class AuthTest extends TestCase
                 'message',
                 'data' => [
                     'token',
-                    'user' => ['id', 'nombre', 'email', 'rol']
-                ]
+                    'user' => ['id', 'nombre', 'email', 'rol'],
+                ],
             ]);
     }
 
@@ -70,7 +70,7 @@ class AuthTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonFragment([
-                'message' => 'Las credenciales proporcionadas son incorrectas.'
+                'message' => 'Las credenciales proporcionadas son incorrectas.',
             ]);
     }
 
@@ -141,8 +141,8 @@ class AuthTest extends TestCase
                     'user' => [
                         'email' => 'jhonatanancasi@gmail.com',
                         'nombre' => 'Jhonatan',
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 

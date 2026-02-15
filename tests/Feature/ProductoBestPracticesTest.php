@@ -11,7 +11,6 @@ use App\Repositories\ProductoRepository;
 use App\ValueObjects\ProductPrice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ProductoBestPracticesTest extends TestCase
@@ -19,16 +18,18 @@ class ProductoBestPracticesTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     private Usuario $usuario;
+
     private string $token;
+
     private ProductoRepository $repository;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->usuario = Usuario::factory()->create();
         $this->token = $this->usuario->createToken('test-token')->plainTextToken;
-        $this->repository = new ProductoRepository(new Producto());
+        $this->repository = new ProductoRepository(new Producto);
     }
 
     /**
@@ -106,7 +107,7 @@ class ProductoBestPracticesTest extends TestCase
     {
         // Create test product
         $producto = Producto::factory()->create();
-        
+
         // Update with specific values
         $producto->update([
             'nombre' => 'Test Product',
@@ -252,7 +253,7 @@ class ProductoBestPracticesTest extends TestCase
     {
         // Test not found error
         $uuid = \Illuminate\Support\Str::uuid();
-        
+
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
         ])->getJson("/api/productos/{$uuid}");
@@ -274,7 +275,7 @@ class ProductoBestPracticesTest extends TestCase
 
         // First call should cache the result
         $found1 = $this->repository->findById($producto->id);
-        
+
         // Second call should hit cache
         $found2 = $this->repository->findById($producto->id);
 
@@ -343,7 +344,7 @@ class ProductoBestPracticesTest extends TestCase
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
         ])->getJson('/api/productos');
-        
+
         $response->assertStatus(400)
             ->assertJsonStructure([
                 'success',

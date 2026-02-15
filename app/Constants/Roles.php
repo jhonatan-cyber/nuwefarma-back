@@ -5,8 +5,11 @@ namespace App\Constants;
 class Roles
 {
     public const ADMINISTRADOR = 'Administrador';
+
     public const GERENTE = 'Gerente';
+
     public const CAJERO = 'Cajero';
+
     public const VENDEDOR = 'Vendedor';
 
     public static function all(): array

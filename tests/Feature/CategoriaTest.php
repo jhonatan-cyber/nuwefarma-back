@@ -3,21 +3,22 @@
 namespace Tests\Feature;
 
 use App\Models\Categoria;
-use Tests\Concerns\CreatesAuthenticatedUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesAuthenticatedUser;
 use Tests\TestCase;
 
 class CategoriaTest extends TestCase
 {
-    use RefreshDatabase, CreatesAuthenticatedUser;
+    use CreatesAuthenticatedUser, RefreshDatabase;
 
     private string $token;
+
     private \App\Models\Usuario $usuario;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Crear usuario autenticado y obtener token
         $this->usuario = $this->createAuthenticatedUser();
         $this->token = $this->authenticateUser($this->usuario);

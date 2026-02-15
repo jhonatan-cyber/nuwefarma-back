@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Cliente;
 
-use App\Models\Cliente;
 use App\Exceptions\ApiException;
+use App\Models\Cliente;
 
 class DeleteClienteAction
 {
     /**
      * Delete a client with business logic validation.
      *
-     * @param Cliente $cliente
-     * @return bool
      * @throws ApiException
      */
     public function execute(Cliente $cliente): bool
@@ -26,7 +24,6 @@ class DeleteClienteAction
     /**
      * Validate if client can be deleted.
      *
-     * @param Cliente $cliente
      * @throws ApiException
      */
     private function validateDeletion(Cliente $cliente): void

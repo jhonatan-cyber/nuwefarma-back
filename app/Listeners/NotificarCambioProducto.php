@@ -21,7 +21,7 @@ class NotificarCambioProducto implements ShouldQueue
         try {
             // Determinar usuarios a notificar
             $usuariosANotificar = $this->obtenerUsuariosANotificar($event);
-            
+
             foreach ($usuariosANotificar as $usuario) {
                 $this->crearNotificacionUsuario($usuario, $event);
             }
@@ -67,14 +67,14 @@ class NotificarCambioProducto implements ShouldQueue
     private function crearNotificacionUsuario(Usuario $usuario, ProductoActualizado $event): void
     {
         $cambios = $event->obtenerCambiosSignificativos();
-        
+
         if (empty($cambios)) {
             return;
         }
 
         $titulo = 'Producto Actualizado';
         $mensaje = $this->generarMensajeNotificacion($event, $cambios);
-        
+
         Notificacion::create([
             'usuario_id' => $usuario->id,
             'titulo' => $titulo,
@@ -97,7 +97,7 @@ class NotificarCambioProducto implements ShouldQueue
     private function generarMensajeNotificacion(ProductoActualizado $event, array $cambios): string
     {
         $mensajesCambios = [];
-        
+
         foreach ($cambios as $cambio) {
             $mensajeCambio = match ($cambio['campo']) {
                 'precio_venta' => "Precio: {$cambio['valor_anterior']} → {$cambio['valor_nuevo']}",
@@ -106,15 +106,15 @@ class NotificarCambioProducto implements ShouldQueue
                 'nombre' => "Nombre: {$cambio['valor_anterior']} → {$cambio['valor_nuevo']}",
                 default => "{$cambio['label']}: {$cambio['valor_anterior']} → {$cambio['valor_nuevo']}",
             };
-            
+
             $mensajesCambios[] = $mensajeCambio;
         }
 
         $mensajePrincipal = "El producto '{$event->producto->nombre}' ha sido actualizado.";
-        $mensajeCambios = "Cambios: " . implode(', ', $mensajesCambios);
-        
+        $mensajeCambios = 'Cambios: '.implode(', ', $mensajesCambios);
+
         $motivo = $event->motivo ? "\nMotivo: {$event->motivo}" : '';
-        
-        return $mensajePrincipal . "\n" . $mensajeCambios . $motivo;
+
+        return $mensajePrincipal."\n".$mensajeCambios.$motivo;
     }
 }

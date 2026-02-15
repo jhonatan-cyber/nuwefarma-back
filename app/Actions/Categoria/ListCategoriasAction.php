@@ -7,14 +7,12 @@ namespace App\Actions\Categoria;
 use App\DTOs\Categoria\ListCategoriasDTO;
 use App\Models\Categoria;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\Rule;
 
 class ListCategoriasAction
 {
     /**
      * Get a paginated list of categories with filtering.
      *
-     * @param ListCategoriasDTO $filters
      * @return LengthAwarePaginator<Categoria>
      */
     public function execute(ListCategoriasDTO $filters): LengthAwarePaginator
@@ -26,22 +24,21 @@ class ListCategoriasAction
         $this->applySorting($query, $filters);
 
         $perPage = min($filters->per_page ?? 15, 100);
-        
+
         return $query->paginate($perPage);
     }
 
     /**
      * Apply filters to the query.
      *
-     * @param mixed $query
-     * @param ListCategoriasDTO $filters
+     * @param  mixed  $query
      */
     private function applyFilters($query, ListCategoriasDTO $filters): void
     {
         $query->when($filters->search, function ($q) use ($filters) {
             $search = $filters->search;
             $q->where('nombre', 'like', "%{$search}%")
-              ->orWhere('descripcion', 'like', "%{$search}%");
+                ->orWhere('descripcion', 'like', "%{$search}%");
         });
 
         $query->when($filters->estado, function ($q) use ($filters) {
@@ -52,8 +49,7 @@ class ListCategoriasAction
     /**
      * Apply sorting to the query.
      *
-     * @param mixed $query
-     * @param ListCategoriasDTO $filters
+     * @param  mixed  $query
      */
     private function applySorting($query, ListCategoriasDTO $filters): void
     {

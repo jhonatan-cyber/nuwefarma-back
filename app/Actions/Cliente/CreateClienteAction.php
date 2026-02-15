@@ -12,8 +12,7 @@ class CreateClienteAction
     /**
      * Create a new client.
      *
-     * @param array<string, mixed> $data
-     * @return Cliente
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Cliente
     {
@@ -25,7 +24,7 @@ class CreateClienteAction
     /**
      * Validate the client data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

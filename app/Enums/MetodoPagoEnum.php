@@ -14,7 +14,7 @@ enum MetodoPagoEnum: string
 
     public function getLabel(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EFECTIVO => 'Efectivo',
             self::TARJETA_CREDITO => 'Tarjeta de Crédito',
             self::TARJETA_DEBITO => 'Tarjeta de Débito',
@@ -27,7 +27,7 @@ enum MetodoPagoEnum: string
 
     public function getIcon(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EFECTIVO => 'cash',
             self::TARJETA_CREDITO => 'credit-card',
             self::TARJETA_DEBITO => 'credit-card',
@@ -40,7 +40,7 @@ enum MetodoPagoEnum: string
 
     public function requiresApproval(): bool
     {
-        return match($this) {
+        return match ($this) {
             self::CHEQUE, self::TRANSFERENCIA, self::CREDITO_TIENDA => true,
             default => false,
         };
@@ -48,7 +48,7 @@ enum MetodoPagoEnum: string
 
     public function allowsInstallments(): bool
     {
-        return match($this) {
+        return match ($this) {
             self::TARJETA_CREDITO, self::CREDITO_TIENDA => true,
             default => false,
         };
@@ -56,7 +56,7 @@ enum MetodoPagoEnum: string
 
     public function getCommissionRate(): float
     {
-        return match($this) {
+        return match ($this) {
             self::TARJETA_CREDITO => 0.035, // 3.5%
             self::TARJETA_DEBITO => 0.020,  // 2.0%
             self::TRANSFERENCIA => 0.010,    // 1.0%
@@ -67,7 +67,7 @@ enum MetodoPagoEnum: string
 
     public static function getAll(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'label' => $case->getLabel(),
             'icon' => $case->getIcon(),
@@ -78,11 +78,11 @@ enum MetodoPagoEnum: string
 
     public static function getImmediate(): array
     {
-        return array_filter(self::cases(), fn($case) => !$case->requiresApproval());
+        return array_filter(self::cases(), fn ($case) => ! $case->requiresApproval());
     }
 
     public static function getWithApproval(): array
     {
-        return array_filter(self::cases(), fn($case) => $case->requiresApproval());
+        return array_filter(self::cases(), fn ($case) => $case->requiresApproval());
     }
 }

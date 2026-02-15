@@ -161,7 +161,7 @@ class NotificacionController extends Controller
     {
         $notificacion = Notificacion::find($id);
 
-        if (!$notificacion) {
+        if (! $notificacion) {
             return response()->json([
                 'success' => false,
                 'message' => 'Notificación no encontrada',

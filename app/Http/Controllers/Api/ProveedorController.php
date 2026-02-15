@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Proveedor\BulkUpdateProveedoresAction;
+use App\Actions\Proveedor\CreateProveedorAction;
+use App\Actions\Proveedor\DeleteProveedorAction;
+use App\Actions\Proveedor\ListProveedoresAction;
+use App\Actions\Proveedor\UpdateProveedorAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Proveedor\StoreProveedorRequest;
 use App\Http\Resources\Proveedor\ProveedorCollection;
 use App\Http\Resources\Proveedor\ProveedorResource;
 use App\Models\Proveedor;
-use App\Actions\Proveedor\CreateProveedorAction;
-use App\Actions\Proveedor\UpdateProveedorAction;
-use App\Actions\Proveedor\DeleteProveedorAction;
-use App\Actions\Proveedor\ListProveedoresAction;
-use App\Actions\Proveedor\BulkUpdateProveedoresAction;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class ProveedorController extends Controller
 {
@@ -29,96 +28,68 @@ class ProveedorController extends Controller
 
     /**
      * Display a paginated listing of providers with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only([
-            'search', 'estado', 'ruc', 'sort', 'direction', 'per_page'
+            'search', 'estado', 'ruc', 'sort', 'direction', 'per_page',
         ]);
-        
+
         $proveedores = $this->listProveedoresAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new ProveedorCollection($proveedores)
-        ], Response::HTTP_OK);
+        return $this->success(new ProveedorCollection($proveedores));
     }
 
     /**
      * Store a newly created provider in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreProveedorRequest $request)
     {
-        $proveedor = $this->createProveedorAction->execute($request->all());
+        $proveedor = $this->createProveedorAction->execute($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Proveedor creado exitosamente',
-            'data' => new ProveedorResource($proveedor)
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new ProveedorResource($proveedor),
+            'Proveedor creado exitosamente'
+        );
     }
 
     /**
      * Display the specified provider with relationships.
-     * 
-     * @param Proveedor $proveedor
-     * @return JsonResponse
      */
-    public function show(Proveedor $proveedor): JsonResponse
+    public function show(Proveedor $proveedor)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new ProveedorResource($proveedor->loadCount('productos'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new ProveedorResource($proveedor->loadCount('productos'))
+        );
     }
 
     /**
      * Update the specified provider in storage.
-     * 
-     * @param Request $request
-     * @param Proveedor $proveedor
-     * @return JsonResponse
      */
-    public function update(Request $request, Proveedor $proveedor): JsonResponse
+    public function update(Request $request, Proveedor $proveedor)
     {
         $updatedProveedor = $this->updateProveedorAction->execute($proveedor, $request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Proveedor actualizado exitosamente',
-            'data' => new ProveedorResource($updatedProveedor->loadCount('productos'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new ProveedorResource($updatedProveedor->loadCount('productos')),
+            'Proveedor actualizado exitosamente'
+        );
     }
 
     /**
      * Remove the specified provider from storage.
-     * 
-     * @param Proveedor $proveedor
-     * @return JsonResponse
      */
-    public function destroy(Proveedor $proveedor): JsonResponse
+    public function destroy(Proveedor $proveedor)
     {
         $this->deleteProveedorAction->execute($proveedor);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Proveedor eliminado exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Proveedor eliminado exitosamente');
     }
 
     /**
      * Bulk update providers status.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -128,12 +99,8 @@ class ProveedorController extends Controller
 
         $updatedCount = $this->bulkUpdateProveedoresAction->execute($validated['ids'], $validated['estado']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Proveedores actualizados exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Proveedores actualizados exitosamente');
     }
 }

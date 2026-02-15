@@ -21,12 +21,12 @@ class OptimizationService
     public function optimizeQuery(Builder $query, array $relations = [], array $selects = []): Builder
     {
         // Add eager loading for relations
-        if (!empty($relations)) {
+        if (! empty($relations)) {
             $query->with($relations);
         }
 
         // Add specific selects to reduce payload
-        if (!empty($selects)) {
+        if (! empty($selects)) {
             $query->select($selects);
         }
 
@@ -48,7 +48,7 @@ class OptimizationService
     public function bulkCache(array $items, string $prefix, int $ttl = 3600): void
     {
         $data = [];
-        
+
         foreach ($items as $key => $value) {
             $data["{$prefix}:{$key}"] = $value;
         }
@@ -64,8 +64,8 @@ class OptimizationService
         if ($this->redis->isConnected()) {
             // Use Redis for pattern matching
             $keys = $this->redis->keys($pattern);
-            
-            if (!empty($keys)) {
+
+            if (! empty($keys)) {
                 $this->redis->del($keys);
             }
         } else {
@@ -82,9 +82,9 @@ class OptimizationService
         return $this->db->transaction(function () use ($callback) {
             // Set transaction isolation level
             $this->db->statement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
-            
+
             $result = $callback($this->db);
-            
+
             return $result;
         });
     }
@@ -125,10 +125,12 @@ class OptimizationService
         foreach ($updates as $update) {
             $id = $update[$keyColumn];
             $ids[] = $id;
-            
+
             foreach ($update as $column => $value) {
-                if ($column === $keyColumn) continue;
-                
+                if ($column === $keyColumn) {
+                    continue;
+                }
+
                 $columns[$column] = true;
                 $cases[$column][] = "WHEN {$keyColumn} = '{$id}' THEN '{$value}'";
             }
@@ -139,11 +141,11 @@ class OptimizationService
         $setParts = [];
 
         foreach ($columns as $column => $true) {
-            $setParts[] = "{$column} = CASE " . implode(' ', $cases[$column]) . " END";
+            $setParts[] = "{$column} = CASE ".implode(' ', $cases[$column]).' END';
         }
 
         $sql .= implode(', ', $setParts);
-        $sql .= " WHERE {$keyColumn} IN ('" . implode("','", $ids) . "')";
+        $sql .= " WHERE {$keyColumn} IN ('".implode("','", $ids)."')";
 
         return $this->db->statement($sql);
     }
@@ -151,7 +153,7 @@ class OptimizationService
     /**
      * Optimize pagination with cursor-based pagination
      */
-    public function cursorPaginate(Builder $query, int $perPage = 15, string $cursor = null): array
+    public function cursorPaginate(Builder $query, int $perPage = 15, ?string $cursor = null): array
     {
         if ($cursor) {
             $query->where('id', '>', $cursor);
@@ -177,7 +179,7 @@ class OptimizationService
     public function addQueryHints(Builder $query): Builder
     {
         // Add index hints for better performance
-        $query->from($query->getModel()->getTable() . ' FORCE INDEX (PRIMARY, idx_estado, idx_categoria_id)');
+        $query->from($query->getModel()->getTable().' FORCE INDEX (PRIMARY, idx_estado, idx_categoria_id)');
 
         // Set query timeout
         $query->timeout(30);
@@ -231,7 +233,7 @@ class OptimizationService
     {
         if ($this->redis->isConnected()) {
             $info = $this->redis->info('memory');
-            
+
             return [
                 'used_memory' => $info['used_memory'],
                 'used_memory_human' => $info['used_memory_human'],
@@ -289,7 +291,7 @@ class OptimizationService
     private function calculateHitRate(int $hits, int $misses): float
     {
         $total = $hits + $misses;
-        
+
         return $total > 0 ? round(($hits / $total) * 100, 2) : 0;
     }
 }

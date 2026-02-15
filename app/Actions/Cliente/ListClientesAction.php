@@ -6,14 +6,13 @@ namespace App\Actions\Cliente;
 
 use App\Models\Cliente;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\Rule;
 
 class ListClientesAction
 {
     /**
      * Get a paginated list of clients with filtering.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return LengthAwarePaginator<Cliente>
      */
     public function execute(array $filters = []): LengthAwarePaginator
@@ -32,29 +31,29 @@ class ListClientesAction
     /**
      * Apply filters to the query.
      *
-     * @param mixed $query
-     * @param array<string, mixed> $filters
+     * @param  mixed  $query
+     * @param  array<string, mixed>  $filters
      */
     private function applyFilters($query, array $filters): void
     {
-        $query->when(!empty($filters['search']), function ($q) use ($filters) {
+        $query->when(! empty($filters['search']), function ($q) use ($filters) {
             $search = $filters['search'];
             $q->where('nombre', 'like', "%{$search}%")
-              ->orWhere('apellidos', 'like', "%{$search}%")
-              ->orWhere('ci', 'like', "%{$search}%")
-              ->orWhere('nit', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('apellidos', 'like', "%{$search}%")
+                ->orWhere('ci', 'like', "%{$search}%")
+                ->orWhere('nit', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
         });
 
-        $query->when(!empty($filters['estado']), function ($q) use ($filters) {
+        $query->when(! empty($filters['estado']), function ($q) use ($filters) {
             $q->where('estado', $filters['estado']);
         });
 
-        $query->when(!empty($filters['ci']), function ($q) use ($filters) {
+        $query->when(! empty($filters['ci']), function ($q) use ($filters) {
             $q->where('ci', $filters['ci']);
         });
 
-        $query->when(!empty($filters['nit']), function ($q) use ($filters) {
+        $query->when(! empty($filters['nit']), function ($q) use ($filters) {
             $q->where('nit', $filters['nit']);
         });
 
@@ -71,8 +70,8 @@ class ListClientesAction
     /**
      * Apply sorting to the query.
      *
-     * @param mixed $query
-     * @param array<string, mixed> $filters
+     * @param  mixed  $query
+     * @param  array<string, mixed>  $filters
      */
     private function applySorting($query, array $filters): void
     {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Usuario;
 
 use App\Models\Usuario;
-use App\Models\Rol;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -14,15 +13,14 @@ class CreateUsuarioAction
     /**
      * Create a new user.
      *
-     * @param array<string, mixed> $data
-     * @return Usuario
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Usuario
     {
         $validatedData = $this->validate($data);
 
         // Auto-hash CI as password if not provided
-        if (!isset($validatedData['password'])) {
+        if (! isset($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['ci']);
         }
 
@@ -32,7 +30,7 @@ class CreateUsuarioAction
     /**
      * Validate the user data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

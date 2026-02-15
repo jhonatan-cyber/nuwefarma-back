@@ -12,7 +12,6 @@ class ClienteResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -47,7 +46,6 @@ class ClienteResource extends JsonResource
     /**
      * Append calculated attributes.
      *
-     * @param Request $request
      * @return array<string>
      */
     public function with(Request $request): array
@@ -57,8 +55,6 @@ class ClienteResource extends JsonResource
 
     /**
      * Calculate pending debt.
-     *
-     * @return float
      */
     protected function deudaPendiente(): float
     {

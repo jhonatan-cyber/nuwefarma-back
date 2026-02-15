@@ -176,7 +176,7 @@ class ActivityLogController extends Controller
     {
         $log = ActivityLog::with('usuario:id,nombre,apellidos,email')->find($id);
 
-        if (!$log) {
+        if (! $log) {
             return response()->json([
                 'success' => false,
                 'message' => 'Log no encontrado',
@@ -218,7 +218,7 @@ class ActivityLogController extends Controller
     public function myLogs(Request $request): JsonResponse
     {
         $perPage = $request->query('per_page', 15);
-        
+
         $logs = ActivityLog::where('usuario_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);

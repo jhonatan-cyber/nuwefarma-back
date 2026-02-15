@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Lote;
 use App\Models\Notificacion;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class NotificacionService
@@ -21,7 +20,7 @@ class NotificacionService
         if ($usuarioId) {
             $query->where(function ($q) use ($usuarioId) {
                 $q->where('usuario_id', $usuarioId)
-                  ->orWhereNull('usuario_id');
+                    ->orWhereNull('usuario_id');
             });
         }
 
@@ -42,8 +41,10 @@ class NotificacionService
         $notificacion = Notificacion::find($notificacionId);
         if ($notificacion) {
             $notificacion->marcarComoLeida();
+
             return true;
         }
+
         return false;
     }
 
@@ -54,7 +55,7 @@ class NotificacionService
         if ($usuarioId) {
             $query->where(function ($q) use ($usuarioId) {
                 $q->where('usuario_id', $usuarioId)
-                  ->orWhereNull('usuario_id');
+                    ->orWhereNull('usuario_id');
             });
         }
 
@@ -71,7 +72,7 @@ class NotificacionService
         if ($usuarioId) {
             $query->where(function ($q) use ($usuarioId) {
                 $q->where('usuario_id', $usuarioId)
-                  ->orWhereNull('usuario_id');
+                    ->orWhereNull('usuario_id');
             });
         }
 
@@ -89,7 +90,7 @@ class NotificacionService
                 ->where('estado', Notificacion::ESTADO_PENDIENTE)
                 ->exists();
 
-            if (!$existe) {
+            if (! $existe) {
                 $this->crearNotificacion([
                     'tipo' => Notificacion::TIPO_STOCK_BAJO,
                     'titulo' => 'Stock Bajo',
@@ -110,6 +111,7 @@ class NotificacionService
         }
 
         Log::info("Alertas de stock bajo generadas: {$contador}");
+
         return $contador;
     }
 
@@ -124,7 +126,7 @@ class NotificacionService
                 ->where('estado', Notificacion::ESTADO_PENDIENTE)
                 ->exists();
 
-            if (!$existe) {
+            if (! $existe) {
                 $this->crearNotificacion([
                     'tipo' => Notificacion::TIPO_PROXIMO_VENCER,
                     'titulo' => 'Producto Próximo a Vencer',
@@ -147,6 +149,7 @@ class NotificacionService
         }
 
         Log::info("Alertas de vencimiento próximas generadas: {$contador}");
+
         return $contador;
     }
 
@@ -161,7 +164,7 @@ class NotificacionService
                 ->where('estado', Notificacion::ESTADO_PENDIENTE)
                 ->exists();
 
-            if (!$existe) {
+            if (! $existe) {
                 $this->crearNotificacion([
                     'tipo' => Notificacion::TIPO_VENCIDO,
                     'titulo' => 'Producto Vencido',
@@ -183,6 +186,7 @@ class NotificacionService
         }
 
         Log::info("Alertas de productos vencidos generadas: {$contador}");
+
         return $contador;
     }
 

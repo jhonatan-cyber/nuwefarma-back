@@ -12,9 +12,7 @@ class UpdateProveedorAction
     /**
      * Update an existing provider.
      *
-     * @param Proveedor $proveedor
-     * @param array<string, mixed> $data
-     * @return Proveedor
+     * @param  array<string, mixed>  $data
      */
     public function execute(Proveedor $proveedor, array $data): Proveedor
     {
@@ -28,8 +26,7 @@ class UpdateProveedorAction
     /**
      * Validate the provider data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Proveedor $proveedor
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Proveedor $proveedor): array

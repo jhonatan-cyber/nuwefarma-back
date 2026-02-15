@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Usuario;
 
-use App\Models\Usuario;
 use App\Exceptions\ApiException;
+use App\Models\Usuario;
 
 class DeleteUsuarioAction
 {
     /**
      * Delete a user with business logic validation.
      *
-     * @param Usuario $usuario
-     * @return bool
      * @throws ApiException
      */
     public function execute(Usuario $usuario): bool
@@ -26,7 +24,6 @@ class DeleteUsuarioAction
     /**
      * Validate if user can be deleted.
      *
-     * @param Usuario $usuario
      * @throws ApiException
      */
     private function validateDeletion(Usuario $usuario): void

@@ -13,7 +13,7 @@ enum EstadoEnum: string
 
     public function getLabel(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => 'Activo',
             self::INACTIVO => 'Inactivo',
             self::PENDIENTE => 'Pendiente',
@@ -25,7 +25,7 @@ enum EstadoEnum: string
 
     public function getColor(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => 'green',
             self::INACTIVO => 'gray',
             self::PENDIENTE => 'yellow',
@@ -37,7 +37,7 @@ enum EstadoEnum: string
 
     public function getIcon(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => 'check-circle',
             self::INACTIVO => 'x-circle',
             self::PENDIENTE => 'clock',
@@ -69,7 +69,7 @@ enum EstadoEnum: string
 
     public function canTransitionTo(self $estado): bool
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => in_array($estado, [self::INACTIVO, self::BLOQUEADO, self::COMPLETADO]),
             self::INACTIVO => in_array($estado, [self::ACTIVO]),
             self::PENDIENTE => in_array($estado, [self::COMPLETADO, self::CANCELADO]),
@@ -81,7 +81,7 @@ enum EstadoEnum: string
 
     public function getTransitionStates(): array
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => [self::INACTIVO, self::BLOQUEADO, self::COMPLETADO],
             self::INACTIVO => [self::ACTIVO],
             self::PENDIENTE => [self::COMPLETADO, self::CANCELADO],
@@ -93,7 +93,7 @@ enum EstadoEnum: string
 
     public static function getAll(): array
     {
-        return array_map(fn($case) => $case->value, self::cases());
+        return array_map(fn ($case) => $case->value, self::cases());
     }
 
     public static function getActives(): array
@@ -108,7 +108,7 @@ enum EstadoEnum: string
 
     public static function getSelectOptions(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'label' => $case->getLabel(),
             'color' => $case->getColor(),
@@ -119,7 +119,7 @@ enum EstadoEnum: string
     // Laravel 12+ features: advanced methods without constructor properties
     public function getDescription(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVO => 'El recurso está activo y disponible',
             self::INACTIVO => 'El recurso está inactivo y no disponible',
             self::PENDIENTE => 'El recurso está pendiente de aprobación',
@@ -131,7 +131,7 @@ enum EstadoEnum: string
 
     public function requiresAction(): bool
     {
-        return match($this) {
+        return match ($this) {
             self::PENDIENTE, self::BLOQUEADO => true,
             default => false,
         };

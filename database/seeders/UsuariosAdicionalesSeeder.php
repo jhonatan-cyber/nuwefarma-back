@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Rol;
-use App\Models\Usuario;
 use App\Models\Sucursal;
+use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,18 +19,20 @@ class UsuariosAdicionalesSeeder extends Seeder
 
         if ($roles->isEmpty()) {
             $this->command->warn('No hay roles disponibles. Ejecuta RolSeeder primero.');
+
             return;
         }
 
         if ($sucursales->isEmpty()) {
             $this->command->warn('No hay sucursales disponibles. Ejecuta SucursalSeeder primero.');
+
             return;
         }
 
         // === GERENTES (3 usuarios) ===
         if ($roles->has('Gerente')) {
             $gerenteRol = $roles['Gerente'];
-            
+
             Usuario::create([
                 'id' => Str::uuid(),
                 'nombre' => 'Carlos',
@@ -83,7 +85,7 @@ class UsuariosAdicionalesSeeder extends Seeder
         // === CAJEROS (5 usuarios) ===
         if ($roles->has('Cajero')) {
             $cajeroRol = $roles['Cajero'];
-            
+
             $cajeros = [
                 [
                     'nombre' => 'María',
@@ -92,7 +94,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '72234567',
                     'email' => 'maria.quispe@nuwefarma.com',
                     'direccion' => 'Calle Murillo #123, El Alto',
-                    'sueldo' => '3200'
+                    'sueldo' => '3200',
                 ],
                 [
                     'nombre' => 'Luis',
@@ -101,7 +103,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '72345678',
                     'email' => 'luis.castro@nuwefarma.com',
                     'direccion' => 'Av. 6 de Agosto #456, San Miguel',
-                    'sueldo' => '3100'
+                    'sueldo' => '3100',
                 ],
                 [
                     'nombre' => 'Carmen',
@@ -110,7 +112,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '72456789',
                     'email' => 'carmen.rojas@nuwefarma.com',
                     'direccion' => 'Calle Sagárnaga #789, Centro',
-                    'sueldo' => '3000'
+                    'sueldo' => '3000',
                 ],
                 [
                     'nombre' => 'Pedro',
@@ -119,7 +121,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '72567890',
                     'email' => 'pedro.mamani@nuwefarma.com',
                     'direccion' => 'Av. Arce #321, Sopocachi',
-                    'sueldo' => '3300'
+                    'sueldo' => '3300',
                 ],
                 [
                     'nombre' => 'Silvia',
@@ -128,8 +130,8 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '72678901',
                     'email' => 'silvia.torrez@nuwefarma.com',
                     'direccion' => 'Calle Potosí #654, Villa Fátima',
-                    'sueldo' => '3150'
-                ]
+                    'sueldo' => '3150',
+                ],
             ];
 
             foreach ($cajeros as $cajero) {
@@ -154,7 +156,7 @@ class UsuariosAdicionalesSeeder extends Seeder
         // === USUARIOS (4 usuarios) ===
         if ($roles->has('Usuario')) {
             $usuarioRol = $roles['Usuario'];
-            
+
             $usuarios = [
                 [
                     'nombre' => 'Diego',
@@ -163,7 +165,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '73234567',
                     'email' => 'diego.salinas@nuwefarma.com',
                     'direccion' => 'Av. Kantutani #987, Calacoto',
-                    'sueldo' => '2800'
+                    'sueldo' => '2800',
                 ],
                 [
                     'nombre' => 'Patricia',
@@ -172,7 +174,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '73345678',
                     'email' => 'patricia.herrera@nuwefarma.com',
                     'direccion' => 'Calle Rosendo Gutiérrez #147, Sopocachi',
-                    'sueldo' => '2900'
+                    'sueldo' => '2900',
                 ],
                 [
                     'nombre' => 'Javier',
@@ -181,7 +183,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '73456789',
                     'email' => 'javier.montano@nuwefarma.com',
                     'direccion' => 'Av. Hernando Siles #258, Obrajes',
-                    'sueldo' => '2750'
+                    'sueldo' => '2750',
                 ],
                 [
                     'nombre' => 'Verónica',
@@ -190,8 +192,8 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '73567890',
                     'email' => 'veronica.caceres@nuwefarma.com',
                     'direccion' => 'Calle 21 de Calacoto #369, Calacoto',
-                    'sueldo' => '2850'
-                ]
+                    'sueldo' => '2850',
+                ],
             ];
 
             foreach ($usuarios as $usuario) {
@@ -216,7 +218,7 @@ class UsuariosAdicionalesSeeder extends Seeder
         // === EDITORES (3 usuarios) ===
         if ($roles->has('Editor')) {
             $editorRol = $roles['Editor'];
-            
+
             $editores = [
                 [
                     'nombre' => 'Sandra',
@@ -225,7 +227,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '74234567',
                     'email' => 'sandra.morales@nuwefarma.com',
                     'direccion' => 'Av. Montes #741, San Pedro',
-                    'sueldo' => '3800'
+                    'sueldo' => '3800',
                 ],
                 [
                     'nombre' => 'Fernando',
@@ -234,7 +236,7 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '74345678',
                     'email' => 'fernando.aguilar@nuwefarma.com',
                     'direccion' => 'Calle Jaén #852, Centro',
-                    'sueldo' => '3900'
+                    'sueldo' => '3900',
                 ],
                 [
                     'nombre' => 'Mónica',
@@ -243,8 +245,8 @@ class UsuariosAdicionalesSeeder extends Seeder
                     'telefono' => '74456789',
                     'email' => 'monica.delgado@nuwefarma.com',
                     'direccion' => 'Av. Camacho #963, Centro',
-                    'sueldo' => '3700'
-                ]
+                    'sueldo' => '3700',
+                ],
             ];
 
             foreach ($editores as $editor) {
@@ -269,7 +271,7 @@ class UsuariosAdicionalesSeeder extends Seeder
         // === USUARIOS INACTIVOS PARA PRUEBAS (2 usuarios) ===
         if ($roles->has('Cajero')) {
             $cajeroRol = $roles['Cajero'];
-            
+
             Usuario::create([
                 'id' => Str::uuid(),
                 'nombre' => 'Raúl',

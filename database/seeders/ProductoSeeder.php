@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Producto;
 use App\Models\Categoria;
+use App\Models\Producto;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -18,6 +18,7 @@ class ProductoSeeder extends Seeder
 
         if ($categorias->isEmpty()) {
             $this->command->warn('No hay categorías. Ejecuta primero el CategoriaSeeder.');
+
             return;
         }
 
@@ -148,54 +149,54 @@ class ProductoSeeder extends Seeder
         foreach ($categorias as $categoriaIndex => $categoria) {
             if (isset($productosData[$categoria->nombre])) {
                 $productos = $productosData[$categoria->nombre];
-                
+
                 foreach ($productos as $index => $productoData) {
                     $contador++;
                     $stockActual = rand(10, 200);
-                    $codigoUnico = '77' . str_pad($contador, 11, '0', STR_PAD_LEFT);
+                    $codigoUnico = '77'.str_pad($contador, 11, '0', STR_PAD_LEFT);
                     $skuCategoria = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $categoria->nombre), 0, 3));
-                    
+
                     // Verificar si ya existe
                     $existe = Producto::where('nombre', $productoData['nombre'])
                         ->where('categoria_id', $categoria->id)
                         ->exists();
-                    
+
                     if ($existe) {
                         continue;
                     }
-                    
+
                     Producto::create([
-                            'id' => Str::uuid(),
-                            'nombre' => $productoData['nombre'],
-                            'categoria_id' => $categoria->id,
-                            'codigo_barras' => $codigoUnico,
-                            'sku' => 'PRD-' . $skuCategoria . '-' . str_pad($contador, 6, '0', STR_PAD_LEFT),
-                            'codigo_interno' => 'INT-' . str_pad($contador, 4, '0', STR_PAD_LEFT),
-                            'laboratorio' => $productoData['laboratorio'],
-                            'forma_farmaceutica' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas', 'Cápsulas blandas']) ? $productoData['presentacion'] : 'Otro',
-                            'concentracion' => $productoData['concentracion'],
-                            'presentacion' => $productoData['presentacion'],
-                            'via_administracion' => $categoria->nombre === 'Material de Curación' ? 'Tópica' : 'Oral',
-                            'unidad_medida' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas', 'Cápsulas blandas']) ? 'Unidad' : 'Caja',
-                            'fracciones_por_unidad' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas']) ? rand(10, 30) : 1,
-                            'permite_fraccionar' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas']),
-                            'lote' => 'LOTE-' . strtoupper(Str::random(6)),
-                            'fecha_vencimiento' => now()->addMonths(rand(6, 36)),
-                            'registro_sanitario' => 'RS-' . rand(100000, 999999),
-                            'refrigeracion_requerida' => rand(0, 10) < 2, // 20% requiere refrigeración
-                            'dias_para_alertar_vencimiento' => 90,
-                            'stock_actual' => $stockActual,
-                            'stock_minimo' => 10,
-                            'stock_maximo' => 500,
-                            'precio_compra' => rand(5, 100) + (rand(0, 99) / 100),
-                            'precio_venta' => rand(10, 150) + (rand(0, 99) / 100),
-                            'margen_sugerido' => rand(15, 50),
-                            'impuesto' => 16,
-                            'etiquetas' => json_encode(['popular', 'stock-disponible']),
-                            'fotos' => json_encode([]),
-                            'descripcion' => 'Producto farmacéutico de alta calidad para el tratamiento médico.',
-                            'estado' => 'activo',
-                        ]);
+                        'id' => Str::uuid(),
+                        'nombre' => $productoData['nombre'],
+                        'categoria_id' => $categoria->id,
+                        'codigo_barras' => $codigoUnico,
+                        'sku' => 'PRD-'.$skuCategoria.'-'.str_pad($contador, 6, '0', STR_PAD_LEFT),
+                        'codigo_interno' => 'INT-'.str_pad($contador, 4, '0', STR_PAD_LEFT),
+                        'laboratorio' => $productoData['laboratorio'],
+                        'forma_farmaceutica' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas', 'Cápsulas blandas']) ? $productoData['presentacion'] : 'Otro',
+                        'concentracion' => $productoData['concentracion'],
+                        'presentacion' => $productoData['presentacion'],
+                        'via_administracion' => $categoria->nombre === 'Material de Curación' ? 'Tópica' : 'Oral',
+                        'unidad_medida' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas', 'Cápsulas blandas']) ? 'Unidad' : 'Caja',
+                        'fracciones_por_unidad' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas']) ? rand(10, 30) : 1,
+                        'permite_fraccionar' => in_array($productoData['presentacion'], ['Tabletas', 'Cápsulas']),
+                        'lote' => 'LOTE-'.strtoupper(Str::random(6)),
+                        'fecha_vencimiento' => now()->addMonths(rand(6, 36)),
+                        'registro_sanitario' => 'RS-'.rand(100000, 999999),
+                        'refrigeracion_requerida' => rand(0, 10) < 2, // 20% requiere refrigeración
+                        'dias_para_alertar_vencimiento' => 90,
+                        'stock_actual' => $stockActual,
+                        'stock_minimo' => 10,
+                        'stock_maximo' => 500,
+                        'precio_compra' => rand(5, 100) + (rand(0, 99) / 100),
+                        'precio_venta' => rand(10, 150) + (rand(0, 99) / 100),
+                        'margen_sugerido' => rand(15, 50),
+                        'impuesto' => 16,
+                        'etiquetas' => json_encode(['popular', 'stock-disponible']),
+                        'fotos' => json_encode([]),
+                        'descripcion' => 'Producto farmacéutico de alta calidad para el tratamiento médico.',
+                        'estado' => 'activo',
+                    ]);
                 }
             }
         }

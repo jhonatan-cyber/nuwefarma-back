@@ -7,7 +7,6 @@ use App\Models\MovimientoLote;
 use App\Services\InventarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class KardexController extends Controller
@@ -32,17 +31,15 @@ class KardexController extends Controller
             );
 
             // Calcular totales
-            $totalEntradas = collect($movimientos)->filter(fn($m) => 
-                in_array($m['tipo_movimiento'], [
-                    'ENTRADA_COMPRA', 'ENTRADA_DEVOLUCION', 'ENTRADA_TRASLADO_IN', 'AJUSTE_POSITIVO'
-                ])
+            $totalEntradas = collect($movimientos)->filter(fn ($m) => in_array($m['tipo_movimiento'], [
+                'ENTRADA_COMPRA', 'ENTRADA_DEVOLUCION', 'ENTRADA_TRASLADO_IN', 'AJUSTE_POSITIVO',
+            ])
             )->sum('cantidad');
 
-            $totalSalidas = collect($movimientos)->filter(fn($m) => 
-                in_array($m['tipo_movimiento'], [
-                    'SALIDA_VENTA', 'SALIDA_DEVOLUCION_PROV', 'SALIDA_TRASLADO_OUT', 
-                    'AJUSTE_NEGATIVO', 'SALIDA_MERMA', 'SALIDA_RETIRADO'
-                ])
+            $totalSalidas = collect($movimientos)->filter(fn ($m) => in_array($m['tipo_movimiento'], [
+                'SALIDA_VENTA', 'SALIDA_DEVOLUCION_PROV', 'SALIDA_TRASLADO_OUT',
+                'AJUSTE_NEGATIVO', 'SALIDA_MERMA', 'SALIDA_RETIRADO',
+            ])
             )->sum('cantidad');
 
             $valorTotal = collect($movimientos)->sum('costo_total');
@@ -61,10 +58,11 @@ class KardexController extends Controller
                 'message' => 'Kardex obtenido correctamente',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al obtener kardex por lote: ' . $e->getMessage());
+            Log::error('Error al obtener kardex por lote: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener kardex: ' . $e->getMessage(),
+                'message' => 'Error al obtener kardex: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -85,7 +83,7 @@ class KardexController extends Controller
             $resumenPorTipo = [];
             foreach ($movimientos as $m) {
                 $tipo = $m['tipo_movimiento'];
-                if (!isset($resumenPorTipo[$tipo])) {
+                if (! isset($resumenPorTipo[$tipo])) {
                     $resumenPorTipo[$tipo] = [
                         'tipo' => $tipo,
                         'cantidad' => 0,
@@ -96,17 +94,15 @@ class KardexController extends Controller
                 $resumenPorTipo[$tipo]['costo_total'] += $m['costo_total'] ?? 0;
             }
 
-            $totalEntradas = collect($movimientos)->filter(fn($m) => 
-                in_array($m['tipo_movimiento'], [
-                    'ENTRADA_COMPRA', 'ENTRADA_DEVOLUCION', 'ENTRADA_TRASLADO_IN', 'AJUSTE_POSITIVO'
-                ])
+            $totalEntradas = collect($movimientos)->filter(fn ($m) => in_array($m['tipo_movimiento'], [
+                'ENTRADA_COMPRA', 'ENTRADA_DEVOLUCION', 'ENTRADA_TRASLADO_IN', 'AJUSTE_POSITIVO',
+            ])
             )->sum('cantidad');
 
-            $totalSalidas = collect($movimientos)->filter(fn($m) => 
-                in_array($m['tipo_movimiento'], [
-                    'SALIDA_VENTA', 'SALIDA_DEVOLUCION_PROV', 'SALIDA_TRASLADO_OUT', 
-                    'AJUSTE_NEGATIVO', 'SALIDA_MERMA', 'SALIDA_RETIRADO'
-                ])
+            $totalSalidas = collect($movimientos)->filter(fn ($m) => in_array($m['tipo_movimiento'], [
+                'SALIDA_VENTA', 'SALIDA_DEVOLUCION_PROV', 'SALIDA_TRASLADO_OUT',
+                'AJUSTE_NEGATIVO', 'SALIDA_MERMA', 'SALIDA_RETIRADO',
+            ])
             )->sum('cantidad');
 
             return response()->json([
@@ -125,10 +121,11 @@ class KardexController extends Controller
                 'message' => 'Kardex por producto obtenido correctamente',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al obtener kardex por producto: ' . $e->getMessage());
+            Log::error('Error al obtener kardex por producto: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener kardex: ' . $e->getMessage(),
+                'message' => 'Error al obtener kardex: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -165,7 +162,7 @@ class KardexController extends Controller
                 ->selectRaw('tipo_movimiento, SUM(cantidad) as total_cantidad, SUM(costo_total) as total_costo')
                 ->groupBy('tipo_movimiento')
                 ->get()
-                ->map(fn($item) => [
+                ->map(fn ($item) => [
                     'tipo' => $item->tipo_movimiento,
                     'cantidad' => (int) $item->total_cantidad,
                     'costo_total' => (float) $item->total_costo,
@@ -187,10 +184,11 @@ class KardexController extends Controller
                 'message' => 'Reporte de movimientos obtenido correctamente',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al obtener reporte de movimientos: ' . $e->getMessage());
+            Log::error('Error al obtener reporte de movimientos: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener reporte: ' . $e->getMessage(),
+                'message' => 'Error al obtener reporte: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -222,6 +220,7 @@ class KardexController extends Controller
             $mermasPorProducto = $mermas->groupBy('lote.producto_id')
                 ->map(function ($items, $productoId) {
                     $producto = $items->first()->lote->producto;
+
                     return [
                         'producto_id' => $productoId,
                         'producto_nombre' => $producto->nombre ?? 'N/A',
@@ -247,10 +246,11 @@ class KardexController extends Controller
                 'message' => 'Reporte de mermas obtenido correctamente',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al obtener reporte de mermas: ' . $e->getMessage());
+            Log::error('Error al obtener reporte de mermas: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener reporte: ' . $e->getMessage(),
+                'message' => 'Error al obtener reporte: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -296,10 +296,11 @@ class KardexController extends Controller
                 'message' => 'Reporte por usuario obtenido correctamente',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al obtener reporte por usuario: ' . $e->getMessage());
+            Log::error('Error al obtener reporte por usuario: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener reporte: ' . $e->getMessage(),
+                'message' => 'Error al obtener reporte: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -324,7 +325,7 @@ class KardexController extends Controller
             }
 
             if ($request->producto_id) {
-                $query->whereHas('lote', function($q) use ($request) {
+                $query->whereHas('lote', function ($q) use ($request) {
                     $q->where('producto_id', $request->producto_id);
                 });
             }
@@ -370,7 +371,7 @@ class KardexController extends Controller
                 ];
             }
 
-            $filename = 'kardex_' . date('Ymd_His') . '.csv';
+            $filename = 'kardex_'.date('Ymd_His').'.csv';
 
             return response()->streamDownload(function () use ($csvData) {
                 $out = fopen('php://output', 'w');
@@ -381,10 +382,11 @@ class KardexController extends Controller
             }, $filename, ['Content-Type' => 'text/csv']);
 
         } catch (\Exception $e) {
-            Log::error('Error al exportar Kardex a CSV: ' . $e->getMessage());
+            Log::error('Error al exportar Kardex a CSV: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al exportar: ' . $e->getMessage(),
+                'message' => 'Error al exportar: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -436,7 +438,7 @@ class KardexController extends Controller
                 ];
             }
 
-            $filename = 'movimientos_' . date('Ymd_His') . '.csv';
+            $filename = 'movimientos_'.date('Ymd_His').'.csv';
 
             return response()->streamDownload(function () use ($csvData) {
                 $out = fopen('php://output', 'w');
@@ -447,10 +449,11 @@ class KardexController extends Controller
             }, $filename, ['Content-Type' => 'text/csv']);
 
         } catch (\Exception $e) {
-            Log::error('Error al exportar movimientos a CSV: ' . $e->getMessage());
+            Log::error('Error al exportar movimientos a CSV: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al exportar: ' . $e->getMessage(),
+                'message' => 'Error al exportar: '.$e->getMessage(),
             ], 500);
         }
     }

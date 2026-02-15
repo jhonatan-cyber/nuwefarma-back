@@ -12,8 +12,11 @@ class Notificacion extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'notificaciones';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -36,11 +39,15 @@ class Notificacion extends Model
     ];
 
     public const TIPO_STOCK_BAJO = 'stock_bajo';
+
     public const TIPO_PROXIMO_VENCER = 'proximo_vencer';
+
     public const TIPO_VENCIDO = 'vencido';
+
     public const TIPO_ALERTA_SISTEMA = 'alerta_sistema';
 
     public const ESTADO_PENDIENTE = 'pendiente';
+
     public const ESTADO_LEIDO = 'leido';
 
     public function usuario(): BelongsTo
@@ -83,7 +90,7 @@ class Notificacion extends Model
 
     public function getIconoAttribute(): string
     {
-        return match($this->tipo) {
+        return match ($this->tipo) {
             self::TIPO_STOCK_BAJO => '⚠️',
             self::TIPO_PROXIMO_VENCER => '⏰',
             self::TIPO_VENCIDO => '❌',
@@ -94,7 +101,7 @@ class Notificacion extends Model
 
     public function getColorAttribute(): string
     {
-        return match($this->tipo) {
+        return match ($this->tipo) {
             self::TIPO_STOCK_BAJO => 'yellow',
             self::TIPO_PROXIMO_VENCER => 'orange',
             self::TIPO_VENCIDO => 'red',

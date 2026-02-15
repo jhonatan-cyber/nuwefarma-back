@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponseService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Health', description: 'Verificación de salud del sistema')]
@@ -49,7 +49,7 @@ class HealthController extends Controller
             new OA\Response(response: 503, description: 'Sistema no saludable'),
         ]
     )]
-    public function __invoke(): JsonResponse
+    public function check(): JsonResponse
     {
         $health = [
             'status' => 'healthy',
@@ -66,7 +66,7 @@ class HealthController extends Controller
             $start = microtime(true);
             DB::connection()->getPdo();
             $responseTime = round((microtime(true) - $start) * 1000, 2);
-            
+
             $health['services']['database'] = [
                 'status' => 'connected',
                 'response_time' => $responseTime,
@@ -85,7 +85,7 @@ class HealthController extends Controller
             Cache::put('health_check', 'ok', 60);
             $result = Cache::get('health_check');
             $responseTime = round((microtime(true) - $start) * 1000, 2);
-            
+
             if ($result === 'ok') {
                 $health['services']['cache'] = [
                     'status' => 'connected',
@@ -108,12 +108,12 @@ class HealthController extends Controller
             file_put_contents($testFile, 'test');
             $canWrite = is_writable($testFile);
             unlink($testFile);
-            
+
             $health['services']['storage'] = [
                 'status' => $canWrite ? 'writable' : 'error',
             ];
-            
-            if (!$canWrite) {
+
+            if (! $canWrite) {
                 $isHealthy = false;
             }
         } catch (\Exception $e) {

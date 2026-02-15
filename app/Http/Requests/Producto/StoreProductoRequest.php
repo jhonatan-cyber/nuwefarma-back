@@ -4,9 +4,8 @@ namespace App\Http\Requests\Producto;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 
-class CreateProductoRequest extends FormRequest
+class StoreProductoRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -273,13 +272,13 @@ class CreateProductoRequest extends FormRequest
             'stock_minimo' => $this->integer('stock_minimo') ?? 0,
             'stock_maximo' => $this->integer('stock_maximo'),
             'etiquetas' => $this->collect($this->get('etiquetas', []))
-                ->map(fn($etiqueta) => trim($etiqueta))
-                ->filter(fn($etiqueta) => !empty($etiqueta))
+                ->map(fn ($etiqueta) => trim($etiqueta))
+                ->filter(fn ($etiqueta) => ! empty($etiqueta))
                 ->unique()
                 ->values()
                 ->all(),
             'fotos' => $this->collect($this->get('fotos', []))
-                ->filter(fn($foto) => !empty($foto) && filter_var($foto, FILTER_VALIDATE_URL))
+                ->filter(fn ($foto) => ! empty($foto) && filter_var($foto, FILTER_VALIDATE_URL))
                 ->values()
                 ->all(),
         ]);
@@ -288,10 +287,10 @@ class CreateProductoRequest extends FormRequest
     public function getValidatedData(): array
     {
         $data = $this->validated();
-        
+
         // Add user ID for auditing
         $data['crear_usuario_id'] = auth()->id();
-        
+
         return $data;
     }
 }

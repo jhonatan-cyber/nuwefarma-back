@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Sucursal\BulkUpdateSucursalesAction;
+use App\Actions\Sucursal\CreateSucursalAction;
+use App\Actions\Sucursal\DeleteSucursalAction;
+use App\Actions\Sucursal\ListSucursalesAction;
+use App\Actions\Sucursal\UpdateSucursalAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sucursal\StoreSucursalRequest;
+use App\Http\Requests\Sucursal\UpdateSucursalRequest;
 use App\Http\Resources\Sucursal\SucursalCollection;
 use App\Http\Resources\Sucursal\SucursalResource;
 use App\Models\Sucursal;
-use App\Actions\Sucursal\CreateSucursalAction;
-use App\Actions\Sucursal\UpdateSucursalAction;
-use App\Actions\Sucursal\DeleteSucursalAction;
-use App\Actions\Sucursal\ListSucursalesAction;
-use App\Actions\Sucursal\BulkUpdateSucursalesAction;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class SucursalController extends Controller
 {
@@ -27,100 +27,54 @@ class SucursalController extends Controller
         private BulkUpdateSucursalesAction $bulkUpdateSucursalesAction
     ) {}
 
-    /**
-     * Display a paginated listing of branches with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only([
             'search', 'estado', 'ciudad', 'departamento', 'pais',
             'gerente_id', 'capacidad_min', 'capacidad_max',
-            'sort', 'direction', 'per_page'
+            'sort', 'direction', 'per_page',
         ]);
-        
+
         $sucursales = $this->listSucursalesAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new SucursalCollection($sucursales)
-        ], Response::HTTP_OK);
+        return $this->success(new SucursalCollection($sucursales));
     }
 
-    /**
-     * Store a newly created branch in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSucursalRequest $request)
     {
-        $sucursal = $this->createSucursalAction->execute($request->all());
+        $sucursal = $this->createSucursalAction->execute($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Sucursal creada exitosamente',
-            'data' => new SucursalResource($sucursal->load('gerente'))
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new SucursalResource($sucursal->load('gerente')),
+            'Sucursal creada exitosamente'
+        );
     }
 
-    /**
-     * Display the specified branch with relationships.
-     * 
-     * @param Sucursal $sucursal
-     * @return JsonResponse
-     */
-    public function show(Sucursal $sucursal): JsonResponse
+    public function show(Sucursal $sucursal)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new SucursalResource($sucursal->loadCount(['usuarios', 'cajas']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new SucursalResource($sucursal->loadCount(['usuarios', 'cajas']))
+        );
     }
 
-    /**
-     * Update the specified branch in storage.
-     * 
-     * @param Request $request
-     * @param Sucursal $sucursal
-     * @return JsonResponse
-     */
-    public function update(Request $request, Sucursal $sucursal): JsonResponse
+    public function update(UpdateSucursalRequest $request, Sucursal $sucursal)
     {
-        $updatedSucursal = $this->updateSucursalAction->execute($sucursal, $request->all());
+        $updatedSucursal = $this->updateSucursalAction->execute($sucursal, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Sucursal actualizada exitosamente',
-            'data' => new SucursalResource($updatedSucursal->loadCount(['usuarios', 'cajas']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new SucursalResource($updatedSucursal->loadCount(['usuarios', 'cajas'])),
+            'Sucursal actualizada exitosamente'
+        );
     }
 
-    /**
-     * Remove the specified branch from storage.
-     * 
-     * @param Sucursal $sucursal
-     * @return JsonResponse
-     */
-    public function destroy(Sucursal $sucursal): JsonResponse
+    public function destroy(Sucursal $sucursal)
     {
         $this->deleteSucursalAction->execute($sucursal);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Sucursal eliminada exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Sucursal eliminada exitosamente');
     }
 
-    /**
-     * Bulk update branches status.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -130,30 +84,17 @@ class SucursalController extends Controller
 
         $updatedCount = $this->bulkUpdateSucursalesAction->execute($validated['ids'], $validated['estado']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Sucursales actualizadas exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Sucursales actualizadas exitosamente');
     }
 
-    /**
-     * Get active branches.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function activas(Request $request): JsonResponse
+    public function activas(Request $request)
     {
         $filters = array_merge($request->only(['per_page']), ['estado' => 'activo']);
-        
+
         $sucursales = $this->listSucursalesAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new SucursalCollection($sucursales)
-        ], Response::HTTP_OK);
+        return $this->success(new SucursalCollection($sucursales));
     }
 }

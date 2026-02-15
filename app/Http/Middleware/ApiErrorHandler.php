@@ -5,8 +5,8 @@ namespace App\Http\Middleware;
 use App\Services\ApiResponseService;
 use Closure;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -34,7 +34,7 @@ class ApiErrorHandler
     private function handleException(Throwable $e, Request $request): JsonResponse
     {
         // Log the exception
-        \Log::error('API Error: ' . $e->getMessage(), [
+        \Log::error('API Error: '.$e->getMessage(), [
             'exception' => $e,
             'request' => $request->all(),
             'url' => $request->fullUrl(),
@@ -72,8 +72,9 @@ class ApiErrorHandler
     private function handleModelNotFoundException(ModelNotFoundException $e): JsonResponse
     {
         $model = class_basename($e->getModel());
+
         return ApiResponseService::notFound(
-            strtolower($model) . ' no encontrado'
+            strtolower($model).' no encontrado'
         );
     }
 

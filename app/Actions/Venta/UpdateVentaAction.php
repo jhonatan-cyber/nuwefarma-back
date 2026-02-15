@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Venta;
 
-use App\Models\Venta;
-use App\Models\VentaProducto;
-use App\Models\Producto;
-use App\Models\Caja;
 use App\Exceptions\ApiException;
+use App\Models\Venta;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -17,9 +14,7 @@ class UpdateVentaAction
     /**
      * Update an existing sale.
      *
-     * @param Venta $venta
-     * @param array<string, mixed> $data
-     * @return Venta
+     * @param  array<string, mixed>  $data
      */
     public function execute(Venta $venta, array $data): Venta
     {
@@ -38,7 +33,6 @@ class UpdateVentaAction
     /**
      * Validate if sale can be updated.
      *
-     * @param Venta $venta
      * @throws ApiException
      */
     private function validateUpdateability(Venta $venta): void
@@ -61,8 +55,7 @@ class UpdateVentaAction
     /**
      * Validate the sale data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Venta $venta
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Venta $venta): array

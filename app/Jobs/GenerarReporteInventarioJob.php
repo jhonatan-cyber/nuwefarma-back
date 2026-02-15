@@ -50,13 +50,13 @@ class GenerarReporteInventarioJob implements ShouldQueue
 
             // Obtener datos del reporte
             $datos = $this->obtenerDatosReporte($productoService);
-            
+
             // Generar archivo del reporte
             $archivo = $this->generarArchivoReporte($datos);
-            
+
             // Guardar archivo y notificar
             $ruta = $this->guardarReporte($archivo);
-            
+
             // Enviar notificación al usuario
             $this->notificarUsuario($ruta);
 
@@ -112,7 +112,7 @@ class GenerarReporteInventarioJob implements ShouldQueue
     private function obtenerDatosReporte(ProductoService $productoService): array
     {
         $productos = $productoService->getProductos($this->filtros, ['campo' => 'nombre', 'direccion' => 'asc'], 1000);
-        
+
         return [
             'productos' => $productos->items(),
             'totales' => [
@@ -120,8 +120,8 @@ class GenerarReporteInventarioJob implements ShouldQueue
                 'valor_total' => $productos->items()->sum(function ($producto) {
                     return $producto->stock_actual * $producto->precio_venta;
                 }),
-                'bajo_stock' => $productos->items()->filter(fn($p) => $p->bajo_stock)->count(),
-                'proximos_vencer' => $productos->items()->filter(fn($p) => $p->proximo_vencer)->count(),
+                'bajo_stock' => $productos->items()->filter(fn ($p) => $p->bajo_stock)->count(),
+                'proximos_vencer' => $productos->items()->filter(fn ($p) => $p->proximo_vencer)->count(),
             ],
             'fecha_generacion' => now()->toDateTimeString(),
             'filtros_aplicados' => $this->filtros,
@@ -147,7 +147,7 @@ class GenerarReporteInventarioJob implements ShouldQueue
     private function generarPDF(array $datos): string
     {
         $pdf = \PDF::loadView('reportes.inventario', compact('datos'));
-        
+
         return $pdf->output();
     }
 
@@ -156,14 +156,14 @@ class GenerarReporteInventarioJob implements ShouldQueue
      */
     private function generarExcel(array $datos): string
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
-        
+
         // Headers
         $sheet->fromArray([
-            ['ID', 'Nombre', 'Categoría', 'Stock Actual', 'Stock Mínimo', 'Precio Venta', 'Valor Total', 'Estado']
+            ['ID', 'Nombre', 'Categoría', 'Stock Actual', 'Stock Mínimo', 'Precio Venta', 'Valor Total', 'Estado'],
         ], null, 'A1');
-        
+
         // Data
         $row = 2;
         foreach ($datos['productos'] as $producto) {
@@ -177,13 +177,13 @@ class GenerarReporteInventarioJob implements ShouldQueue
                     $producto->precio_venta,
                     $producto->stock_actual * $producto->precio_venta,
                     $producto->estado_label,
-                ]
+                ],
             ], null, "A{$row}");
             $row++;
         }
-        
+
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-        
+
         return $writer->save('php://output/temp.xlsx');
     }
 
@@ -193,11 +193,11 @@ class GenerarReporteInventarioJob implements ShouldQueue
     private function generarCSV(array $datos): string
     {
         $csv = \League\Csv\Writer::createFromPath('php://output/temp.csv');
-        
+
         $csv->insertOne([
-            'ID', 'Nombre', 'Categoría', 'Stock Actual', 'Stock Mínimo', 'Precio Venta', 'Valor Total', 'Estado'
+            'ID', 'Nombre', 'Categoría', 'Stock Actual', 'Stock Mínimo', 'Precio Venta', 'Valor Total', 'Estado',
         ]);
-        
+
         foreach ($datos['productos'] as $producto) {
             $csv->insertOne([
                 $producto->id,
@@ -210,7 +210,7 @@ class GenerarReporteInventarioJob implements ShouldQueue
                 $producto->estado_label,
             ]);
         }
-        
+
         return file_get_contents('php://output/temp.csv');
     }
 
@@ -219,10 +219,10 @@ class GenerarReporteInventarioJob implements ShouldQueue
      */
     private function guardarReporte(string $contenido): string
     {
-        $filename = "reportes/inventario/inventario_{$this->usuarioId}_" . now()->format('Y-m-d_H-i-s') . ".{$this->formato}";
-        
+        $filename = "reportes/inventario/inventario_{$this->usuarioId}_".now()->format('Y-m-d_H-i-s').".{$this->formato}";
+
         Storage::put($filename, $contenido);
-        
+
         return $filename;
     }
 
@@ -232,7 +232,7 @@ class GenerarReporteInventarioJob implements ShouldQueue
     private function notificarUsuario(string $ruta): void
     {
         $usuario = \App\Models\Usuario::find($this->usuarioId);
-        
+
         if ($usuario) {
             \App\Models\Notificacion::create([
                 'usuario_id' => $usuario->id,
@@ -255,7 +255,7 @@ class GenerarReporteInventarioJob implements ShouldQueue
     private function notificarFallo(\Throwable $exception): void
     {
         $usuario = \App\Models\Usuario::find($this->usuarioId);
-        
+
         if ($usuario) {
             \App\Models\Notificacion::create([
                 'usuario_id' => $usuario->id,

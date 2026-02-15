@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Product\BulkUpdateProductosAction;
+use App\Actions\Product\CreateProductoAction;
+use App\Actions\Product\DeleteProductoAction;
+use App\Actions\Product\ListProductosAction;
+use App\Actions\Product\UpdateProductoAction;
+use App\DTOs\Product\CreateProductoDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Producto\StoreProductoRequest;
+use App\Http\Requests\Producto\UpdateProductoRequest;
 use App\Http\Resources\Producto\ProductoCollection;
 use App\Http\Resources\Producto\ProductoResource;
 use App\Models\Producto;
-use App\Actions\Product\CreateProductoAction;
-use App\Actions\Product\UpdateProductoAction;
-use App\Actions\Product\DeleteProductoAction;
-use App\Actions\Product\ListProductosAction;
-use App\Actions\Product\BulkUpdateProductosAction;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class ProductoController extends Controller
 {
@@ -29,98 +30,71 @@ class ProductoController extends Controller
 
     /**
      * Display a paginated listing of products with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only([
             'search', 'estado', 'categoria_id', 'proveedor_id',
             'stock_bajo', 'proximos_vencer', 'precio_min', 'precio_max',
-            'sort', 'direction', 'per_page'
+            'sort', 'direction', 'per_page',
         ]);
-        
+
         $productos = $this->listProductosAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new ProductoCollection($productos)
-        ], Response::HTTP_OK);
+        return $this->success(new ProductoCollection($productos));
     }
 
     /**
      * Store a newly created product in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreProductoRequest $request)
     {
-        $producto = $this->createProductoAction->execute($request->all());
+        $dto = CreateProductoDTO::fromArray($request->validated());
+        $producto = $this->createProductoAction->execute($dto);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto creado exitosamente',
-            'data' => new ProductoResource($producto->load(['categoria', 'proveedor']))
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new ProductoResource($producto->load(['categoria', 'proveedor'])),
+            'Producto creado exitosamente'
+        );
     }
 
     /**
      * Display the specified product with relationships.
-     * 
-     * @param Producto $producto
-     * @return JsonResponse
      */
-    public function show(Producto $producto): JsonResponse
+    public function show(Producto $producto)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new ProductoResource($producto->load(['categoria', 'proveedor']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new ProductoResource($producto->load(['categoria', 'proveedor']))
+        );
     }
 
     /**
      * Update the specified product in storage.
-     * 
-     * @param Request $request
-     * @param Producto $producto
-     * @return JsonResponse
      */
-    public function update(Request $request, Producto $producto): JsonResponse
+    public function update(UpdateProductoRequest $request, Producto $producto)
     {
-        $updatedProducto = $this->updateProductoAction->execute($producto, $request->all());
+        $updatedProducto = $this->updateProductoAction->execute($producto, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto actualizado exitosamente',
-            'data' => new ProductoResource($updatedProducto->load(['categoria', 'proveedor']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new ProductoResource($updatedProducto->load(['categoria', 'proveedor'])),
+            'Producto actualizado exitosamente'
+        );
     }
 
     /**
      * Remove the specified product from storage.
-     * 
-     * @param Producto $producto
-     * @return JsonResponse
      */
-    public function destroy(Producto $producto): JsonResponse
+    public function destroy(Producto $producto)
     {
         $this->deleteProductoAction->execute($producto);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto eliminado exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Producto eliminado exitosamente');
     }
 
     /**
      * Bulk update products status or stock.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -132,48 +106,32 @@ class ProductoController extends Controller
 
         $updatedCount = $this->bulkUpdateProductosAction->execute($validated['ids'], $validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Productos actualizados exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Productos actualizados exitosamente');
     }
 
     /**
      * Get products with low stock.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function bajoStock(Request $request): JsonResponse
+    public function bajoStock(Request $request)
     {
         $filters = array_merge($request->only(['per_page']), ['stock_bajo' => true]);
-        
+
         $productos = $this->listProductosAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new ProductoCollection($productos)
-        ], Response::HTTP_OK);
+        return $this->success(new ProductoCollection($productos));
     }
 
     /**
      * Get products expiring soon.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function proximosVencer(Request $request): JsonResponse
+    public function proximosVencer(Request $request)
     {
         $filters = array_merge($request->only(['per_page']), ['proximos_vencer' => true]);
-        
+
         $productos = $this->listProductosAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new ProductoCollection($productos)
-        ], Response::HTTP_OK);
+        return $this->success(new ProductoCollection($productos));
     }
 }

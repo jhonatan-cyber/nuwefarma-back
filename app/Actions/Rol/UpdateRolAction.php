@@ -12,9 +12,7 @@ class UpdateRolAction
     /**
      * Update an existing role.
      *
-     * @param Rol $rol
-     * @param array<string, mixed> $data
-     * @return Rol
+     * @param  array<string, mixed>  $data
      */
     public function execute(Rol $rol, array $data): Rol
     {
@@ -28,8 +26,7 @@ class UpdateRolAction
     /**
      * Validate the role data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Rol $rol
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Rol $rol): array

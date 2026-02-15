@@ -12,7 +12,6 @@ class CajaResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -20,12 +19,12 @@ class CajaResource extends JsonResource
         return [
             'id' => $this->id,
             'nombre' => $this->nombre,
-            'sucursal' => $this->whenLoaded('sucursal', fn() => [
+            'sucursal' => $this->whenLoaded('sucursal', fn () => [
                 'id' => $this->sucursal->id,
                 'nombre' => $this->sucursal->nombre,
                 'direccion' => $this->sucursal->direccion,
             ]),
-            'gerente' => $this->whenLoaded('gerente', fn() => [
+            'gerente' => $this->whenLoaded('gerente', fn () => [
                 'id' => $this->gerente->id,
                 'nombre' => $this->gerente->nombre,
                 'email' => $this->gerente->email,

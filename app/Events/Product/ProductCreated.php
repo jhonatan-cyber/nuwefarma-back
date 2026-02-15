@@ -23,7 +23,7 @@ class ProductCreated
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('productos.' . $this->producto->id),
+            new PrivateChannel('productos.'.$this->producto->id),
             new Channel('productos'),
             new Channel('inventory'),
         ];

@@ -6,40 +6,34 @@ namespace App\Http\Middleware;
 
 use App\Models\Usuario;
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Laravel\Sanctum\NewAccessToken;
 
 class RoleMiddleware
 {
     /**
      * Handle an incoming request with role-based authorization.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @param string ...$roles
-     * @return JsonResponse|Response
      */
     public function handle(Request $request, Closure $next, string ...$roles): JsonResponse|Response
     {
         /** @var Usuario $user */
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'No autenticado',
                 'errors' => [
-                    'auth' => ['Usuario no autenticado']
-                ]
+                    'auth' => ['Usuario no autenticado'],
+                ],
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Laravel 12+: Enhanced role checking with pattern matching
         $userRole = $user->rol?->nombre;
 
-        if (!$this->userHasRequiredRole($userRole, $roles)) {
+        if (! $this->userHasRequiredRole($userRole, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acceso denegado',
@@ -49,9 +43,9 @@ class RoleMiddleware
                             'Se requiere uno de estos roles: %s. Rol actual: %s',
                             implode(', ', $roles),
                             $userRole ?? 'sin rol'
-                        )
-                    ]
-                ]
+                        ),
+                    ],
+                ],
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -65,13 +59,11 @@ class RoleMiddleware
     /**
      * Check if user has required role using Laravel 12+ pattern matching.
      *
-     * @param string|null $userRole
-     * @param array<string> $requiredRoles
-     * @return bool
+     * @param  array<string>  $requiredRoles
      */
     private function userHasRequiredRole(?string $userRole, array $requiredRoles): bool
     {
-        if (!$userRole) {
+        if (! $userRole) {
             return false;
         }
 
@@ -86,7 +78,6 @@ class RoleMiddleware
     /**
      * Get user abilities based on role with Laravel 12+ pattern matching.
      *
-     * @param string|null $role
      * @return array<string>
      */
     private function getUserAbilities(?string $role): array

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Caja;
 
 use App\Models\Caja;
-use App\Models\Sucursal;
-use App\Models\Usuario;
 use Illuminate\Validation\Rule;
 
 class CreateCajaAction
@@ -14,8 +12,7 @@ class CreateCajaAction
     /**
      * Create a new cash register.
      *
-     * @param array<string, mixed> $data
-     * @return Caja
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Caja
     {
@@ -27,7 +24,7 @@ class CreateCajaAction
     /**
      * Validate the cash register data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Rol;
 
-use App\Models\Rol;
 use App\Exceptions\ApiException;
+use App\Models\Rol;
 
 class DeleteRolAction
 {
     /**
      * Delete a role with business logic validation.
      *
-     * @param Rol $rol
-     * @return bool
      * @throws ApiException
      */
     public function execute(Rol $rol): bool
@@ -26,7 +24,6 @@ class DeleteRolAction
     /**
      * Validate if role can be deleted.
      *
-     * @param Rol $rol
      * @throws ApiException
      */
     private function validateDeletion(Rol $rol): void

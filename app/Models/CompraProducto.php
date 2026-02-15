@@ -12,8 +12,11 @@ class CompraProducto extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'compra_productos';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -67,7 +70,7 @@ class CompraProducto extends Model
         parent::boot();
 
         static::saving(function ($compraProducto) {
-            $compraProducto->subtotal = $compraProducto->cantidad * 
+            $compraProducto->subtotal = $compraProducto->cantidad *
                 ($compraProducto->precio_unitario - $compraProducto->descuento_unitario);
         });
 

@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Caja;
 use App\Models\Categoria;
+use App\Models\Cliente;
 use App\Models\Producto;
 use App\Models\Rol;
-use App\Models\Usuario;
-use App\Models\Cliente;
 use App\Models\Sucursal;
-use App\Models\Caja;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -18,10 +18,15 @@ class VentaTest extends TestCase
     use RefreshDatabase;
 
     private string $token;
+
     private Usuario $adminUser;
+
     private Sucursal $sucursal;
+
     private Caja $caja;
+
     private Cliente $cliente;
+
     private Producto $producto;
 
     protected function setUp(): void
@@ -100,7 +105,7 @@ class VentaTest extends TestCase
     public function test_puede_listar_ventas(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->getJson('/api/ventas');
 
         $response->assertStatus(200)
@@ -130,7 +135,7 @@ class VentaTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->postJson('/api/ventas', $ventaData);
 
         $response->assertStatus(201)
@@ -168,7 +173,7 @@ class VentaTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->postJson('/api/ventas', $ventaData);
 
         $response->assertStatus(422);
@@ -190,7 +195,7 @@ class VentaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->patchJson("/api/ventas/{$venta->id}/completar");
 
         // Debug: Ver qué respuesta estamos recibiendo
@@ -218,7 +223,7 @@ class VentaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->patchJson("/api/ventas/{$venta->id}/cancelar");
 
         $response->assertStatus(200)

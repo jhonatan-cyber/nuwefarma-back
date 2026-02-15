@@ -12,7 +12,6 @@ class UsuarioResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -33,12 +32,12 @@ class UsuarioResource extends JsonResource
             'sueldo' => $this->sueldo,
             'foto' => $this->foto,
             'estado' => $this->estado,
-            'rol' => $this->whenLoaded('rol', fn() => [
+            'rol' => $this->whenLoaded('rol', fn () => [
                 'id' => $this->rol->id,
                 'nombre' => $this->rol->nombre,
                 'descripcion' => $this->rol->descripcion,
             ]),
-            'sucursal' => $this->whenLoaded('sucursal', fn() => [
+            'sucursal' => $this->whenLoaded('sucursal', fn () => [
                 'id' => $this->sucursal->id,
                 'nombre' => $this->sucursal->nombre,
                 'direccion' => $this->sucursal->direccion,

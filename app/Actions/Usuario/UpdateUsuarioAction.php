@@ -13,16 +13,14 @@ class UpdateUsuarioAction
     /**
      * Update an existing user.
      *
-     * @param Usuario $usuario
-     * @param array<string, mixed> $data
-     * @return Usuario
+     * @param  array<string, mixed>  $data
      */
     public function execute(Usuario $usuario, array $data): Usuario
     {
         $validatedData = $this->validate($data, $usuario);
 
         // Auto-hash CI as password if CI is updated and no password provided
-        if (isset($validatedData['ci']) && !isset($validatedData['password'])) {
+        if (isset($validatedData['ci']) && ! isset($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['ci']);
         }
 
@@ -34,8 +32,7 @@ class UpdateUsuarioAction
     /**
      * Validate the user data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Usuario $usuario
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Usuario $usuario): array

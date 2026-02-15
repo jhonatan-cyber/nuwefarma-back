@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Venta;
 use App\Models\Compra;
 use App\Models\Lote;
 use App\Models\Producto;
-use App\Models\MovimientoLote;
-use Illuminate\Http\JsonResponse;
+use App\Models\Venta;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use OpenApi\Attributes as OA;
 
@@ -29,7 +26,7 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Métricas del dashboard'),
         ]
     )]
-    public function getMetrics(Request $request): JsonResponse
+    public function getMetrics(Request $request)
     {
         $periodo = $request->get('periodo', 'mes');
         $cacheKey = "dashboard_metrics_{$periodo}";
@@ -38,10 +35,7 @@ class DashboardController extends Controller
             return $this->calculateMetrics($periodo);
         });
 
-        return response()->json([
-            'success' => true,
-            'data' => $metrics,
-        ]);
+        return $this->success($metrics);
     }
 
     private function calculateMetrics(string $periodo): array
@@ -111,7 +105,7 @@ class DashboardController extends Controller
         $stockTotal = Lote::whereIn('estado', ['disponible', 'parcial'])->sum('stock');
         $valorInventario = Lote::whereIn('estado', ['disponible', 'parcial'])
             ->get()
-            ->sum(fn($l) => $l->stock * $l->precio_costo);
+            ->sum(fn ($l) => $l->stock * $l->precio_costo);
 
         $lotesVencidos = Lote::where('estado', 'vencido')->count();
         $lotesProximosVencer = Lote::proximosAVencer(30)->count();
@@ -154,7 +148,7 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Top productos'),
         ]
     )]
-    public function getTopProductos(Request $request): JsonResponse
+    public function getTopProductos(Request $request)
     {
         $tipo = $request->get('tipo', 'mas_vendidos');
         $limite = $request->get('limite', 10);
@@ -169,10 +163,7 @@ class DashboardController extends Controller
             ->limit($limite)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $productos,
-        ]);
+        return $this->success($productos);
     }
 
     #[OA\Get(
@@ -187,7 +178,7 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Ventas por categoría'),
         ]
     )]
-    public function getVentasPorCategoria(Request $request): JsonResponse
+    public function getVentasPorCategoria(Request $request)
     {
         $fechaInicio = now()->subDays(30);
 
@@ -202,10 +193,7 @@ class DashboardController extends Controller
             ->orderBy('total', 'desc')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $ventasPorCategoria,
-        ]);
+        return $this->success($ventasPorCategoria);
     }
 
     #[OA\Get(
@@ -217,17 +205,17 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Actividad reciente'),
         ]
     )]
-    public function getActividadReciente(): JsonResponse
+    public function getActividadReciente()
     {
         $ventasRecientes = Venta::with(['cliente', 'usuario'])
             ->where('created_at', '>=', now()->subHours(24))
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($v) => [
+            ->map(fn ($v) => [
                 'tipo' => 'venta',
                 'titulo' => "Venta #{$v->numero_venta}",
-                'descripcion' => $v->cliente ? "Cliente: {$v->cliente->nombre}" : "Venta general",
+                'descripcion' => $v->cliente ? "Cliente: {$v->cliente->nombre}" : 'Venta general',
                 'monto' => $v->total,
                 'usuario' => $v->usuario?->nombre,
                 'fecha' => $v->created_at,
@@ -238,10 +226,10 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(fn($c) => [
+            ->map(fn ($c) => [
                 'tipo' => 'compra',
                 'titulo' => "Compra #{$c->numero_compra}",
-                'descripcion' => $c->proveedor ? "Proveedor: {$c->proveedor->nombre}" : "Compra general",
+                'descripcion' => $c->proveedor ? "Proveedor: {$c->proveedor->nombre}" : 'Compra general',
                 'monto' => $c->total,
                 'usuario' => $c->usuario?->nombre,
                 'fecha' => $c->created_at,
@@ -252,10 +240,7 @@ class DashboardController extends Controller
             ->take(15)
             ->values();
 
-        return response()->json([
-            'success' => true,
-            'data' => $actividades,
-        ]);
+        return $this->success($actividades);
     }
 
     #[OA\Get(
@@ -271,7 +256,7 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Comparativo de ventas'),
         ]
     )]
-    public function getComparativo(Request $request): JsonResponse
+    public function getComparativo(Request $request)
     {
         $mesActual = now()->startOfMonth();
         $mesAnterior = now()->subMonth()->startOfMonth();
@@ -289,14 +274,11 @@ class DashboardController extends Controller
             ? (($ventasMesActual - $ventasMesAnterior) / $ventasMesAnterior) * 100
             : 0;
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'mes_actual' => $ventasMesActual,
-                'mes_anterior' => $ventasMesAnterior,
-                'comparacion_porcentaje' => round($comparacion, 2),
-                'tipo' => $comparacion >= 0 ? 'subio' : 'bajo',
-            ],
+        return $this->success([
+            'mes_actual' => $ventasMesActual,
+            'mes_anterior' => $ventasMesAnterior,
+            'comparacion_porcentaje' => round($comparacion, 2),
+            'tipo' => $comparacion >= 0 ? 'subio' : 'bajo',
         ]);
     }
 }

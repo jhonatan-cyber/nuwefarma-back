@@ -12,8 +12,11 @@ class AjusteInventarioDetalle extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'ajuste_inventario_detalles';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [

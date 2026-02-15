@@ -12,9 +12,7 @@ class BulkUpdateClientesAction
     /**
      * Bulk update clients status.
      *
-     * @param array<string> $ids
-     * @param string $estado
-     * @return int
+     * @param  array<string>  $ids
      */
     public function execute(array $ids, string $estado): int
     {
@@ -27,7 +25,7 @@ class BulkUpdateClientesAction
     /**
      * Validate bulk update data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

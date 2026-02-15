@@ -23,7 +23,7 @@ trait HasActivityLog
                 $userId ?? null
             );
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error al registrar activity log: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error al registrar activity log: '.$e->getMessage());
         }
     }
 }

@@ -13,7 +13,7 @@ use Tests\TestCase;
 class ProductoTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     private string $token;
 
     protected function setUp(): void

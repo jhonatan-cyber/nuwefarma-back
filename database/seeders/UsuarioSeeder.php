@@ -17,8 +17,9 @@ class UsuarioSeeder extends Seeder
         $usuarioRol = Rol::where('nombre', 'Cajero')->first();
         $editorRol = Rol::where('nombre', 'Gerente')->first();
 
-        if (!$adminRol || !$usuarioRol || !$editorRol) {
+        if (! $adminRol || ! $usuarioRol || ! $editorRol) {
             $this->command->warn('Faltan roles. Asegúrate de ejecutar RolSeeder primero.');
+
             return;
         }
 

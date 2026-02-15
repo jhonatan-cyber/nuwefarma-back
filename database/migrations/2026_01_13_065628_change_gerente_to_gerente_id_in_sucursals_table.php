@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('sucursals', function (Blueprint $table) {
             // Eliminar columna gerente antigua
             $table->dropColumn('gerente');
-            
+
             // Agregar nueva columna gerente_id con foreign key
             $table->foreignUuid('gerente_id')
                 ->nullable()
@@ -33,7 +33,7 @@ return new class extends Migration
             // Eliminar foreign key y columna gerente_id
             $table->dropForeign(['gerente_id']);
             $table->dropColumn('gerente_id');
-            
+
             // Restaurar columna gerente antigua
             $table->string('gerente')->nullable()->after('email');
         });

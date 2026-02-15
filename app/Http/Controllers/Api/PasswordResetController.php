@@ -53,7 +53,7 @@ class PasswordResetController extends Controller
 
             $usuario = Usuario::where('email', $request->email)->first();
 
-            if (!$usuario) {
+            if (! $usuario) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No se encontró un usuario con ese email.',
@@ -142,7 +142,7 @@ class PasswordResetController extends Controller
                 ->where('email', $request->email)
                 ->first();
 
-            if (!$resetRecord) {
+            if (! $resetRecord) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Token de recuperación no encontrado.',
@@ -150,7 +150,7 @@ class PasswordResetController extends Controller
             }
 
             // Verificar token
-            if (!Hash::check($request->token, $resetRecord->token)) {
+            if (! Hash::check($request->token, $resetRecord->token)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Token inválido.',
@@ -160,6 +160,7 @@ class PasswordResetController extends Controller
             // Verificar expiración
             if (now()->gt($resetRecord->expires_at)) {
                 DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
                 return response()->json([
                     'success' => false,
                     'message' => 'El token ha expirado. Solicita uno nuevo.',
@@ -169,7 +170,7 @@ class PasswordResetController extends Controller
             // Actualizar usuario
             $usuario = Usuario::where('email', $request->email)->first();
 
-            if (!$usuario) {
+            if (! $usuario) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Usuario no encontrado.',

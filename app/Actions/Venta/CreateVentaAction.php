@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\Venta;
 
+use App\Models\Caja;
+use App\Models\Producto;
 use App\Models\Venta;
 use App\Models\VentaProducto;
-use App\Models\Producto;
-use App\Models\Cliente;
-use App\Models\Caja;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -17,8 +16,7 @@ class CreateVentaAction
     /**
      * Create a new sale with products.
      *
-     * @param array<string, mixed> $data
-     * @return Venta
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Venta
     {
@@ -57,7 +55,7 @@ class CreateVentaAction
     /**
      * Validate the sale data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array
@@ -87,8 +85,7 @@ class CreateVentaAction
     /**
      * Add product to sale and update stock.
      *
-     * @param Venta $venta
-     * @param array<string, mixed> $productoData
+     * @param  array<string, mixed>  $productoData
      */
     private function addProductToSale(Venta $venta, array $productoData): void
     {
@@ -115,13 +112,11 @@ class CreateVentaAction
 
     /**
      * Update caja balance.
-     *
-     * @param Venta $venta
      */
     private function updateCajaBalance(Venta $venta): void
     {
         $caja = Caja::findOrFail($venta->caja_id);
-        
+
         if ($venta->pagado > 0) {
             $caja->increment('saldo_actual', $venta->pagado);
         }

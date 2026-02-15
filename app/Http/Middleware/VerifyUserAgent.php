@@ -23,17 +23,17 @@ class VerifyUserAgent
         if ($request->header('Authorization')) {
             return $next($request);
         }
-        
+
         // Para requests de API sin autenticación, tampoco verificar User-Agent
         if ($request->is('api/*')) {
             return $next($request);
         }
-        
+
         if ($request->user()) {
             $currentUserAgent = $request->header('User-Agent');
             $sessionUserAgent = $request->session()->get('user_agent');
 
-            if (!$sessionUserAgent) {
+            if (! $sessionUserAgent) {
                 // Primera vez: guardar el User-Agent
                 $request->session()->put('user_agent', $currentUserAgent);
             } elseif ($currentUserAgent !== $sessionUserAgent) {

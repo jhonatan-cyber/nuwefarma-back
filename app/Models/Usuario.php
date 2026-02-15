@@ -12,12 +12,24 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-    use HasFactory, HasUuids, HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     protected $table = 'usuarios';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'intentos_fallidos',
+        'bloqueado_hasta',
+        'ultimo_intento_fallido',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'nombre',
@@ -59,7 +71,7 @@ class Usuario extends Authenticatable
         parent::boot();
 
         static::creating(function ($usuario) {
-            if (isset($usuario->ci) && !isset($usuario->password)) {
+            if (isset($usuario->ci) && ! isset($usuario->password)) {
                 $usuario->password = Hash::make($usuario->ci);
             }
         });

@@ -12,12 +12,17 @@ use Tests\TestCase;
 class AuthorizationTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     private Rol $adminRol;
+
     private Rol $usuarioRol;
+
     private Usuario $admin;
+
     private Usuario $usuario;
+
     private string $adminToken;
+
     private string $usuarioToken;
 
     protected function setUp(): void

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Compra;
 
-use App\Models\Compra;
 use App\Exceptions\ApiException;
+use App\Models\Compra;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -14,9 +14,7 @@ class UpdateCompraAction
     /**
      * Update an existing purchase.
      *
-     * @param Compra $compra
-     * @param array<string, mixed> $data
-     * @return Compra
+     * @param  array<string, mixed>  $data
      */
     public function execute(Compra $compra, array $data): Compra
     {
@@ -35,7 +33,6 @@ class UpdateCompraAction
     /**
      * Validate if purchase can be updated.
      *
-     * @param Compra $compra
      * @throws ApiException
      */
     private function validateUpdateability(Compra $compra): void
@@ -58,8 +55,7 @@ class UpdateCompraAction
     /**
      * Validate the purchase data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Compra $compra
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Compra $compra): array

@@ -21,7 +21,7 @@ readonly class UpdateRolDTO
         public ?string $nombre = null,
         public ?string $descripcion = null,
         /** @var array<string>|null */
-        public array|null $permiso_id = null,
+        public ?array $permiso_id = null,
         public ?string $estado = null
     ) {}
 }

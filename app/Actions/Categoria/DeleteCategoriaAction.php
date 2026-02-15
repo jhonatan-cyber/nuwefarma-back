@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Categoria;
 
-use App\Models\Categoria;
 use App\Exceptions\ApiException;
+use App\Models\Categoria;
 
 class DeleteCategoriaAction
 {
     /**
      * Delete a category with business logic validation.
      *
-     * @param Categoria $categoria
-     * @return bool
      * @throws ApiException
      */
     public function execute(Categoria $categoria): bool
@@ -26,7 +24,6 @@ class DeleteCategoriaAction
     /**
      * Validate if category can be deleted.
      *
-     * @param Categoria $categoria
      * @throws ApiException
      */
     private function validateDeletion(Categoria $categoria): void

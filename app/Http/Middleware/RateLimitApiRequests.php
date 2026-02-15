@@ -18,14 +18,14 @@ class RateLimitApiRequests
     public function handle(Request $request, Closure $next): Response
     {
         $key = $this->resolveRequestKey($request);
-        
+
         // Límite: 60 requests por minuto por usuario/IP
         $maxAttempts = 60;
         $decayMinutes = 1;
 
         if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($key);
-            
+
             logger()->warning('Rate limit excedido', [
                 'key' => $key,
                 'ip' => $request->ip(),
@@ -34,7 +34,7 @@ class RateLimitApiRequests
 
             return response()->json([
                 'success' => false,
-                'message' => 'Demasiadas peticiones. Intenta de nuevo en ' . $seconds . ' segundos.',
+                'message' => 'Demasiadas peticiones. Intenta de nuevo en '.$seconds.' segundos.',
             ], 429);
         }
 
@@ -55,9 +55,9 @@ class RateLimitApiRequests
     protected function resolveRequestKey(Request $request): string
     {
         if ($user = $request->user()) {
-            return 'api:user:' . $user->id;
+            return 'api:user:'.$user->id;
         }
 
-        return 'api:ip:' . $request->ip();
+        return 'api:ip:'.$request->ip();
     }
 }

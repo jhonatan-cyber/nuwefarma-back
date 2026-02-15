@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Traslado;
-use App\Models\TrasladoDetalle;
 use App\Models\Lote;
 use App\Models\MovimientoLote;
-use Illuminate\Http\Request;
+use App\Models\Traslado;
+use App\Models\TrasladoDetalle;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -128,9 +128,10 @@ class TrasladoController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear el traslado: ' . $e->getMessage(),
+                'message' => 'Error al crear el traslado: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -151,7 +152,7 @@ class TrasladoController extends Controller
     {
         $traslado = Traslado::findOrFail($id);
 
-        if (!$traslado->puedeSerEnviado()) {
+        if (! $traslado->puedeSerEnviado()) {
             return response()->json([
                 'success' => false,
                 'message' => 'El traslado no puede ser enviado en su estado actual',
@@ -195,9 +196,10 @@ class TrasladoController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al enviar el traslado: ' . $e->getMessage(),
+                'message' => 'Error al enviar el traslado: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -218,7 +220,7 @@ class TrasladoController extends Controller
     {
         $traslado = Traslado::with(['detalles.loteOrigen.producto'])->findOrFail($id);
 
-        if (!$traslado->puedeSerRecibido()) {
+        if (! $traslado->puedeSerRecibido()) {
             return response()->json([
                 'success' => false,
                 'message' => 'El traslado no puede ser recibido en su estado actual',
@@ -235,10 +237,10 @@ class TrasladoController extends Controller
                     ->where('sucursal_id', $traslado->sucursal_destino_id)
                     ->first();
 
-                if (!$loteDestino) {
+                if (! $loteDestino) {
                     $loteDestino = Lote::create([
                         'producto_id' => $loteOrigen->producto_id,
-                        'numero_lote' => $loteOrigen->numero_lote . '-TR',
+                        'numero_lote' => $loteOrigen->numero_lote.'-TR',
                         'stock' => $detalle->cantidad,
                         'precio_costo' => $loteOrigen->precio_costo,
                         'precio_venta' => $loteOrigen->precio_venta,
@@ -281,9 +283,10 @@ class TrasladoController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al recibir el traslado: ' . $e->getMessage(),
+                'message' => 'Error al recibir el traslado: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -4,10 +4,8 @@ namespace App\Services;
 
 use App\Enums\EstadoEnum;
 use App\Models\Producto;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -29,7 +27,7 @@ class AdvancedProductoService
     public function searchProductos(array $criteria): LengthAwarePaginator
     {
         $cacheKey = $this->generateAdvancedCacheKey($criteria);
-        
+
         return $this->cache->remember($cacheKey, now()->addMinutes(30), function () use ($criteria) {
             $query = Producto::query()
                 ->with(['categoria:id,nombre', 'proveedor:id,nombre'])
@@ -46,15 +44,15 @@ class AdvancedProductoService
             }
 
             if (isset($criteria['price_range'])) {
-                $query->filterByNumericRange('precio_venta', 
-                    $criteria['price_range']['min'] ?? null, 
+                $query->filterByNumericRange('precio_venta',
+                    $criteria['price_range']['min'] ?? null,
                     $criteria['price_range']['max'] ?? null
                 );
             }
 
             if (isset($criteria['date_range'])) {
-                $query->filterByDateRange('created_at', 
-                    $criteria['date_range']['from'] ?? null, 
+                $query->filterByDateRange('created_at',
+                    $criteria['date_range']['from'] ?? null,
                     $criteria['date_range']['to'] ?? null
                 );
             }
@@ -165,7 +163,7 @@ class AdvancedProductoService
                 'COUNT' => ['productos.id' => 'product_count'],
                 'AVG' => ['productos.precio_venta' => 'avg_price'],
                 'SUM' => ['productos.stock_actual' => 'total_stock'],
-                'SUM' => ['productos.precio_venta * productos.stock_actual' => 'total_value']
+                'SUM' => ['productos.precio_venta * productos.stock_actual' => 'total_value'],
             ])
             ->withGroupBy(['categorias.id', 'categorias.nombre'])
             ->orderBy('total_value', 'desc')
@@ -194,7 +192,7 @@ class AdvancedProductoService
                 'productos.nombre',
                 'productos.precio_venta',
                 'recent_activity.activity_count',
-                'recent_activity.last_activity'
+                'recent_activity.last_activity',
             ])
             ->orderBy('activity_count', 'desc')
             ->orderBy('last_activity', 'desc')
@@ -267,7 +265,7 @@ class AdvancedProductoService
     public function getRealTimeInventory(): array
     {
         $key = 'real_time_inventory';
-        
+
         // Check Redis for real-time data
         if ($this->redis->exists($key)) {
             return json_decode($this->redis->get($key), true);
@@ -356,7 +354,7 @@ class AdvancedProductoService
      */
     private function generateAdvancedCacheKey(array $criteria): string
     {
-        return 'productos_search_' . md5(json_encode($criteria));
+        return 'productos_search_'.md5(json_encode($criteria));
     }
 
     private function logStockUpdate(array $update): void
@@ -374,7 +372,7 @@ class AdvancedProductoService
 
         foreach ($patterns as $pattern) {
             $keys = $this->redis->keys($pattern);
-            if (!empty($keys)) {
+            if (! empty($keys)) {
                 $this->redis->del($keys);
             }
         }

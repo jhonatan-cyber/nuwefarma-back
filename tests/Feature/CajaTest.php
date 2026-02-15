@@ -3,16 +3,18 @@
 namespace Tests\Feature;
 
 use App\Models\Sucursal;
-use Tests\Concerns\CreatesAuthenticatedUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesAuthenticatedUser;
 use Tests\TestCase;
 
 class CajaTest extends TestCase
 {
-    use RefreshDatabase, CreatesAuthenticatedUser;
+    use CreatesAuthenticatedUser, RefreshDatabase;
 
     private string $token;
+
     private \App\Models\Usuario $adminUser;
+
     private Sucursal $sucursal;
 
     protected function setUp(): void
@@ -60,7 +62,7 @@ class CajaTest extends TestCase
     public function test_puede_listar_cajas(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->getJson('/api/cajas');
 
         $response->assertStatus(200)
@@ -87,7 +89,7 @@ class CajaTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->postJson('/api/cajas', $cajaData);
 
         $response->assertStatus(201)
@@ -117,7 +119,7 @@ class CajaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->patchJson("/api/cajas/{$caja->id}/abrir");
 
         $response->assertStatus(200)
@@ -135,7 +137,7 @@ class CajaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->patchJson("/api/cajas/{$caja->id}/cerrar", [
             'monto_final' => 500.00,
             'observaciones' => 'Cierre de caja',
@@ -153,7 +155,7 @@ class CajaTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->postJson('/api/cajas', $cajaData);
 
         $response->assertStatus(422);
@@ -169,7 +171,7 @@ class CajaTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer '.$this->token,
         ])->patchJson("/api/cajas/{$caja->id}/abrir");
 
         $response->assertStatus(400)

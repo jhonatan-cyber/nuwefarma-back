@@ -71,9 +71,9 @@ class Handler extends ExceptionHandler
     private function handleModelNotFoundException(ModelNotFoundException $e): JsonResponse
     {
         $model = class_basename($e->getModel());
-        
+
         return $this->apiResponse->notFound(
-            strtolower($model) . ' no encontrado'
+            strtolower($model).' no encontrado'
         );
     }
 
@@ -85,7 +85,7 @@ class Handler extends ExceptionHandler
     private function handleMethodNotAllowedHttpException(MethodNotAllowedHttpException $e): JsonResponse
     {
         $allowedMethods = $e->getHeaders()['Allow'] ?? 'GET, POST, PUT, PATCH, DELETE';
-        
+
         return $this->apiResponse->error(
             'Método HTTP no permitido para este endpoint',
             ['allowed_methods' => explode(', ', $allowedMethods)],

@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Caja;
 
-use App\Models\Caja;
 use App\Exceptions\ApiException;
+use App\Models\Caja;
 
 class DeleteCajaAction
 {
     /**
      * Delete a cash register with business logic validation.
      *
-     * @param Caja $caja
-     * @return bool
      * @throws ApiException
      */
     public function execute(Caja $caja): bool
@@ -26,7 +24,6 @@ class DeleteCajaAction
     /**
      * Validate if cash register can be deleted.
      *
-     * @param Caja $caja
      * @throws ApiException
      */
     private function validateDeletion(Caja $caja): void

@@ -15,9 +15,20 @@ class Lote extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $table = 'lotes';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'stock_comprometido',
+        'precio_costo_promedio',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'producto_id',
@@ -152,8 +163,8 @@ class Lote extends Model
      */
     public function estaDisponible(): bool
     {
-        return $this->stock > 0 
-            && $this->estado !== 'vencido' 
+        return $this->stock > 0
+            && $this->estado !== 'vencido'
             && $this->estado !== 'retirado'
             && $this->fecha_vencimiento->isFuture();
     }
@@ -191,6 +202,7 @@ class Lote extends Model
         if ($this->estaVencido()) {
             return null;
         }
+
         return now()->diffInDays($this->fecha_vencimiento);
     }
 
@@ -202,6 +214,7 @@ class Lote extends Model
         if ($this->estaVencido()) {
             return 'Vencido';
         }
+
         return ucfirst($this->estado);
     }
 
@@ -219,6 +232,7 @@ class Lote extends Model
         if ($this->stock <= $this->stock_minimo) {
             return 'text-yellow-600 bg-yellow-100';
         }
+
         return 'text-green-600 bg-green-100';
     }
 
@@ -236,6 +250,7 @@ class Lote extends Model
         } elseif ($this->stock < $this->stock_minimo) {
             $this->estado = 'parcial';
         }
+
         return $this->save();
     }
 
@@ -245,17 +260,17 @@ class Lote extends Model
     public function aumentarStock(int $cantidad, ?float $precioCosto = null): bool
     {
         $this->stock += $cantidad;
-        
+
         // Actualizar precio promedio ponderado
         if ($precioCosto !== null && $precioCosto > 0) {
             $totalCosto = ($this->stock - $cantidad) * $this->precio_costo_promedio + $cantidad * $precioCosto;
             $this->precio_costo_promedio = $totalCosto / $this->stock;
         }
-        
+
         if ($this->stock > 0 && $this->estado === 'agotado') {
             $this->estado = $this->stock <= $this->stock_minimo ? 'parcial' : 'disponible';
         }
-        
+
         return $this->save();
     }
 
@@ -268,6 +283,7 @@ class Lote extends Model
             return false;
         }
         $this->stock_comprometido += $cantidad;
+
         return $this->save();
     }
 
@@ -277,6 +293,7 @@ class Lote extends Model
     public function liberarStockComprometido(int $cantidad): bool
     {
         $this->stock_comprometido = max(0, $this->stock_comprometido - $cantidad);
+
         return $this->save();
     }
 }

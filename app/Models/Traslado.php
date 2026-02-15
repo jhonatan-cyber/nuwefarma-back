@@ -13,8 +13,11 @@ class Traslado extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'traslados';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -34,9 +37,13 @@ class Traslado extends Model
     ];
 
     public const ESTADO_PENDIENTE = 'pendiente';
+
     public const ESTADO_ENVIADO = 'enviado';
+
     public const ESTADO_RECIBIDO = 'recibido';
+
     public const ESTADO_COMPLETADO = 'completado';
+
     public const ESTADO_CANCELADO = 'cancelado';
 
     public function sucursalOrigen(): BelongsTo
@@ -73,7 +80,8 @@ class Traslado extends Model
     {
         $lastTraslado = self::orderBy('created_at', 'desc')->first();
         $lastNumber = $lastTraslado ? (int) substr($lastTraslado->numero_traslado, 2) : 0;
-        return 'T-' . str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
+
+        return 'T-'.str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
     }
 
     public function scopePorEstado($query, string $estado)

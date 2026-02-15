@@ -12,7 +12,6 @@ class ProductoResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -42,11 +41,11 @@ class ProductoResource extends JsonResource
             'precio_compra' => $this->precio_compra,
             'precio_venta' => $this->precio_venta,
             'impuesto' => $this->impuesto,
-            'categoria' => $this->whenLoaded('categoria', fn() => [
+            'categoria' => $this->whenLoaded('categoria', fn () => [
                 'id' => $this->categoria->id,
                 'nombre' => $this->categoria->nombre,
             ]),
-            'proveedor' => $this->whenLoaded('proveedor', fn() => [
+            'proveedor' => $this->whenLoaded('proveedor', fn () => [
                 'id' => $this->proveedor->id,
                 'nombre' => $this->proveedor->nombre,
                 'ruc' => $this->proveedor->ruc,

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\EstadoEnum;
 use App\Enums\ViaAdministracionEnum;
 use App\Models\Concerns\HasAuditoria;
 use App\Models\Concerns\HasEstado;
@@ -16,12 +15,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
-    use HasFactory, HasUuid, HasEstado, HasAuditoria;
+    use HasAuditoria, HasEstado, HasFactory, HasUuid;
 
     protected $table = 'productos';
-    
-    protected $fillable = [
+
+    protected $guarded = [
         'id',
+        'crear_usuario_id',
+        'actualizar_usuario_id',
+        'created_at',
+        'updated_at',
+    ];
+
+    protected $fillable = [
         'categoria_id',
         'proveedor_id',
         'nombre',
@@ -134,7 +140,7 @@ class Producto extends Model
     protected function margenReal(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->precio_compra > 0 
+            get: fn () => $this->precio_compra > 0
                 ? round((($this->precio_venta - $this->precio_compra) / $this->precio_compra) * 100, 2)
                 : 0
         );
@@ -150,7 +156,7 @@ class Producto extends Model
     protected function proximoVencer(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->fecha_vencimiento && 
+            get: fn () => $this->fecha_vencimiento &&
                 $this->fecha_vencimiento->diffInDays(now()) <= ($this->dias_para_alertar_vencimiento ?? 60)
         );
     }
@@ -240,7 +246,7 @@ class Producto extends Model
 
     public function descontarStock(int $cantidad): bool
     {
-        if (!$this->tieneStock($cantidad)) {
+        if (! $this->tieneStock($cantidad)) {
             return false;
         }
 
@@ -255,7 +261,7 @@ class Producto extends Model
     public function actualizarPrecio(float $nuevoPrecio, ?string $motivo = null): bool
     {
         $precioAnterior = $this->precio_venta;
-        
+
         if ($this->update(['precio_venta' => $nuevoPrecio])) {
             // Registrar cambio de precio en activity log
             activity()
@@ -281,7 +287,7 @@ class Producto extends Model
 
     public function diasParaVencer(): ?int
     {
-        if (!$this->fecha_vencimiento) {
+        if (! $this->fecha_vencimiento) {
             return null;
         }
 
@@ -290,8 +296,8 @@ class Producto extends Model
 
     public function getMargenCalculado(): float
     {
-        return $this->precio_compra > 0 
-            ? (($this->precio_venta - $this->precio_compra) / $this->precio_compra) * 100 
+        return $this->precio_compra > 0
+            ? (($this->precio_venta - $this->precio_compra) / $this->precio_compra) * 100
             : 0;
     }
 

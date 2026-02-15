@@ -16,7 +16,7 @@ enum ViaAdministracionEnum: string
 
     public function getLabel(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ORAL => 'Oral',
             self::PARENTERAL => 'Parenteral',
             self::TOPICA => 'Tópica',
@@ -31,7 +31,7 @@ enum ViaAdministracionEnum: string
 
     public function getDescription(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ORAL => 'Administración por boca (tabletas, cápsulas, jarabes)',
             self::PARENTERAL => 'Inyección (IV, IM, SC)',
             self::TOPICA => 'Aplicación sobre la piel (cremas, ungüentos)',
@@ -46,7 +46,7 @@ enum ViaAdministracionEnum: string
 
     public function getInstructions(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ORAL => 'Tomar con agua, preferentemente con alimentos si causa irritación gástrica',
             self::PARENTERAL => 'Administración por personal médico capacitado, verificar dosis y via correcta',
             self::TOPICA => 'Aplicar sobre piel limpia y seca, masajear suavemente',
@@ -61,7 +61,7 @@ enum ViaAdministracionEnum: string
 
     public function getFormasFarmaceuticas(): array
     {
-        return match($this) {
+        return match ($this) {
             self::ORAL => ['tabletas', 'cápsulas', 'jarabes', 'suspensiones', 'grageas', 'polvos'],
             self::PARENTERAL => ['inyectables', 'soluciones', 'emulsiones'],
             self::TOPICA => ['cremas', 'ungüentos', 'geles', 'lociones', 'parches'],
@@ -76,7 +76,7 @@ enum ViaAdministracionEnum: string
 
     public function requiresMedicalSupervision(): bool
     {
-        return match($this) {
+        return match ($this) {
             self::PARENTERAL => true,
             default => false,
         };
@@ -84,7 +84,7 @@ enum ViaAdministracionEnum: string
 
     public static function getAll(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn ($case) => [
             'value' => $case->value,
             'label' => $case->getLabel(),
             'description' => $case->getDescription(),

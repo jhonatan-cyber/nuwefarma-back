@@ -14,9 +14,7 @@ class UpdateProductoAction
     /**
      * Update an existing product.
      *
-     * @param Producto $producto
-     * @param array<string, mixed> $data
-     * @return Producto
+     * @param  array<string, mixed>  $data
      */
     public function execute(Producto $producto, array $data): Producto
     {
@@ -41,8 +39,7 @@ class UpdateProductoAction
     /**
      * Validate the product data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Producto $producto
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Producto $producto): array

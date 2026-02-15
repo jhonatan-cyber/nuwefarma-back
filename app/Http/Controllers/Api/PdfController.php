@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\PdfService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use OpenApi\Attributes as OA;
 
@@ -39,7 +38,7 @@ class PdfController extends Controller
 
         $pdf = $this->pdfService->generarReporteVentas($filtros);
 
-        return $pdf->download('reporte_ventas_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_ventas_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -62,7 +61,7 @@ class PdfController extends Controller
 
         $pdf = $this->pdfService->generarReporteCompras($filtros);
 
-        return $pdf->download('reporte_compras_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_compras_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -84,7 +83,7 @@ class PdfController extends Controller
 
         $pdf = $this->pdfService->generarReporteInventario($filtros);
 
-        return $pdf->download('reporte_inventario_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_inventario_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -109,7 +108,7 @@ class PdfController extends Controller
             $request->fecha_fin
         );
 
-        return $pdf->download('kardex_lote_' . $loteId . '_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('kardex_lote_'.$loteId.'_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -125,7 +124,7 @@ class PdfController extends Controller
     {
         $pdf = $this->pdfService->generarReporteStockBajo();
 
-        return $pdf->download('reporte_stock_bajo_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_stock_bajo_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -146,7 +145,7 @@ class PdfController extends Controller
 
         $pdf = $this->pdfService->generarReporteProximosVencer($dias);
 
-        return $pdf->download('reporte_proximos_vencer_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_proximos_vencer_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -169,7 +168,7 @@ class PdfController extends Controller
 
         $pdf = $this->pdfService->generarReporteMovimientos($filtros);
 
-        return $pdf->download('reporte_movimientos_' . date('Ymd_His') . '.pdf');
+        return $pdf->download('reporte_movimientos_'.date('Ymd_His').'.pdf');
     }
 
     #[OA\Get(
@@ -188,7 +187,7 @@ class PdfController extends Controller
     {
         $pdf = $this->pdfService->generarComprobanteVenta($id);
 
-        return $pdf->download('comprobante_venta_' . $id . '.pdf');
+        return $pdf->download('comprobante_venta_'.$id.'.pdf');
     }
 
     #[OA\Get(
@@ -207,6 +206,6 @@ class PdfController extends Controller
     {
         $pdf = $this->pdfService->generarComprobanteCompra($id);
 
-        return $pdf->download('comprobante_compra_' . $id . '.pdf');
+        return $pdf->download('comprobante_compra_'.$id.'.pdf');
     }
 }

@@ -27,23 +27,38 @@ class ValidateRequestOrigin
     {
         // Validar solo en métodos que modifican datos (protección CSRF)
         if (in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
-            // Si el request tiene Authorization header (bearer token), permitir
-            // Esto permite que Swagger, Postman, y apps móviles funcionen
-            if ($request->header('Authorization')) {
-                return $next($request);
-            }
-            
             $origin = $request->header('Origin') ?? $request->header('Referer');
-            
-            if ($origin) {
-                // Limpiar el origen (quitar path si viene del Referer)
-                $parsedOrigin = parse_url($origin);
-                $cleanOrigin = ($parsedOrigin['scheme'] ?? 'http') . '://' . 
-                              ($parsedOrigin['host'] ?? '') . 
-                              (isset($parsedOrigin['port']) ? ':' . $parsedOrigin['port'] : '');
-                
-                // Verificar si el origen está en la lista permitida
-                if (!in_array($cleanOrigin, $this->allowedOrigins)) {
+
+            // Si tiene Authorization header, verificar que el usuario esté autenticado
+            // Esto evita que tokens robados sean usados desde orígenes no permitidos
+            if ($request->header('Authorization')) {
+                // Solo permitir si hay un usuario autenticado Y el origen es válido
+                // O si es una petición de herramientas de desarrollo (debug)
+                if (auth('sanctum')->check()) {
+                    // Usuario autenticado: verificar origen
+                    if ($origin && ! in_array($this->parseOrigin($origin), $this->allowedOrigins)) {
+                        // En producción, denegar; en desarrollo, permitir con warning
+                        if (app()->environment(['production'])) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Origen no permitido para usuario autenticado.',
+                            ], 403);
+                        }
+                    }
+                } elseif ($origin) {
+                    // Sin autenticación: verificar origen estrictamente
+                    $parsedOrigin = $this->parseOrigin($origin);
+                    if (! in_array($parsedOrigin, $this->allowedOrigins)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Origen no permitido. Posible ataque CSRF.',
+                        ], 403);
+                    }
+                }
+            } elseif ($origin) {
+                // Sin Authorization header: verificar origen
+                $parsedOrigin = $this->parseOrigin($origin);
+                if (! in_array($parsedOrigin, $this->allowedOrigins)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Origen no permitido. Posible ataque CSRF.',
@@ -53,5 +68,17 @@ class ValidateRequestOrigin
         }
 
         return $next($request);
+    }
+
+    /**
+     * Parse and clean origin URL
+     */
+    private function parseOrigin(string $origin): string
+    {
+        $parsedOrigin = parse_url($origin);
+
+        return ($parsedOrigin['scheme'] ?? 'http').'://'.
+               ($parsedOrigin['host'] ?? '').
+               (isset($parsedOrigin['port']) ? ':'.$parsedOrigin['port'] : '');
     }
 }

@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions\Caja;
 
-use App\Models\Caja;
 use App\Exceptions\ApiException;
-use Illuminate\Validation\Rule;
+use App\Models\Caja;
 
 class AbrirCajaAction
 {
     /**
      * Open a cash register.
      *
-     * @param Caja $caja
-     * @param array<string, mixed> $data
-     * @return Caja
+     * @param  array<string, mixed>  $data
      */
     public function execute(Caja $caja, array $data = []): Caja
     {
@@ -37,7 +34,6 @@ class AbrirCajaAction
     /**
      * Validate if cash register can be opened.
      *
-     * @param Caja $caja
      * @throws ApiException
      */
     private function validateOpening(Caja $caja): void
@@ -53,7 +49,7 @@ class AbrirCajaAction
     /**
      * Validate opening data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

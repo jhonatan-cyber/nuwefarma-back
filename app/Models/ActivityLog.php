@@ -9,6 +9,12 @@ class ActivityLog extends Model
 {
     protected $table = 'activity_logs';
 
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
+
     protected $fillable = [
         'usuario_id',
         'accion',
@@ -49,7 +55,7 @@ class ActivityLog extends Model
         ?string $usuarioId = null
     ): void {
         $request = request();
-        
+
         self::create([
             'usuario_id' => $usuarioId ?? auth('sanctum')->id(),
             'accion' => $accion,

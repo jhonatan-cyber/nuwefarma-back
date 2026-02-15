@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Compra;
 
-use App\Models\Compra;
-use App\Models\CompraProducto;
-use App\Models\Producto;
-use App\Models\Caja;
 use App\Exceptions\ApiException;
+use App\Models\Caja;
+use App\Models\Compra;
 use Illuminate\Support\Facades\DB;
 
 class DeleteCompraAction
@@ -16,8 +14,6 @@ class DeleteCompraAction
     /**
      * Cancel/delete a purchase with business logic validation.
      *
-     * @param Compra $compra
-     * @return bool
      * @throws ApiException
      */
     public function execute(Compra $compra): bool
@@ -48,7 +44,6 @@ class DeleteCompraAction
     /**
      * Validate if purchase can be deleted.
      *
-     * @param Compra $compra
      * @throws ApiException
      */
     private function validateDeletion(Compra $compra): void

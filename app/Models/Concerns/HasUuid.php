@@ -40,7 +40,7 @@ trait HasUuid
      */
     public function scopeWhereUuid($query, string $uuid)
     {
-        return $query->where($this->getTable() . '.' . $this->getKeyName(), $uuid);
+        return $query->where($this->getTable().'.'.$this->getKeyName(), $uuid);
     }
 
     /**
@@ -48,7 +48,7 @@ trait HasUuid
      */
     public function scopeWhereUuids($query, array $uuids)
     {
-        return $query->whereIn($this->getTable() . '.' . $this->getKeyName(), $uuids);
+        return $query->whereIn($this->getTable().'.'.$this->getKeyName(), $uuids);
     }
 
     /**

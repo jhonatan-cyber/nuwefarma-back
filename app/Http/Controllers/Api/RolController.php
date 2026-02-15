@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Rol\BulkUpdateRolesAction;
+use App\Actions\Rol\CreateRolAction;
+use App\Actions\Rol\DeleteRolAction;
+use App\Actions\Rol\ListRolesAction;
+use App\Actions\Rol\UpdateRolAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Rol\StoreRolRequest;
+use App\Http\Requests\Rol\UpdateRolRequest;
 use App\Http\Resources\Rol\RolCollection;
 use App\Http\Resources\Rol\RolResource;
 use App\Models\Rol;
-use App\Actions\Rol\CreateRolAction;
-use App\Actions\Rol\UpdateRolAction;
-use App\Actions\Rol\DeleteRolAction;
-use App\Actions\Rol\ListRolesAction;
-use App\Actions\Rol\BulkUpdateRolesAction;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class RolController extends Controller
 {
@@ -27,99 +27,53 @@ class RolController extends Controller
         private BulkUpdateRolesAction $bulkUpdateRolesAction
     ) {}
 
-    /**
-     * Display a paginated listing of roles with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only([
             'search', 'estado', 'permiso', 'con_usuarios',
-            'sort', 'direction', 'per_page'
+            'sort', 'direction', 'per_page',
         ]);
-        
+
         $roles = $this->listRolesAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new RolCollection($roles)
-        ], Response::HTTP_OK);
+        return $this->success(new RolCollection($roles));
     }
 
-    /**
-     * Store a newly created role in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StoreRolRequest $request)
     {
-        $rol = $this->createRolAction->execute($request->all());
+        $rol = $this->createRolAction->execute($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Rol creado exitosamente',
-            'data' => new RolResource($rol)
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new RolResource($rol),
+            'Rol creado exitosamente'
+        );
     }
 
-    /**
-     * Display the specified role with relationships.
-     * 
-     * @param Rol $rol
-     * @return JsonResponse
-     */
-    public function show(Rol $rol): JsonResponse
+    public function show(Rol $rol)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new RolResource($rol->loadCount('usuarios'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new RolResource($rol->loadCount('usuarios'))
+        );
     }
 
-    /**
-     * Update the specified role in storage.
-     * 
-     * @param Request $request
-     * @param Rol $rol
-     * @return JsonResponse
-     */
-    public function update(Request $request, Rol $rol): JsonResponse
+    public function update(UpdateRolRequest $request, Rol $rol)
     {
-        $updatedRol = $this->updateRolAction->execute($rol, $request->all());
+        $updatedRol = $this->updateRolAction->execute($rol, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Rol actualizado exitosamente',
-            'data' => new RolResource($updatedRol->loadCount('usuarios'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new RolResource($updatedRol->loadCount('usuarios')),
+            'Rol actualizado exitosamente'
+        );
     }
 
-    /**
-     * Remove the specified role from storage.
-     * 
-     * @param Rol $rol
-     * @return JsonResponse
-     */
-    public function destroy(Rol $rol): JsonResponse
+    public function destroy(Rol $rol)
     {
         $this->deleteRolAction->execute($rol);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Rol eliminado exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Rol eliminado exitosamente');
     }
 
-    /**
-     * Bulk update roles status.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -129,30 +83,17 @@ class RolController extends Controller
 
         $updatedCount = $this->bulkUpdateRolesAction->execute($validated['ids'], $validated['estado']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Roles actualizados exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Roles actualizados exitosamente');
     }
 
-    /**
-     * Get roles with assigned users.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function conUsuarios(Request $request): JsonResponse
+    public function conUsuarios(Request $request)
     {
         $filters = array_merge($request->only(['per_page']), ['con_usuarios' => true]);
-        
+
         $roles = $this->listRolesAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new RolCollection($roles)
-        ], Response::HTTP_OK);
+        return $this->success(new RolCollection($roles));
     }
 }

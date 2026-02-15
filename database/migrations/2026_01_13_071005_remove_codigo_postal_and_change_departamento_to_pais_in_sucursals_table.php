@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('sucursals', function (Blueprint $table) {
             // Eliminar codigo_postal
             $table->dropColumn('codigo_postal');
-            
+
             // Renombrar departamento a pais
             $table->renameColumn('departamento', 'pais');
         });
@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::table('sucursals', function (Blueprint $table) {
             // Restaurar codigo_postal
             $table->string('codigo_postal')->nullable()->after('ciudad');
-            
+
             // Renombrar pais a departamento
             $table->renameColumn('pais', 'departamento');
         });

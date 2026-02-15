@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Venta;
 
-use App\Models\Venta;
 use App\Exceptions\ApiException;
+use App\Models\Venta;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class CompleteVentaAction
 {
     /**
      * Complete a pending sale.
      *
-     * @param Venta $venta
-     * @param array<string, mixed> $data
-     * @return Venta
+     * @param  array<string, mixed>  $data
      */
     public function execute(Venta $venta, array $data = []): Venta
     {
@@ -42,7 +39,6 @@ class CompleteVentaAction
     /**
      * Validate if sale can be completed.
      *
-     * @param Venta $venta
      * @throws ApiException
      */
     private function validateCompletion(Venta $venta): void
@@ -65,7 +61,7 @@ class CompleteVentaAction
     /**
      * Validate completion data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array
@@ -77,9 +73,6 @@ class CompleteVentaAction
 
     /**
      * Update caja balance.
-     *
-     * @param Venta $venta
-     * @param float $pagado
      */
     private function updateCajaBalance(Venta $venta, float $pagado): void
     {

@@ -11,14 +11,10 @@ class UpdateCategoriaAction
 {
     /**
      * Update an existing category.
-     *
-     * @param Categoria $categoria
-     * @param UpdateCategoriaDTO $data
-     * @return Categoria
      */
     public function execute(Categoria $categoria, UpdateCategoriaDTO $data): Categoria
     {
-        $updateData = array_filter((array) $data, fn($value) => $value !== null);
+        $updateData = array_filter((array) $data, fn ($value) => $value !== null);
 
         $categoria->update($updateData);
 

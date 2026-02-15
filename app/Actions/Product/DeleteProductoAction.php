@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Product;
 
-use App\Models\Producto;
 use App\Exceptions\ApiException;
+use App\Models\Producto;
 use Illuminate\Support\Facades\DB;
 
 class DeleteProductoAction
@@ -13,8 +13,6 @@ class DeleteProductoAction
     /**
      * Delete a product with business logic validation.
      *
-     * @param Producto $producto
-     * @return bool
      * @throws ApiException
      */
     public function execute(Producto $producto): bool
@@ -29,7 +27,6 @@ class DeleteProductoAction
     /**
      * Validate if product can be deleted.
      *
-     * @param Producto $producto
      * @throws ApiException
      */
     private function validateDeletion(Producto $producto): void

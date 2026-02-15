@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,12 +10,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Caja extends Model
 {
-    use HasFactory, HasUuids;
+    use HasAuditoria, HasFactory, HasUuids;
 
     protected $table = 'cajas';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'saldo_actual',
+        'total_ingresos',
+        'total_egresos',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'numero_caja',
@@ -66,7 +79,8 @@ class Caja extends Model
     {
         $lastCaja = self::orderBy('created_at', 'desc')->first();
         $lastNumber = $lastCaja ? (int) substr($lastCaja->numero_caja, 4) : 0;
-        return 'CAJA' . str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
+
+        return 'CAJA'.str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
     }
 
     /**

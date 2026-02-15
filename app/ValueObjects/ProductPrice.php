@@ -5,8 +5,11 @@ namespace App\ValueObjects;
 readonly class ProductPrice
 {
     private float $purchasePrice;
+
     private float $sellingPrice;
+
     private float $tax;
+
     private float $margin;
 
     public function __construct(
@@ -15,7 +18,7 @@ readonly class ProductPrice
         float $tax = 0.0
     ) {
         $this->validatePrices($purchasePrice, $sellingPrice, $tax);
-        
+
         $this->purchasePrice = $purchasePrice;
         $this->sellingPrice = $sellingPrice;
         $this->tax = $tax;
@@ -130,7 +133,7 @@ readonly class ProductPrice
         float $tax = 0.0
     ): self {
         $sellingPrice = $purchasePrice * (1 + $marginPercentage / 100);
-        
+
         return new self($purchasePrice, $sellingPrice, $tax);
     }
 }

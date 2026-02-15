@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->foreign('venta_id')->references('id')->on('ventas')->onDelete('cascade');
             $table->foreign('producto_id')->references('id')->on('productos')->onDelete('cascade');
-            
+
             $table->index(['venta_id']);
             $table->index(['producto_id']);
         });

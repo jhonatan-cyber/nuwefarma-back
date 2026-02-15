@@ -11,9 +11,6 @@ class CreateCategoriaAction
 {
     /**
      * Create a new category.
-     *
-     * @param CreateCategoriaDTO $data
-     * @return Categoria
      */
     public function execute(CreateCategoriaDTO $data): Categoria
     {

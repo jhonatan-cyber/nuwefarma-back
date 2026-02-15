@@ -8,7 +8,6 @@ use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ProductoApiTest extends TestCase
@@ -16,18 +15,19 @@ class ProductoApiTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     private Usuario $usuario;
+
     private string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Crear rol de Administrador si no existe
         $rolAdministrador = Rol::where('nombre', 'Administrador')->first();
-        if (!$rolAdministrador) {
+        if (! $rolAdministrador) {
             $rolAdministrador = Rol::factory()->create(['nombre' => 'Administrador']);
         }
-        
+
         $this->usuario = Usuario::factory()->create(['rol_id' => $rolAdministrador->id]);
         $this->token = $this->usuario->createToken('test-token')->plainTextToken;
     }
@@ -97,7 +97,7 @@ class ProductoApiTest extends TestCase
     public function test_producto_no_encontrado_devuelve_404(): void
     {
         $uuid = \Illuminate\Support\Str::uuid();
-        
+
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
         ])->getJson("/api/productos/{$uuid}");
@@ -177,7 +177,7 @@ class ProductoApiTest extends TestCase
     public function test_puede_actualizar_producto(): void
     {
         $producto = Producto::factory()->create();
-        
+
         $data = [
             'nombre' => 'Ibuprofeno 400mg',
             'precio_compra' => 25.00,
@@ -245,7 +245,7 @@ class ProductoApiTest extends TestCase
 
         $data = $response->json('data');
         $meta = $response->json('meta');
-        
+
         $this->assertCount(10, $data);
         $this->assertEquals(2, $meta['current_page']);
         $this->assertEquals(10, $meta['per_page']);
@@ -281,7 +281,7 @@ class ProductoApiTest extends TestCase
             'stock_actual' => 5,
             'stock_minimo' => 10,
         ]);
-        
+
         Producto::factory()->create([
             'estado' => EstadoEnum::INACTIVO->value,
             'stock_actual' => 50,
@@ -323,7 +323,7 @@ class ProductoApiTest extends TestCase
 
         $response->assertStatus(200);
         $data = $response->json('data');
-        
+
         $this->assertEquals(30.00, $data[0]['attributes']['precio_venta']);
         $this->assertEquals(20.00, $data[1]['attributes']['precio_venta']);
         $this->assertEquals(10.00, $data[2]['attributes']['precio_venta']);
@@ -382,11 +382,11 @@ class ProductoApiTest extends TestCase
         /*
         $productosBajoStock = Producto::bajoStock()->get();
         $this->assertCount(1, $productosBajoStock);
-        
+
         // Verificar que el scope funciona correctamente
         $primerProducto = $productosBajoStock->first();
         $this->assertNotNull($primerProducto);
-        
+
         // Acceder al ID usando una sintaxis diferente
         $primerId = $primerProducto->getAttribute('id');
         $this->assertEquals($primerId, $productosBajoStock->first()->getAttribute('id'));

@@ -14,7 +14,7 @@ class ValidateApiHeaders
         // Validate required headers
         $errors = $this->validateHeaders($request);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             Log::warning('API headers validation failed', [
                 'errors' => $errors,
                 'headers' => $request->headers->all(),
@@ -31,7 +31,7 @@ class ValidateApiHeaders
 
         // Add security headers
         $response = $next($request);
-        
+
         $this->addSecurityHeaders($response);
         $this->addCachingHeaders($response, $request);
         $this->addApiVersionHeaders($response);
@@ -46,21 +46,21 @@ class ValidateApiHeaders
         // Check Content-Type for POST/PUT/PATCH requests
         if (in_array($request->method(), ['POST', 'PUT', 'PATCH'])) {
             $contentType = $request->header('Content-Type');
-            
-            if (!$contentType || !str_contains($contentType, 'application/json')) {
+
+            if (! $contentType || ! str_contains($contentType, 'application/json')) {
                 $errors['content_type'] = 'Content-Type must be application/json';
             }
         }
 
         // Check Accept header
         $accept = $request->header('Accept');
-        if ($accept && !str_contains($accept, 'application/json')) {
+        if ($accept && ! str_contains($accept, 'application/json')) {
             $errors['accept'] = 'Accept header must include application/json';
         }
 
         // Validate API version if provided
         $apiVersion = $request->header('X-API-Version');
-        if ($apiVersion && !in_array($apiVersion, ['1', '2', 'v1', 'v2'])) {
+        if ($apiVersion && ! in_array($apiVersion, ['1', '2', 'v1', 'v2'])) {
             $errors['api_version'] = 'Invalid API version. Supported: v1, v2';
         }
 
@@ -72,10 +72,10 @@ class ValidateApiHeaders
 
         foreach ($requiredHeaders as $header => $rule) {
             $value = $request->header($header);
-            
-            if (!$value) {
+
+            if (! $value) {
                 $errors[$header] = "Header {$header} is required";
-            } elseif (!$this->validateHeaderValue($value, $rule)) {
+            } elseif (! $this->validateHeaderValue($value, $rule)) {
                 $errors[$header] = "Header {$header} is invalid";
             }
         }
@@ -86,7 +86,7 @@ class ValidateApiHeaders
     private function validateHeaderValue(string $value, string $rule): bool
     {
         $rules = explode('|', $rule);
-        
+
         foreach ($rules as $rule) {
             if (str_starts_with($rule, 'max:')) {
                 $maxLength = (int) substr($rule, 4);
@@ -94,7 +94,7 @@ class ValidateApiHeaders
                     return false;
                 }
             } elseif ($rule === 'string') {
-                if (!is_string($value)) {
+                if (! is_string($value)) {
                     return false;
                 }
             }

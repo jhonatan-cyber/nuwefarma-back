@@ -4,80 +4,51 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lote;
-use App\Models\Producto;
 use App\Services\InventarioService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LoteController extends Controller
 {
-    private InventarioService $inventarioService;
+    public function __construct(private InventarioService $inventarioService) {}
 
-    public function __construct(InventarioService $inventarioService)
-    {
-        $this->inventarioService = $inventarioService;
-    }
-
-    /**
-     * Listar todos los lotes con filtros
-     */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         try {
             $query = Lote::with(['producto', 'proveedor'])
-                ->when($request->producto_id, fn($q, $v) => $q->where('producto_id', $v))
-                ->when($request->estado, fn($q, $v) => $q->where('estado', $v))
-                ->when($request->disponible, fn($q) => $q->disponibles())
-                ->when($request->proximos_vencer, fn($q, $v) => $q->proximosAVencer((int) $v))
-                ->when($request->stock_bajo, fn($q) => $q->stockBajo())
-                ->when($request->search, fn($q, $v) => $q->where('numero_lote', 'like', "%{$v}%"))
+                ->when($request->producto_id, fn ($q, $v) => $q->where('producto_id', $v))
+                ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
+                ->when($request->disponible, fn ($q) => $q->disponibles())
+                ->when($request->proximos_vencer, fn ($q, $v) => $q->proximosAVencer((int) $v))
+                ->when($request->stock_bajo, fn ($q) => $q->stockBajo())
+                ->when($request->search, fn ($q, $v) => $q->where('numero_lote', 'like', "%{$v}%"))
                 ->orderBy('created_at', 'desc');
 
             $lotes = $query->paginate($request->per_page ?? 20);
 
-            return response()->json([
-                'success' => true,
-                'data' => $lotes,
-                'message' => 'Lotes obtenidos correctamente',
-            ]);
+            return $this->success($lotes, 'Lotes obtenidos correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al listar lotes: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener lotes: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al listar lotes: '.$e->getMessage());
+
+            return $this->error('Error al obtener lotes: '.$e->getMessage());
         }
     }
 
-    /**
-     * Obtener un lote específico
-     */
-    public function show(string $id): JsonResponse
+    public function show(string $id)
     {
         try {
             $lote = Lote::with(['producto', 'proveedor', 'movimientos.usuario'])
                 ->findOrFail($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $lote,
-                'message' => 'Lote obtenido correctamente',
-            ]);
+            return $this->success($lote, 'Lote obtenido correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al obtener lote: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener lote: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al obtener lote: '.$e->getMessage());
+
+            return $this->notFound('Lote no encontrado');
         }
     }
 
-    /**
-     * Crear un nuevo lote
-     */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -95,24 +66,18 @@ class LoteController extends Controller
 
             $lote = $this->inventarioService->crearLote($validated);
 
-            return response()->json([
-                'success' => true,
-                'data' => $lote->load(['producto', 'proveedor']),
-                'message' => 'Lote creado correctamente',
-            ], 201);
+            return $this->created(
+                $lote->load(['producto', 'proveedor']),
+                'Lote creado correctamente'
+            );
         } catch (\Exception $e) {
-            Log::error('Error al crear lote: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear lote: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al crear lote: '.$e->getMessage());
+
+            return $this->error('Error al crear lote: '.$e->getMessage());
         }
     }
 
-    /**
-     * Actualizar un lote
-     */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(Request $request, string $id)
     {
         try {
             $lote = Lote::findOrFail($id);
@@ -130,7 +95,6 @@ class LoteController extends Controller
 
             $lote->update($validated);
 
-            // Recalcular estado si cambió el stock
             if (isset($validated['stock'])) {
                 if ($lote->stock == 0) {
                     $lote->estado = 'agotado';
@@ -142,54 +106,37 @@ class LoteController extends Controller
                 $lote->save();
             }
 
-            return response()->json([
-                'success' => true,
-                'data' => $lote->load(['producto', 'proveedor']),
-                'message' => 'Lote actualizado correctamente',
-            ]);
+            return $this->success(
+                $lote->load(['producto', 'proveedor']),
+                'Lote actualizado correctamente'
+            );
         } catch (\Exception $e) {
-            Log::error('Error al actualizar lote: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar lote: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al actualizar lote: '.$e->getMessage());
+
+            return $this->error('Error al actualizar lote: '.$e->getMessage());
         }
     }
 
-    /**
-     * Eliminar un lote (soft delete)
-     */
-    public function destroy(string $id): JsonResponse
+    public function destroy(string $id)
     {
         try {
             $lote = Lote::findOrFail($id);
 
             if ($lote->stock > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se puede eliminar un lote con stock. Primero agote o transfiera el stock.',
-                ], 400);
+                return $this->error('No se puede eliminar un lote con stock. Primero agote o transfiera el stock.', null, 400);
             }
 
             $lote->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Lote eliminado correctamente',
-            ]);
+            return $this->noContent('Lote eliminado correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al eliminar lote: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar lote: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al eliminar lote: '.$e->getMessage());
+
+            return $this->error('Error al eliminar lote: '.$e->getMessage());
         }
     }
 
-    /**
-     * Obtener lotes disponibles para un producto (FEFO)
-     */
-    public function getLotesDisponibles(Request $request): JsonResponse
+    public function getLotesDisponibles(Request $request)
     {
         try {
             $request->validate([
@@ -202,24 +149,15 @@ class LoteController extends Controller
                 $request->cantidad
             );
 
-            return response()->json([
-                'success' => true,
-                'data' => $lotes,
-                'message' => 'Lotes disponibles obtenidos correctamente',
-            ]);
+            return $this->success($lotes, 'Lotes disponibles obtenidos correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al obtener lotes disponibles: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener lotes disponibles: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al obtener lotes disponibles: '.$e->getMessage());
+
+            return $this->error('Error al obtener lotes disponibles: '.$e->getMessage());
         }
     }
 
-    /**
-     * Agregar stock a un lote (entrada por compra)
-     */
-    public function agregarStock(Request $request, string $id): JsonResponse
+    public function agregarStock(Request $request, string $id)
     {
         try {
             $request->validate([
@@ -242,24 +180,15 @@ class LoteController extends Controller
                 ]
             );
 
-            return response()->json([
-                'success' => true,
-                'data' => $resultado,
-                'message' => 'Stock agregado correctamente',
-            ]);
+            return $this->success($resultado, 'Stock agregado correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al agregar stock: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al agregar stock: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al agregar stock: '.$e->getMessage());
+
+            return $this->error('Error al agregar stock: '.$e->getMessage());
         }
     }
 
-    /**
-     * Descontar stock de un lote específico
-     */
-    public function descontarStock(Request $request, string $id): JsonResponse
+    public function descontarStock(Request $request, string $id)
     {
         try {
             $request->validate([
@@ -280,113 +209,68 @@ class LoteController extends Controller
                 ]
             );
 
-            return response()->json([
-                'success' => true,
-                'data' => $resultado,
-                'message' => 'Stock descontado correctamente',
-            ]);
+            return $this->success($resultado, 'Stock descontado correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al descontar stock: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al descontar stock: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al descontar stock: '.$e->getMessage());
+
+            return $this->error('Error al descontar stock: '.$e->getMessage());
         }
     }
 
-    /**
-     * Marcar lote como vencido
-     */
-    public function marcarVencido(string $id): JsonResponse
+    public function marcarVencido(string $id)
     {
         try {
             $resultado = $this->inventarioService->marcarVencido($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $resultado,
-                'message' => 'Lote marcado como vencido',
-            ]);
+            return $this->success($resultado, 'Lote marcado como vencido');
         } catch (\Exception $e) {
-            Log::error('Error al marcar lote como vencido: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al marcar lote como vencido: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al marcar lote como vencido: '.$e->getMessage());
+
+            return $this->error('Error al marcar lote como vencido: '.$e->getMessage());
         }
     }
 
-    /**
-     * Obtener resumen de inventario
-     */
-    public function getResumenInventario(): JsonResponse
+    public function getResumenInventario()
     {
         try {
             $resumen = $this->inventarioService->getResumenInventario();
 
-            return response()->json([
-                'success' => true,
-                'data' => $resumen,
-                'message' => 'Resumen de inventario obtenido correctamente',
-            ]);
+            return $this->success($resumen, 'Resumen de inventario obtenido correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al obtener resumen de inventario: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener resumen de inventario: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al obtener resumen de inventario: '.$e->getMessage());
+
+            return $this->error('Error al obtener resumen de inventario: '.$e->getMessage());
         }
     }
 
-    /**
-     * Obtener productos con stock bajo
-     */
-    public function getProductosStockBajo(): JsonResponse
+    public function getProductosStockBajo()
     {
         try {
             $productos = $this->inventarioService->getProductosStockBajo();
 
-            return response()->json([
-                'success' => true,
-                'data' => $productos,
-                'message' => 'Productos con stock bajo obtenidos correctamente',
-            ]);
+            return $this->success($productos, 'Productos con stock bajo obtenidos correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al obtener productos con stock bajo: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener productos con stock bajo: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al obtener productos con stock bajo: '.$e->getMessage());
+
+            return $this->error('Error al obtener productos con stock bajo: '.$e->getMessage());
         }
     }
 
-    /**
-     * Obtener productos próximos a vencer
-     */
-    public function getProductosProximosAVencer(Request $request): JsonResponse
+    public function getProductosProximosAVencer(Request $request)
     {
         try {
             $dias = $request->dias ?? 60;
             $productos = $this->inventarioService->getProductosProximosAVencer((int) $dias);
 
-            return response()->json([
-                'success' => true,
-                'data' => $productos,
-                'message' => 'Productos próximos a vencer obtenidos correctamente',
-            ]);
+            return $this->success($productos, 'Productos próximos a vencer obtenidos correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al obtener productos próximos a vencer: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener productos próximos a vencer: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al obtener productos próximos a vencer: '.$e->getMessage());
+
+            return $this->error('Error al obtener productos próximos a vencer: '.$e->getMessage());
         }
     }
 
-    /**
-     * Transferir stock entre lotes
-     */
-    public function transferirEntreLotes(Request $request): JsonResponse
+    public function transferirEntreLotes(Request $request)
     {
         try {
             $request->validate([
@@ -401,17 +285,11 @@ class LoteController extends Controller
                 $request->cantidad
             );
 
-            return response()->json([
-                'success' => true,
-                'data' => $resultado,
-                'message' => 'Transferencia realizada correctamente',
-            ]);
+            return $this->success($resultado, 'Transferencia realizada correctamente');
         } catch (\Exception $e) {
-            Log::error('Error al transferir stock: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al transferir stock: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Error al transferir stock: '.$e->getMessage());
+
+            return $this->error('Error al transferir stock: '.$e->getMessage());
         }
     }
 }

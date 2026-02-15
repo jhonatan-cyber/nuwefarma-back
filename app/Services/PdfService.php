@@ -2,13 +2,10 @@
 
 namespace App\Services;
 
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Venta;
 use App\Models\Compra;
 use App\Models\Lote;
-use App\Models\Producto;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\View;
+use App\Models\Venta;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PdfService
 {
@@ -16,13 +13,13 @@ class PdfService
     {
         $query = Venta::with(['cliente', 'usuario', 'sucursal', 'productos.producto']);
 
-        if (!empty($filtros['fecha_inicio'])) {
+        if (! empty($filtros['fecha_inicio'])) {
             $query->where('fecha_venta', '>=', $filtros['fecha_inicio']);
         }
-        if (!empty($filtros['fecha_fin'])) {
+        if (! empty($filtros['fecha_fin'])) {
             $query->where('fecha_venta', '<=', $filtros['fecha_fin']);
         }
-        if (!empty($filtros['estado'])) {
+        if (! empty($filtros['estado'])) {
             $query->where('estado', $filtros['estado']);
         }
 
@@ -53,13 +50,13 @@ class PdfService
     {
         $query = Compra::with(['proveedor', 'usuario', 'sucursal', 'productos.producto']);
 
-        if (!empty($filtros['fecha_inicio'])) {
+        if (! empty($filtros['fecha_inicio'])) {
             $query->where('fecha_compra', '>=', $filtros['fecha_inicio']);
         }
-        if (!empty($filtros['fecha_fin'])) {
+        if (! empty($filtros['fecha_fin'])) {
             $query->where('fecha_compra', '<=', $filtros['fecha_fin']);
         }
-        if (!empty($filtros['estado'])) {
+        if (! empty($filtros['estado'])) {
             $query->where('estado', $filtros['estado']);
         }
 
@@ -90,17 +87,17 @@ class PdfService
     {
         $query = Lote::with(['producto', 'producto.categorias']);
 
-        if (!empty($filtros['estado'])) {
+        if (! empty($filtros['estado'])) {
             $query->where('estado', $filtros['estado']);
         }
-        if (!empty($filtros['producto_id'])) {
+        if (! empty($filtros['producto_id'])) {
             $query->where('producto_id', $filtros['producto_id']);
         }
 
         $lotes = $query->orderBy('fecha_vencimiento', 'asc')->get();
 
         $stockTotal = $lotes->sum('stock');
-        $valorTotal = $lotes->sum(fn($l) => $l->stock * $l->precio_costo);
+        $valorTotal = $lotes->sum(fn ($l) => $l->stock * $l->precio_costo);
         $lotesVencidos = $lotes->where('estado', 'vencido')->count();
         $lotesProximosVencer = $lotes->filter(function ($lote) {
             return $lote->dias_para_vencer !== null && $lote->dias_para_vencer <= 30;
@@ -139,8 +136,8 @@ class PdfService
 
         $movimientos = $query->orderBy('created_at', 'desc')->get();
 
-        $entradas = $movimientos->filter(fn($m) => $m->esEntrada())->sum('cantidad');
-        $salidas = $movimientos->filter(fn($m) => $m->esSalida())->sum('cantidad');
+        $entradas = $movimientos->filter(fn ($m) => $m->esEntrada())->sum('cantidad');
+        $salidas = $movimientos->filter(fn ($m) => $m->esSalida())->sum('cantidad');
 
         $data = [
             'titulo' => 'Reporte de Kardex',
@@ -169,6 +166,7 @@ class PdfService
 
         $agrupado = $lotesStockBajo->groupBy('producto_id')->map(function ($items, $productoId) {
             $producto = $items->first()->producto;
+
             return [
                 'producto' => $producto,
                 'lotes' => $items,
@@ -216,13 +214,13 @@ class PdfService
     {
         $query = \App\Models\MovimientoLote::with(['lote.producto', 'usuario', 'sucursal']);
 
-        if (!empty($filtros['fecha_inicio'])) {
+        if (! empty($filtros['fecha_inicio'])) {
             $query->where('created_at', '>=', $filtros['fecha_inicio']);
         }
-        if (!empty($filtros['fecha_fin'])) {
+        if (! empty($filtros['fecha_fin'])) {
             $query->where('created_at', '<=', $filtros['fecha_fin']);
         }
-        if (!empty($filtros['tipo_movimiento'])) {
+        if (! empty($filtros['tipo_movimiento'])) {
             $query->where('tipo_movimiento', $filtros['tipo_movimiento']);
         }
 

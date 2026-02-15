@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Compra;
 
-use App\Models\Compra;
 use App\Exceptions\ApiException;
+use App\Models\Compra;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class CompleteCompraAction
 {
     /**
      * Complete a pending purchase.
      *
-     * @param Compra $compra
-     * @param array<string, mixed> $data
-     * @return Compra
+     * @param  array<string, mixed>  $data
      */
     public function execute(Compra $compra, array $data = []): Compra
     {
@@ -42,7 +39,6 @@ class CompleteCompraAction
     /**
      * Validate if purchase can be completed.
      *
-     * @param Compra $compra
      * @throws ApiException
      */
     private function validateCompletion(Compra $compra): void
@@ -65,7 +61,7 @@ class CompleteCompraAction
     /**
      * Validate completion data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array
@@ -77,9 +73,6 @@ class CompleteCompraAction
 
     /**
      * Update caja balance.
-     *
-     * @param Compra $compra
-     * @param float $pagado
      */
     private function updateCajaBalance(Compra $compra, float $pagado): void
     {

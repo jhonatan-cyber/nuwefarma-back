@@ -18,7 +18,7 @@ class ProductoService
     public function getProductos(array $filters = [], array $sort = [], int $perPage = 15): LengthAwarePaginator
     {
         $cacheKey = $this->generateCacheKey($filters, $sort, $perPage);
-        
+
         return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($filters, $sort, $perPage) {
             $query = Producto::conRelacionesOptimizadas();
 
@@ -51,10 +51,10 @@ class ProductoService
     {
         return DB::transaction(function () use ($data) {
             $producto = Producto::create($data);
-            
+
             // Clear related caches
             $this->clearProductosCache();
-            
+
             // Cache the new product
             Cache::put(
                 "producto_{$producto->id}",
@@ -73,12 +73,12 @@ class ProductoService
     {
         return DB::transaction(function () use ($id, $data) {
             $producto = Producto::findOrFail($id);
-            
+
             if ($producto->update($data)) {
                 // Clear caches
                 $this->clearProductosCache();
                 Cache::forget("producto_{$id}");
-                
+
                 return true;
             }
 
@@ -93,12 +93,12 @@ class ProductoService
     {
         return DB::transaction(function () use ($id) {
             $producto = Producto::findOrFail($id);
-            
+
             if ($producto->delete()) {
                 // Clear caches
                 $this->clearProductosCache();
                 Cache::forget("producto_{$id}");
-                
+
                 return true;
             }
 
@@ -158,7 +158,7 @@ class ProductoService
     {
         return DB::transaction(function () use ($productoId, $cantidad, $operacion) {
             $producto = Producto::findOrFail($productoId);
-            
+
             match ($operacion) {
                 'agregar' => $producto->agregarStock($cantidad),
                 'descontar' => $producto->descontarStock($cantidad),
@@ -218,7 +218,7 @@ class ProductoService
             ->busqueda($termino);
 
         // Apply additional filters
-        if (!empty($filtrosAdicionales)) {
+        if (! empty($filtrosAdicionales)) {
             $this->applyFilters($query, $filtrosAdicionales);
         }
 
@@ -288,8 +288,8 @@ class ProductoService
         $direccion = $sort['direccion'] ?? 'asc';
 
         $allowedFields = [
-            'nombre', 'created_at', 'updated_at', 'stock_actual', 
-            'precio_venta', 'precio_compra', 'laboratorio'
+            'nombre', 'created_at', 'updated_at', 'stock_actual',
+            'precio_venta', 'precio_compra', 'laboratorio',
         ];
 
         if (in_array($campo, $allowedFields)) {
@@ -304,7 +304,7 @@ class ProductoService
     {
         $filterHash = md5(serialize($filters));
         $sortHash = md5(serialize($sort));
-        
+
         return "productos_list_{$filterHash}_{$sortHash}_{$perPage}";
     }
 

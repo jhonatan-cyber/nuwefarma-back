@@ -12,8 +12,7 @@ class CreateProveedorAction
     /**
      * Create a new provider.
      *
-     * @param array<string, mixed> $data
-     * @return Proveedor
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Proveedor
     {
@@ -25,7 +24,7 @@ class CreateProveedorAction
     /**
      * Validate the provider data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

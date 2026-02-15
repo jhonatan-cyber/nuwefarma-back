@@ -32,7 +32,7 @@ class ProductoActualizado
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('productos.' . $this->producto->id),
+            new PrivateChannel('productos.'.$this->producto->id),
             new Channel('productos'),
         ];
     }
@@ -66,7 +66,7 @@ class ProductoActualizado
     private function obtenerCambiosSignificativos(): array
     {
         $cambios = [];
-        
+
         $camposImportantes = [
             'precio_venta' => 'Precio Venta',
             'stock_actual' => 'Stock Actual',

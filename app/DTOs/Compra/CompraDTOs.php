@@ -15,7 +15,7 @@ readonly class CreateCompraDTO
         public string $fecha_documento,
         public float $subtotal,
         public float $impuesto,
-        public float $descuento = 0.0,
+        public float $descuento,
         public float $total,
         public float $pagado = 0.0,
         public float $saldo_pendiente = 0.0,

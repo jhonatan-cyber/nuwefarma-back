@@ -20,6 +20,7 @@ class InventarioService
             if ($cantidadRequerida === null) {
                 return true;
             }
+
             return $lote->stock_disponible >= $cantidadRequerida;
         });
 
@@ -56,7 +57,7 @@ class InventarioService
     {
         return DB::transaction(function () use ($data) {
             $lote = Lote::create($data);
-            
+
             $this->registrarMovimiento([
                 'lote_id' => $lote->id,
                 'tipo_movimiento' => MovimientoLote::ENTRADA_COMPRA,
@@ -77,7 +78,7 @@ class InventarioService
         return DB::transaction(function () use ($loteId, $cantidad, $precioCosto, $documento) {
             $lote = Lote::findOrFail($loteId);
             $stockAnterior = $lote->stock;
-            
+
             $nuevoCostoTotal = ($stockAnterior * $lote->precio_costo_promedio) + ($cantidad * $precioCosto);
             $nuevoStock = $stockAnterior + $cantidad;
             $nuevoPrecioPromedio = $nuevoStock > 0 ? $nuevoCostoTotal / $nuevoStock : $precioCosto;
@@ -174,7 +175,7 @@ class InventarioService
     {
         return DB::transaction(function () use ($loteId, $cantidad, $documento) {
             $lote = Lote::findOrFail($loteId);
-            
+
             if ($cantidad > $lote->stock_disponible) {
                 throw new \Exception("Stock insuficiente en lote {$lote->numero_lote}");
             }
@@ -212,7 +213,7 @@ class InventarioService
         return DB::transaction(function () use ($loteId, $cantidad, $precioCosto, $documento) {
             $lote = Lote::findOrFail($loteId);
             $stockAnterior = $lote->stock;
-            
+
             $lote->aumentarStock($cantidad, $precioCosto);
             $stockNuevo = $lote->stock;
 
@@ -245,10 +246,10 @@ class InventarioService
         return DB::transaction(function () use ($loteId) {
             $lote = Lote::findOrFail($loteId);
             $stockAnterior = $lote->stock;
-            
+
             $lote->update([
                 'estado' => 'vencido',
-                'notas' => ($lote->notas ? $lote->notas . "\n" : '') . now() . ": Marcado como vencido",
+                'notas' => ($lote->notas ? $lote->notas."\n" : '').now().': Marcado como vencido',
             ]);
 
             $this->registrarMovimiento([
@@ -283,7 +284,7 @@ class InventarioService
             'tipo' => $movimiento->tipo_movimiento,
             'lote_id' => $movimiento->lote_id,
             'cantidad' => $movimiento->cantidad,
-            'documento' => $movimiento->documento_tipo . ' - ' . ($movimiento->documento_id ?? 'N/A'),
+            'documento' => $movimiento->documento_tipo.' - '.($movimiento->documento_id ?? 'N/A'),
         ]);
 
         return $movimiento;
@@ -303,7 +304,7 @@ class InventarioService
     public function getKardexPorProducto(string $productoId, ?string $fechaInicio = null, ?string $fechaFin = null): array
     {
         $lotesIds = Lote::where('producto_id', $productoId)->pluck('id');
-        
+
         $query = MovimientoLote::whereIn('lote_id', $lotesIds)->recientes();
 
         if ($fechaInicio && $fechaFin) {
@@ -324,7 +325,7 @@ class InventarioService
             'stock_bajo' => Lote::stockBajo()->count(),
             'valor_inventario' => Lote::where('estado', '!=', 'retirado')
                 ->get()
-                ->sum(fn($l) => $l->stock * $l->precio_costo_promedio),
+                ->sum(fn ($l) => $l->stock * $l->precio_costo_promedio),
         ];
     }
 
@@ -340,7 +341,7 @@ class InventarioService
             $producto = $lotesProducto->first()->producto;
             $stockTotal = $lotesProducto->sum('stock');
             $stockMinimo = $lotesProducto->min('stock_minimo');
-            
+
             $resultado[] = [
                 'producto_id' => $productoId,
                 'producto_nombre' => $producto->nombre,
@@ -348,7 +349,7 @@ class InventarioService
                 'stock_total' => $stockTotal,
                 'stock_minimo' => $stockMinimo,
                 'lotes_count' => $lotesProducto->count(),
-                'lotes' => $lotesProducto->map(fn($l) => [
+                'lotes' => $lotesProducto->map(fn ($l) => [
                     'lote_id' => $l->id,
                     'numero_lote' => $l->numero_lote,
                     'stock' => $l->stock,
@@ -388,12 +389,12 @@ class InventarioService
             $loteDestino = Lote::findOrFail($loteDestinoId);
 
             if ($cantidad > $loteOrigen->stock_disponible) {
-                throw new \Exception("Stock insuficiente en lote origen");
+                throw new \Exception('Stock insuficiente en lote origen');
             }
 
             $stockAnteriorOrigen = $loteOrigen->stock;
             $loteOrigen->descontarStock($cantidad);
-            
+
             $stockAnteriorDestino = $loteDestino->stock;
             $loteDestino->aumentarStock($cantidad, $loteOrigen->precio_costo_promedio);
 

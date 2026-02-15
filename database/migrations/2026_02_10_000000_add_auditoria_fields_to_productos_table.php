@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::table('productos', function (Blueprint $table) {
             $table->uuid('crear_usuario_id')->nullable()->after('estado');
             $table->uuid('actualizar_usuario_id')->nullable()->after('crear_usuario_id');
-            
+
             $table->foreign('crear_usuario_id')->references('id')->on('usuarios')->onDelete('set null');
             $table->foreign('actualizar_usuario_id')->references('id')->on('usuarios')->onDelete('set null');
-            
+
             $table->index('crear_usuario_id');
             $table->index('actualizar_usuario_id');
         });

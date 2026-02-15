@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Gasto;
 use App\Models\Categoria;
+use App\Models\Gasto;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -18,6 +18,7 @@ class GastoSeeder extends Seeder
 
         if ($categorias->isEmpty()) {
             $this->command->warn('No hay categorías. Ejecuta primero el CategoriaSeeder.');
+
             return;
         }
 

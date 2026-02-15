@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\Compra;
 
+use App\Models\Caja;
 use App\Models\Compra;
 use App\Models\CompraProducto;
 use App\Models\Producto;
-use App\Models\Proveedor;
-use App\Models\Caja;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -17,8 +16,7 @@ class CreateCompraAction
     /**
      * Create a new purchase with products.
      *
-     * @param array<string, mixed> $data
-     * @return Compra
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Compra
     {
@@ -58,7 +56,7 @@ class CreateCompraAction
     /**
      * Validate the purchase data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array
@@ -91,8 +89,7 @@ class CreateCompraAction
     /**
      * Add product to purchase and update stock.
      *
-     * @param Compra $compra
-     * @param array<string, mixed> $productoData
+     * @param  array<string, mixed>  $productoData
      */
     private function addProductToPurchase(Compra $compra, array $productoData): void
     {
@@ -116,13 +113,11 @@ class CreateCompraAction
 
     /**
      * Update caja balance.
-     *
-     * @param Compra $compra
      */
     private function updateCajaBalance(Compra $compra): void
     {
         $caja = Caja::findOrFail($compra->caja_id);
-        
+
         if ($compra->pagado > 0) {
             $caja->decrement('saldo_actual', $compra->pagado);
         }

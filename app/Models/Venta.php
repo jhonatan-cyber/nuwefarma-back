@@ -2,20 +2,31 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Venta extends Model
 {
-    use HasFactory, HasUuids;
+    use HasAuditoria, HasFactory, HasUuids;
 
     protected $table = 'ventas';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'numero_venta',
@@ -90,7 +101,8 @@ class Venta extends Model
     {
         $lastVenta = self::orderBy('created_at', 'desc')->first();
         $lastNumber = $lastVenta ? (int) substr($lastVenta->numero_venta, 2) : 0;
-        return 'V-' . str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
+
+        return 'V-'.str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -129,19 +141,21 @@ class Venta extends Model
     public function completar(): void
     {
         if ($this->estado === 'pendiente') {
-            $inventarioService = new \App\Services\InventarioService();
+            DB::transaction(function () {
+                $inventarioService = new \App\Services\InventarioService;
 
-            foreach ($this->productos as $producto) {
-                $inventarioService->descontarStock($producto->producto_id, $producto->cantidad, [
-                    'tipo' => 'Venta',
-                    'id' => $this->id,
-                    'numero' => $this->numero_venta,
-                    'observaciones' => "Venta {$this->numero_venta}",
-                ]);
-            }
+                foreach ($this->productos as $producto) {
+                    $inventarioService->descontarStock($producto->producto_id, $producto->cantidad, [
+                        'tipo' => 'Venta',
+                        'id' => $this->id,
+                        'numero' => $this->numero_venta,
+                        'observaciones' => "Venta {$this->numero_venta}",
+                    ]);
+                }
 
-            $this->estado = 'completada';
-            $this->save();
+                $this->estado = 'completada';
+                $this->save();
+            });
         }
     }
 

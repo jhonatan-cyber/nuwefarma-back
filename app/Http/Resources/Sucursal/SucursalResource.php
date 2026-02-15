@@ -12,7 +12,6 @@ class SucursalResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -26,7 +25,7 @@ class SucursalResource extends JsonResource
             'ciudad' => $this->ciudad,
             'departamento' => $this->departamento,
             'pais' => $this->pais,
-            'gerente' => $this->whenLoaded('gerente', fn() => [
+            'gerente' => $this->whenLoaded('gerente', fn () => [
                 'id' => $this->gerente->id,
                 'nombre' => $this->gerente->nombre,
                 'email' => $this->gerente->email,

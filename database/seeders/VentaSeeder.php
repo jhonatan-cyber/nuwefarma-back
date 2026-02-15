@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Caja;
+use App\Models\Cliente;
+use App\Models\Producto;
+use App\Models\Sucursal;
+use App\Models\Usuario;
 use App\Models\Venta;
 use App\Models\VentaProducto;
-use App\Models\Cliente;
-use App\Models\Usuario;
-use App\Models\Sucursal;
-use App\Models\Caja;
-use App\Models\Producto;
 use Illuminate\Database\Seeder;
 
 class VentaSeeder extends Seeder
@@ -27,6 +27,7 @@ class VentaSeeder extends Seeder
 
         if ($productos->isEmpty()) {
             $this->command->warn('No hay productos activos para crear ventas');
+
             return;
         }
 
@@ -57,7 +58,7 @@ class VentaSeeder extends Seeder
                         'precio_unitario' => 25.00,
                         'descuento_unitario' => 0.00,
                     ],
-                ]
+                ],
             ],
             [
                 'subtotal' => 0,
@@ -79,7 +80,7 @@ class VentaSeeder extends Seeder
                         'precio_unitario' => 12.00,
                         'descuento_unitario' => 0.00,
                     ],
-                ]
+                ],
             ],
             [
                 'subtotal' => 0,
@@ -107,7 +108,7 @@ class VentaSeeder extends Seeder
                         'precio_unitario' => 8.50,
                         'descuento_unitario' => 0.00,
                     ],
-                ]
+                ],
             ],
             [
                 'subtotal' => 0,
@@ -129,7 +130,7 @@ class VentaSeeder extends Seeder
                         'precio_unitario' => 18.00,
                         'descuento_unitario' => 0.00,
                     ],
-                ]
+                ],
             ],
         ];
 

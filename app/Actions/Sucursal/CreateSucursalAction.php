@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Sucursal;
 
 use App\Models\Sucursal;
-use App\Models\Usuario;
 use Illuminate\Validation\Rule;
 
 class CreateSucursalAction
@@ -13,8 +12,7 @@ class CreateSucursalAction
     /**
      * Create a new branch.
      *
-     * @param array<string, mixed> $data
-     * @return Sucursal
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Sucursal
     {
@@ -26,7 +24,7 @@ class CreateSucursalAction
     /**
      * Validate the branch data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Proveedor;
 
-use App\Models\Proveedor;
 use App\Exceptions\ApiException;
+use App\Models\Proveedor;
 
 class DeleteProveedorAction
 {
     /**
      * Delete a provider with business logic validation.
      *
-     * @param Proveedor $proveedor
-     * @return bool
      * @throws ApiException
      */
     public function execute(Proveedor $proveedor): bool
@@ -26,7 +24,6 @@ class DeleteProveedorAction
     /**
      * Validate if provider can be deleted.
      *
-     * @param Proveedor $proveedor
      * @throws ApiException
      */
     private function validateDeletion(Proveedor $proveedor): void

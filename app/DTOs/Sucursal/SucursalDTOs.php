@@ -10,7 +10,7 @@ readonly class CreateSucursalDTO
         public string $nombre,
         public string $direccion,
         public string $telefono,
-        public ?string $email = null,
+        public ?string $email,
         public string $ciudad,
         public string $departamento,
         public string $pais,

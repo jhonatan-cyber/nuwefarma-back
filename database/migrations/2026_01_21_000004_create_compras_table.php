@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreign('proveedor_id')->references('id')->on('proveedores')->onDelete('set null');
             $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
             $table->foreign('sucursal_id')->references('id')->on('sucursals')->onDelete('set null');
-            
+
             $table->index(['estado', 'fecha_compra']);
             $table->index(['proveedor_id']);
             $table->index(['usuario_id']);

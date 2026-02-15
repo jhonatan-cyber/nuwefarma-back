@@ -56,8 +56,8 @@ readonly class CreateProductoDTO
             fraccionesPorUnidad: $data['fracciones_por_unidad'] ?? null,
             permiteFraccionar: $data['permite_fraccionar'] ?? null,
             lote: $data['lote'] ?? null,
-            fechaVencimiento: isset($data['fecha_vencimiento']) 
-                ? new \DateTime($data['fecha_vencimiento']) 
+            fechaVencimiento: isset($data['fecha_vencimiento'])
+                ? new \DateTime($data['fecha_vencimiento'])
                 : null,
             registroSanitario: $data['registro_sanitario'] ?? null,
             refrigeracionRequerida: $data['refrigeracion_requerida'] ?? null,
@@ -75,6 +75,11 @@ readonly class CreateProductoDTO
             estado: $data['estado'] ?? null,
             crearUsuarioId: $data['crear_usuario_id'] ?? null
         );
+    }
+
+    public static function fromRequest(array $data): self
+    {
+        return self::fromArray($data);
     }
 
     public function toArray(): array

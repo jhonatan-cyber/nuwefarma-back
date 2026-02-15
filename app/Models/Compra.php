@@ -2,20 +2,31 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Compra extends Model
 {
-    use HasFactory, HasUuids;
+    use HasAuditoria, HasFactory, HasUuids;
 
     protected $table = 'compras';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'numero_compra',
@@ -81,7 +92,8 @@ class Compra extends Model
     {
         $lastCompra = self::orderBy('created_at', 'desc')->first();
         $lastNumber = $lastCompra ? (int) substr($lastCompra->numero_compra, 2) : 0;
-        return 'C-' . str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
+
+        return 'C-'.str_pad($lastNumber + 1, 8, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -129,54 +141,56 @@ class Compra extends Model
     public function recibir(): void
     {
         if ($this->estado === 'pendiente') {
-            foreach ($this->productos as $producto) {
-                $lote = null;
+            DB::transaction(function () {
+                foreach ($this->productos as $producto) {
+                    $lote = null;
 
-                if ($producto->lote_id) {
-                    $lote = Lote::find($producto->lote_id);
-                }
+                    if ($producto->lote_id) {
+                        $lote = Lote::find($producto->lote_id);
+                    }
 
-                if (!$lote) {
-                    $lote = Lote::create([
-                        'producto_id' => $producto->producto_id,
-                        'numero_lote' => 'LOTE-' . strtoupper(substr($this->numero_compra, 2)) . '-' . str_pad($producto->cantidad, 4, '0', STR_PAD_LEFT),
-                        'stock' => $producto->cantidad,
-                        'precio_costo' => $producto->precio_unitario,
-                        'precio_venta' => $producto->producto->precio_venta ?? $producto->precio_unitario * 1.2,
-                        'fecha_fabricacion' => now(),
-                        'fecha_vencimiento' => now()->addYear(),
+                    if (! $lote) {
+                        $lote = Lote::create([
+                            'producto_id' => $producto->producto_id,
+                            'numero_lote' => 'LOTE-'.strtoupper(substr($this->numero_compra, 2)).'-'.str_pad($producto->cantidad, 4, '0', STR_PAD_LEFT),
+                            'stock' => $producto->cantidad,
+                            'precio_costo' => $producto->precio_unitario,
+                            'precio_venta' => $producto->producto->precio_venta ?? $producto->precio_unitario * 1.2,
+                            'fecha_fabricacion' => now(),
+                            'fecha_vencimiento' => now()->addYear(),
+                        ]);
+
+                        $producto->lote_id = $lote->id;
+                        $producto->save();
+                    } else {
+                        $lote->stock += $producto->cantidad;
+                        $lote->save();
+                    }
+
+                    MovimientoLote::create([
+                        'lote_id' => $lote->id,
+                        'tipo' => 'entrada_compra',
+                        'cantidad' => $producto->cantidad,
+                        'stock_anterior' => $lote->stock - $producto->cantidad,
+                        'stock_nuevo' => $lote->stock,
+                        'precio_unitario' => $producto->precio_unitario,
+                        'referencia_id' => $this->id,
+                        'referencia_type' => Compra::class,
+                        'notas' => "Recepción de compra {$this->numero_compra}",
                     ]);
-
-                    $producto->lote_id = $lote->id;
-                    $producto->save();
-                } else {
-                    $lote->stock += $producto->cantidad;
-                    $lote->save();
                 }
 
-                MovimientoLote::create([
-                    'lote_id' => $lote->id,
-                    'tipo' => 'entrada_compra',
-                    'cantidad' => $producto->cantidad,
-                    'stock_anterior' => $lote->stock - $producto->cantidad,
-                    'stock_nuevo' => $lote->stock,
-                    'precio_unitario' => $producto->precio_unitario,
-                    'referencia_id' => $this->id,
-                    'referencia_type' => Compra::class,
-                    'notas' => "Recepción de compra {$this->numero_compra}",
+                $this->estado = 'recibida';
+                $this->save();
+
+                ActivityLog::create([
+                    'usuario_id' => auth()->id(),
+                    'accion' => 'recibir_compra',
+                    'descripcion' => "Compra {$this->numero_compra} marcada como recibida",
+                    'modulo' => 'Compra',
+                    'registro_id' => $this->id,
                 ]);
-            }
-
-            $this->estado = 'recibida';
-            $this->save();
-
-            ActivityLog::create([
-                'usuario_id' => auth()->id(),
-                'accion' => 'recibir_compra',
-                'descripcion' => "Compra {$this->numero_compra} marcada como recibida",
-                'modulo' => 'Compra',
-                'registro_id' => $this->id,
-            ]);
+            });
         }
     }
 

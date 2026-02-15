@@ -7,8 +7,8 @@ use App\Models\AjusteInventario;
 use App\Models\AjusteInventarioDetalle;
 use App\Models\Lote;
 use App\Models\MovimientoLote;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -164,9 +164,10 @@ class AjusteInventarioController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al crear el ajuste: ' . $e->getMessage(),
+                'message' => 'Error al crear el ajuste: '.$e->getMessage(),
             ], 500);
         }
     }

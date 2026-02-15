@@ -2,16 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sucursal extends Model
 {
-    use HasUuids;
+    use HasAuditoria, HasUuids;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $fillable = [
         'nombre',

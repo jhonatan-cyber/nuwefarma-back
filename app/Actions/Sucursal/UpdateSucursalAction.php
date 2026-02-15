@@ -12,9 +12,7 @@ class UpdateSucursalAction
     /**
      * Update an existing branch.
      *
-     * @param Sucursal $sucursal
-     * @param array<string, mixed> $data
-     * @return Sucursal
+     * @param  array<string, mixed>  $data
      */
     public function execute(Sucursal $sucursal, array $data): Sucursal
     {
@@ -28,8 +26,7 @@ class UpdateSucursalAction
     /**
      * Validate the branch data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Sucursal $sucursal
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Sucursal $sucursal): array

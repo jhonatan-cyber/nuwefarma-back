@@ -13,8 +13,11 @@ class MovimientoLote extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'movimientos_lote';
+
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -49,14 +52,23 @@ class MovimientoLote extends Model
      * Constantes para tipos de movimiento
      */
     public const ENTRADA_COMPRA = 'ENTRADA_COMPRA';
+
     public const ENTRADA_DEVOLUCION = 'ENTRADA_DEVOLUCION';
+
     public const ENTRADA_TRASLADO_IN = 'ENTRADA_TRASLADO_IN';
+
     public const SALIDA_VENTA = 'SALIDA_VENTA';
+
     public const SALIDA_DEVOLUCION_PROV = 'SALIDA_DEVOLUCION_PROV';
+
     public const SALIDA_TRASLADO_OUT = 'SALIDA_TRASLADO_OUT';
+
     public const AJUSTE_POSITIVO = 'AJUSTE_POSITIVO';
+
     public const AJUSTE_NEGATIVO = 'AJUSTE_NEGATIVO';
+
     public const SALIDA_MERMA = 'SALIDA_MERMA';
+
     public const SALIDA_RETIRADO = 'SALIDA_RETIRADO';
 
     /**
@@ -224,6 +236,7 @@ class MovimientoLote extends Model
         if ($this->esEntrada()) {
             return 'text-green-600 bg-green-100';
         }
+
         return 'text-red-600 bg-red-100';
     }
 
@@ -235,6 +248,7 @@ class MovimientoLote extends Model
         if ($this->esEntrada()) {
             return '↑';
         }
+
         return '↓';
     }
 
@@ -244,8 +258,9 @@ class MovimientoLote extends Model
     public function getCantidadConSignoAttribute(): string
     {
         if ($this->esEntrada()) {
-            return '+' . $this->cantidad;
+            return '+'.$this->cantidad;
         }
-        return '-' . $this->cantidad;
+
+        return '-'.$this->cantidad;
     }
 }

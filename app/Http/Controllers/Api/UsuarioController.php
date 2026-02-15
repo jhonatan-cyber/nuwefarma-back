@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Usuario\BulkUpdateUsuariosAction;
+use App\Actions\Usuario\CreateUsuarioAction;
+use App\Actions\Usuario\DeleteUsuarioAction;
+use App\Actions\Usuario\ListUsuariosAction;
+use App\Actions\Usuario\UpdateUsuarioAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\Usuario\UsuarioCollection;
 use App\Http\Resources\Usuario\UsuarioResource;
 use App\Models\Usuario;
-use App\Actions\Usuario\CreateUsuarioAction;
-use App\Actions\Usuario\UpdateUsuarioAction;
-use App\Actions\Usuario\DeleteUsuarioAction;
-use App\Actions\Usuario\ListUsuariosAction;
-use App\Actions\Usuario\BulkUpdateUsuariosAction;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class UsuarioController extends Controller
 {
@@ -28,99 +26,53 @@ class UsuarioController extends Controller
         private BulkUpdateUsuariosAction $bulkUpdateUsuariosAction
     ) {}
 
-    /**
-     * Display a paginated listing of users with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only([
-            'search', 'estado', 'rol_id', 'sucursal_id', 
-            'sort', 'direction', 'per_page'
+            'search', 'estado', 'rol_id', 'sucursal_id',
+            'sort', 'direction', 'per_page',
         ]);
-        
+
         $usuarios = $this->listUsuariosAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new UsuarioCollection($usuarios)
-        ], Response::HTTP_OK);
+        return $this->success(new UsuarioCollection($usuarios));
     }
 
-    /**
-     * Store a newly created user in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $usuario = $this->createUsuarioAction->execute($request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario creado exitosamente',
-            'data' => new UsuarioResource($usuario->load(['rol', 'sucursal']))
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new UsuarioResource($usuario->load(['rol', 'sucursal'])),
+            'Usuario creado exitosamente'
+        );
     }
 
-    /**
-     * Display the specified user with relationships.
-     * 
-     * @param Usuario $usuario
-     * @return JsonResponse
-     */
-    public function show(Usuario $usuario): JsonResponse
+    public function show(Usuario $usuario)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new UsuarioResource($usuario->load(['rol', 'sucursal']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new UsuarioResource($usuario->load(['rol', 'sucursal']))
+        );
     }
 
-    /**
-     * Update the specified user in storage.
-     * 
-     * @param Request $request
-     * @param Usuario $usuario
-     * @return JsonResponse
-     */
-    public function update(Request $request, Usuario $usuario): JsonResponse
+    public function update(Request $request, Usuario $usuario)
     {
         $updatedUsuario = $this->updateUsuarioAction->execute($usuario, $request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario actualizado exitosamente',
-            'data' => new UsuarioResource($updatedUsuario)
-        ], Response::HTTP_OK);
+        return $this->success(
+            new UsuarioResource($updatedUsuario),
+            'Usuario actualizado exitosamente'
+        );
     }
 
-    /**
-     * Remove the specified user from storage.
-     * 
-     * @param Usuario $usuario
-     * @return JsonResponse
-     */
-    public function destroy(Usuario $usuario): JsonResponse
+    public function destroy(Usuario $usuario)
     {
         $this->deleteUsuarioAction->execute($usuario);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario eliminado exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Usuario eliminado exitosamente');
     }
 
-    /**
-     * Bulk update users status.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -130,26 +82,15 @@ class UsuarioController extends Controller
 
         $updatedCount = $this->bulkUpdateUsuariosAction->execute($validated['ids'], $validated['estado']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuarios actualizados exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Usuarios actualizados exitosamente');
     }
 
-    /**
-     * Get current authenticated user profile.
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function profile(Request $request): JsonResponse
+    public function profile(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'data' => new UserResource($request->user()->load(['rol', 'sucursal']))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new UserResource($request->user()->load(['rol', 'sucursal']))
+        );
     }
-};
+}

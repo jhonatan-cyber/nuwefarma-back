@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Categoria;
 
-use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
 use App\Models\Categoria;
 
 class BulkUpdateCategoriasAction
@@ -12,9 +11,7 @@ class BulkUpdateCategoriasAction
     /**
      * Bulk update categories status.
      *
-     * @param array<string> $ids
-     * @param string $estado
-     * @return int
+     * @param  array<string>  $ids
      */
     public function execute(array $ids, string $estado): int
     {

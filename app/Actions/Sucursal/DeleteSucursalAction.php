@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Sucursal;
 
-use App\Models\Sucursal;
 use App\Exceptions\ApiException;
+use App\Models\Sucursal;
 
 class DeleteSucursalAction
 {
     /**
      * Delete a branch with business logic validation.
      *
-     * @param Sucursal $sucursal
-     * @return bool
      * @throws ApiException
      */
     public function execute(Sucursal $sucursal): bool
@@ -26,7 +24,6 @@ class DeleteSucursalAction
     /**
      * Validate if branch can be deleted.
      *
-     * @param Sucursal $sucursal
      * @throws ApiException
      */
     private function validateDeletion(Sucursal $sucursal): void

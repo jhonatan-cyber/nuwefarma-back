@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Caja;
 
-use App\Models\Caja;
 use App\Exceptions\ApiException;
+use App\Models\Caja;
 use Illuminate\Validation\Rule;
 
 class UpdateCajaAction
@@ -13,9 +13,7 @@ class UpdateCajaAction
     /**
      * Update an existing cash register.
      *
-     * @param Caja $caja
-     * @param array<string, mixed> $data
-     * @return Caja
+     * @param  array<string, mixed>  $data
      */
     public function execute(Caja $caja, array $data): Caja
     {
@@ -31,8 +29,8 @@ class UpdateCajaAction
     /**
      * Validate if cash register can be updated.
      *
-     * @param Caja $caja
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
+     *
      * @throws ApiException
      */
     private function validateUpdateability(Caja $caja, array $data): void
@@ -57,8 +55,7 @@ class UpdateCajaAction
     /**
      * Validate the cash register data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Caja $caja
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Caja $caja): array

@@ -10,7 +10,7 @@ readonly class CreateClienteDTO
         public string $nombre,
         public string $apellidos,
         public string $ci,
-        public ?string $nit = null,
+        public ?string $nit,
         public string $direccion,
         public string $telefono,
         public ?string $celular = null,

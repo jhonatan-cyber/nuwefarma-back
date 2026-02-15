@@ -12,7 +12,6 @@ class CategoriaResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -23,13 +22,12 @@ class CategoriaResource extends JsonResource
             'descripcion' => $this->descripcion,
             'estado' => $this->estado,
             'productos_count' => $this->whenCounted('productos'),
-            'productos' => $this->whenLoaded('productos', fn() => 
-                $this->productos->map(fn($producto) => [
-                    'id' => $producto->id,
-                    'nombre' => $producto->nombre,
-                    'precio' => $producto->precio,
-                    'stock' => $producto->stock,
-                ])
+            'productos' => $this->whenLoaded('productos', fn () => $this->productos->map(fn ($producto) => [
+                'id' => $producto->id,
+                'nombre' => $producto->nombre,
+                'precio' => $producto->precio,
+                'stock' => $producto->stock,
+            ])
             ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

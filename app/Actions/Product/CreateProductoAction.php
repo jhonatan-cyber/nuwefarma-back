@@ -2,8 +2,8 @@
 
 namespace App\Actions\Product;
 
-use App\Enums\EstadoEnum;
 use App\DTOs\Product\CreateProductoDTO;
+use App\Enums\EstadoEnum;
 use App\Models\Producto;
 use App\ValueObjects\ProductPrice;
 use Illuminate\Support\Facades\DB;

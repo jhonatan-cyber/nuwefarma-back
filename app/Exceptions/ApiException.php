@@ -14,10 +14,7 @@ class ApiException extends Exception
     /**
      * Create a new API exception instance.
      *
-     * @param string $message
-     * @param array<string, mixed> $errors
-     * @param int $code
-     * @param Exception|null $previous
+     * @param  array<string, mixed>  $errors
      */
     public function __construct(
         string $message = 'API Error',
@@ -30,9 +27,6 @@ class ApiException extends Exception
 
     /**
      * Render the exception as an HTTP response.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function render(Request $request): JsonResponse
     {
@@ -48,8 +42,7 @@ class ApiException extends Exception
     /**
      * Create a validation error exception.
      *
-     * @param array<string, mixed> $errors
-     * @return static
+     * @param  array<string, mixed>  $errors
      */
     public static function validation(array $errors): static
     {
@@ -62,10 +55,6 @@ class ApiException extends Exception
 
     /**
      * Create a not found exception.
-     *
-     * @param string $resource
-     * @param string $id
-     * @return static
      */
     public static function notFound(string $resource, string $id): static
     {
@@ -78,9 +67,6 @@ class ApiException extends Exception
 
     /**
      * Create an unauthorized exception.
-     *
-     * @param string $message
-     * @return static
      */
     public static function unauthorized(string $message = 'No autorizado'): static
     {
@@ -93,9 +79,6 @@ class ApiException extends Exception
 
     /**
      * Create a forbidden exception.
-     *
-     * @param string $message
-     * @return static
      */
     public static function forbidden(string $message = 'Acceso denegado'): static
     {
@@ -109,9 +92,7 @@ class ApiException extends Exception
     /**
      * Create a conflict exception.
      *
-     * @param string $message
-     * @param array<string, mixed> $errors
-     * @return static
+     * @param  array<string, mixed>  $errors
      */
     public static function conflict(string $message, array $errors = []): static
     {

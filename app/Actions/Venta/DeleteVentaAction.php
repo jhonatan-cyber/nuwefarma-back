@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Venta;
 
-use App\Models\Venta;
-use App\Models\VentaProducto;
-use App\Models\Producto;
-use App\Models\Caja;
 use App\Exceptions\ApiException;
+use App\Models\Caja;
+use App\Models\Venta;
 use Illuminate\Support\Facades\DB;
 
 class DeleteVentaAction
@@ -16,8 +14,6 @@ class DeleteVentaAction
     /**
      * Cancel/delete a sale with business logic validation.
      *
-     * @param Venta $venta
-     * @return bool
      * @throws ApiException
      */
     public function execute(Venta $venta): bool
@@ -48,7 +44,6 @@ class DeleteVentaAction
     /**
      * Validate if sale can be deleted.
      *
-     * @param Venta $venta
      * @throws ApiException
      */
     private function validateDeletion(Venta $venta): void

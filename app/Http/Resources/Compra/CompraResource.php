@@ -12,25 +12,24 @@ class CompraResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'proveedor' => $this->whenLoaded('proveedor', fn() => [
+            'proveedor' => $this->whenLoaded('proveedor', fn () => [
                 'id' => $this->proveedor->id,
                 'nombre' => $this->proveedor->nombre,
                 'ruc' => $this->proveedor->ruc,
                 'email' => $this->proveedor->email,
             ]),
-            'usuario' => $this->whenLoaded('usuario', fn() => [
+            'usuario' => $this->whenLoaded('usuario', fn () => [
                 'id' => $this->usuario->id,
                 'nombre' => $this->usuario->nombre,
                 'email' => $this->usuario->email,
             ]),
-            'caja' => $this->whenLoaded('caja', fn() => [
+            'caja' => $this->whenLoaded('caja', fn () => [
                 'id' => $this->caja->id,
                 'nombre' => $this->caja->nombre,
             ]),
@@ -45,21 +44,20 @@ class CompraResource extends JsonResource
             'saldo_pendiente' => $this->saldo_pendiente,
             'estado' => $this->estado,
             'observaciones' => $this->observaciones,
-            'compra_productos' => $this->whenLoaded('compraProductos', fn() => 
-                $this->compraProductos->map(fn($cp) => [
-                    'id' => $cp->id,
-                    'producto' => [
-                        'id' => $cp->producto->id,
-                        'nombre' => $cp->producto->nombre,
-                        'codigo_barras' => $cp->producto->codigo_barras,
-                    ],
-                    'cantidad' => $cp->cantidad,
-                    'precio_unitario' => $cp->precio_unitario,
-                    'descuento' => $cp->descuento,
-                    'subtotal' => $cp->subtotal,
-                    'lote' => $cp->lote,
-                    'fecha_vencimiento' => $cp->fecha_vencimiento,
-                ])
+            'compra_productos' => $this->whenLoaded('compraProductos', fn () => $this->compraProductos->map(fn ($cp) => [
+                'id' => $cp->id,
+                'producto' => [
+                    'id' => $cp->producto->id,
+                    'nombre' => $cp->producto->nombre,
+                    'codigo_barras' => $cp->producto->codigo_barras,
+                ],
+                'cantidad' => $cp->cantidad,
+                'precio_unitario' => $cp->precio_unitario,
+                'descuento' => $cp->descuento,
+                'subtotal' => $cp->subtotal,
+                'lote' => $cp->lote,
+                'fecha_vencimiento' => $cp->fecha_vencimiento,
+            ])
             ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

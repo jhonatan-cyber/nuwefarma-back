@@ -51,41 +51,41 @@ class ProductoRepository
     public function create(CreateProductoDTO $dto): Producto
     {
         $data = $dto->toArray();
-        
+
         // Ensure required fields have default values
         $data['permite_fraccionar'] = $data['permite_fraccionar'] ?? false;
         $data['refrigeracion_requerida'] = $data['refrigeracion_requerida'] ?? false;
         $data['dias_para_alertar_vencimiento'] = $data['dias_para_alertar_vencimiento'] ?? 60;
-        
+
         $producto = $this->model->create($data);
-        
+
         // Clear cache
         $this->clearCache();
-        
+
         return $producto;
     }
 
     public function update(string $id, array $data): bool
     {
         $result = $this->model->where('id', $id)->update($data);
-        
+
         if ($result) {
             $this->clearCache();
             Cache::forget("producto_{$id}");
         }
-        
+
         return $result;
     }
 
     public function delete(string $id): bool
     {
         $result = $this->model->where('id', $id)->delete();
-        
+
         if ($result) {
             $this->clearCache();
             Cache::forget("producto_{$id}");
         }
-        
+
         return $result;
     }
 
@@ -229,18 +229,18 @@ class ProductoRepository
     public function bulkUpdate(array $updates): int
     {
         $affected = 0;
-        
+
         foreach ($updates as $id => $data) {
             if ($this->model->where('id', $id)->update($data)) {
                 $affected++;
                 Cache::forget("producto_{$id}");
             }
         }
-        
+
         if ($affected > 0) {
             $this->clearCache();
         }
-        
+
         return $affected;
     }
 

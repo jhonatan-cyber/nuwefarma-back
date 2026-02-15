@@ -41,7 +41,7 @@ class ApiRequestLogger
         ];
 
         // Log request body only for specific methods and in non-production environments
-        if (in_array($request->method(), ['POST', 'PUT', 'PATCH']) && !app()->environment('production')) {
+        if (in_array($request->method(), ['POST', 'PUT', 'PATCH']) && ! app()->environment('production')) {
             $data['body'] = $request->except(['password', 'password_confirmation']);
         }
 

@@ -19,7 +19,7 @@ class NotifyProductCreated implements ShouldQueue
     {
         try {
             $usuariosANotificar = $this->obtenerUsuariosANotificar();
-            
+
             foreach ($usuariosANotificar as $usuario) {
                 $this->crearNotificacionUsuario($usuario, $event);
             }

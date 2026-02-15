@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Categoria\BulkUpdateCategoriasAction;
+use App\Actions\Categoria\CreateCategoriaAction;
+use App\Actions\Categoria\DeleteCategoriaAction;
+use App\Actions\Categoria\ListCategoriasAction;
+use App\Actions\Categoria\UpdateCategoriaAction;
+use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
+use App\DTOs\Categoria\CreateCategoriaDTO;
+use App\DTOs\Categoria\ListCategoriasDTO;
+use App\DTOs\Categoria\UpdateCategoriaDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Categoria\StoreCategoriaRequest;
+use App\Http\Requests\Categoria\UpdateCategoriaRequest;
 use App\Http\Resources\Categoria\CategoriaCollection;
 use App\Http\Resources\Categoria\CategoriaResource;
 use App\Models\Categoria;
-use App\Actions\Categoria\CreateCategoriaAction;
-use App\Actions\Categoria\UpdateCategoriaAction;
-use App\Actions\Categoria\DeleteCategoriaAction;
-use App\Actions\Categoria\ListCategoriasAction;
-use App\Actions\Categoria\BulkUpdateCategoriasAction;
-use App\DTOs\Categoria\CreateCategoriaDTO;
-use App\DTOs\Categoria\UpdateCategoriaDTO;
-use App\DTOs\Categoria\ListCategoriasDTO;
-use App\DTOs\Categoria\BulkUpdateCategoriasDTO;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class CategoriaController extends Controller
 {
@@ -33,11 +33,8 @@ class CategoriaController extends Controller
 
     /**
      * Display a paginated listing of categories with filtering.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = new ListCategoriasDTO(
             search: $request->string('search')?->toString(),
@@ -46,109 +43,81 @@ class CategoriaController extends Controller
             direction: $request->string('direction', 'asc')?->toString(),
             per_page: $request->integer('per_page', 15)
         );
-        
+
         $categorias = $this->listCategoriasAction->execute($filters);
 
-        return response()->json([
-            'success' => true,
-            'data' => new CategoriaCollection($categorias)
-        ], Response::HTTP_OK);
+        return $this->success(new CategoriaCollection($categorias));
     }
 
     /**
      * Store a newly created category in storage.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCategoriaRequest $request)
     {
         $dto = new CreateCategoriaDTO(
-            nombre: $request->string('nombre')?->toString(),
-            descripcion: $request->string('descripcion')?->toString(),
-            estado: $request->string('estado', 'activo')?->toString()
+            nombre: $request->validated('nombre'),
+            descripcion: $request->validated('descripcion'),
+            estado: $request->validated('estado', 'activo')
         );
 
         $categoria = $this->createCategoriaAction->execute($dto);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Categoría creada exitosamente',
-            'data' => new CategoriaResource($categoria->loadCount('productos'))
-        ], Response::HTTP_CREATED);
+        return $this->created(
+            new CategoriaResource($categoria->loadCount('productos')),
+            'Categoría creada exitosamente'
+        );
     }
 
     /**
      * Display the specified category with relationships.
-     * 
-     * @param Request $request
-     * @param Categoria $categoria
-     * @return JsonResponse
      */
-    public function show(Request $request, Categoria $categoria): JsonResponse
+    public function show(Request $request, Categoria $categoria)
     {
-        // Laravel 12+: Conditional eager loading
         $includes = $request->collect('include', []);
-        
+
         if ($includes->contains('productos')) {
-            $categoria->load(['productos' => fn($query) => 
-                $query->select('id', 'nombre', 'precio', 'stock', 'categoria_id')
+            $categoria->load(['productos' => fn ($query) => $query->select('id', 'nombre', 'precio', 'stock', 'categoria_id'),
             ]);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => new CategoriaResource($categoria->loadCount('productos'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new CategoriaResource($categoria->loadCount('productos'))
+        );
     }
 
     /**
      * Update the specified category in storage.
-     * 
-     * @param Request $request
-     * @param Categoria $categoria
-     * @return JsonResponse
      */
-    public function update(Request $request, Categoria $categoria): JsonResponse
+    public function update(UpdateCategoriaRequest $request, Categoria $categoria)
     {
         $dto = new UpdateCategoriaDTO(
-            nombre: $request->filled('nombre') ? $request->string('nombre')?->toString() : null,
-            descripcion: $request->filled('descripcion') ? $request->string('descripcion')?->toString() : null,
-            estado: $request->filled('estado') ? $request->string('estado')?->toString() : null
+            nombre: $request->validated('nombre'),
+            descripcion: $request->validated('descripcion'),
+            estado: $request->validated('estado')
         );
 
         $updatedCategoria = $this->updateCategoriaAction->execute($categoria, $dto);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Categoría actualizada exitosamente',
-            'data' => new CategoriaResource($updatedCategoria->loadCount('productos'))
-        ], Response::HTTP_OK);
+        return $this->success(
+            new CategoriaResource($updatedCategoria->loadCount('productos')),
+            'Categoría actualizada exitosamente'
+        );
     }
 
     /**
      * Remove the specified category from storage.
-     * 
-     * @param Categoria $categoria
-     * @return JsonResponse
      */
-    public function destroy(Categoria $categoria): JsonResponse
+    public function destroy(Categoria $categoria)
     {
         $this->deleteCategoriaAction->execute($categoria);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Categoría eliminada exitosamente'
-        ], Response::HTTP_OK);
+        return $this->noContent('Categoría eliminada exitosamente');
     }
 
     /**
      * Bulk update categories status.
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
-    public function bulkUpdate(Request $request): JsonResponse
+    public function bulkUpdate(Request $request)
     {
         $dto = new BulkUpdateCategoriasDTO(
             ids: $request->array('ids'),
@@ -157,12 +126,8 @@ class CategoriaController extends Controller
 
         $updatedCount = $this->bulkUpdateCategoriasAction->execute($dto->ids, $dto->estado);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Categorías actualizadas exitosamente',
-            'data' => [
-                'updated_count' => $updatedCount
-            ]
-        ], Response::HTTP_OK);
+        return $this->success([
+            'updated_count' => $updatedCount,
+        ], 'Categorías actualizadas exitosamente');
     }
 }

@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Caja;
-use App\Models\Usuario;
 use App\Models\Sucursal;
+use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 
 class CajaSeeder extends Seeder

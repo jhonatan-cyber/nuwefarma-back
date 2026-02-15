@@ -4,10 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Compra;
 use App\Models\CompraProducto;
-use App\Models\Proveedor;
-use App\Models\Usuario;
-use App\Models\Sucursal;
 use App\Models\Producto;
+use App\Models\Proveedor;
+use App\Models\Sucursal;
+use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -26,6 +26,7 @@ class CompraSeeder extends Seeder
 
         if ($proveedores->isEmpty() || $usuarios->isEmpty() || $productos->isEmpty()) {
             $this->command->warn('No hay suficientes datos para crear compras. Asegúrate de tener proveedores, usuarios y productos.');
+
             return;
         }
 
@@ -42,7 +43,7 @@ class CompraSeeder extends Seeder
 
             $compra = Compra::create([
                 'id' => Str::uuid(),
-                'numero_compra' => 'C-' . str_pad($i, 8, '0', STR_PAD_LEFT),
+                'numero_compra' => 'C-'.str_pad($i, 8, '0', STR_PAD_LEFT),
                 'subtotal' => 0, // Se calculará automáticamente
                 'descuento' => rand(0, 50),
                 'impuestos' => rand(10, 100) / 10, // Entre 1.0 y 10.0

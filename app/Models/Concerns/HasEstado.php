@@ -13,7 +13,7 @@ trait HasEstado
     protected static function bootHasEstado(): void
     {
         static::creating(function ($model) {
-            if (!isset($model->estado)) {
+            if (! isset($model->estado)) {
                 $model->estado = EstadoEnum::ACTIVO->value;
             }
         });
@@ -96,10 +96,10 @@ trait HasEstado
      */
     public function toggleEstado(): bool
     {
-        $nuevoEstado = $this->isActive() 
-            ? EstadoEnum::INACTIVO 
+        $nuevoEstado = $this->isActive()
+            ? EstadoEnum::INACTIVO
             : EstadoEnum::ACTIVO;
-            
+
         return $this->update(['estado' => $nuevoEstado->value]);
     }
 

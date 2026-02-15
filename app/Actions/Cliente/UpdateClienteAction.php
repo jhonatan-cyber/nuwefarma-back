@@ -12,9 +12,7 @@ class UpdateClienteAction
     /**
      * Update an existing client.
      *
-     * @param Cliente $cliente
-     * @param array<string, mixed> $data
-     * @return Cliente
+     * @param  array<string, mixed>  $data
      */
     public function execute(Cliente $cliente, array $data): Cliente
     {
@@ -28,8 +26,7 @@ class UpdateClienteAction
     /**
      * Validate the client data for update.
      *
-     * @param array<string, mixed> $data
-     * @param Cliente $cliente
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data, Cliente $cliente): array

@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace App\Actions\Product;
 
 use App\Models\Producto;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BulkUpdateProductosAction
 {
     /**
      * Bulk update products status or stock.
      *
-     * @param array<string> $ids
-     * @param array<string, mixed> $data
-     * @return int
+     * @param  array<string>  $ids
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $ids, array $data): int
     {
@@ -44,7 +43,7 @@ class BulkUpdateProductosAction
     /**
      * Validate bulk update data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array

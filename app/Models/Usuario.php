@@ -123,4 +123,111 @@ class Usuario extends Authenticatable
     {
         return $this->hasMany(Sucursal::class, 'gerente_id');
     }
+
+    /**
+     * Verificar si el usuario tiene un rol específico
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function hasRole(string $roleName): bool
+    {
+        if (!$this->rol) {
+            return false;
+        }
+
+        return strtolower($this->rol->nombre) === strtolower($roleName);
+    }
+
+    /**
+     * Verificar si el usuario tiene alguno de los roles especificados
+     *
+     * @param array $roles
+     * @return bool
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        if (!$this->rol) {
+            return false;
+        }
+
+        foreach ($roles as $role) {
+            if ($this->hasRole($role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Verificar si el usuario tiene todos los roles especificados
+     *
+     * @param array $roles
+     * @return bool
+     */
+    public function hasAllRoles(array $roles): bool
+    {
+        if (!$this->rol) {
+            return false;
+        }
+
+        foreach ($roles as $role) {
+            if (!$this->hasRole($role)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Obtener el nombre del rol del usuario
+     *
+     * @return string|null
+     */
+    public function getRoleName(): ?string
+    {
+        return $this->rol?->nombre;
+    }
+
+    /**
+     * Verificar si el usuario es administrador
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('Administrador');
+    }
+
+    /**
+     * Verificar si el usuario es gerente
+     *
+     * @return bool
+     */
+    public function isGerente(): bool
+    {
+        return $this->hasRole('Gerente');
+    }
+
+    /**
+     * Verificar si el usuario es cajero
+     *
+     * @return bool
+     */
+    public function isCajero(): bool
+    {
+        return $this->hasRole('Cajero');
+    }
+
+    /**
+     * Verificar si el usuario es vendedor
+     *
+     * @return bool
+     */
+    public function isVendedor(): bool
+    {
+        return $this->hasRole('Vendedor');
+    }
 }

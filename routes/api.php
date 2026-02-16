@@ -37,6 +37,23 @@ Route::prefix('usuarios')->middleware(['auth:sanctum'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| API Routes - Roles
+|--------------------------------------------------------------------------
+|
+| Role management routes with role-based authorization
+|
+*/
+
+Route::apiResource('roles', \App\Http\Controllers\Api\RolController::class)
+    ->middleware(['auth:sanctum']);
+
+// Additional role routes
+Route::prefix('roles')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/{role}/toggle-estado', [\App\Http\Controllers\Api\RolController::class, 'toggleEstado']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | API Routes - Sales
 |--------------------------------------------------------------------------
 |

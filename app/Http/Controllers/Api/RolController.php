@@ -41,34 +41,70 @@ class RolController extends Controller
 
     public function store(StoreRolRequest $request)
     {
-        $rol = $this->createRolAction->execute($request->validated());
+        try {
+            \Log::info('Creating rol with data:', $request->validated());
+            
+            $rol = $this->createRolAction->execute($request->validated());
+            
+            \Log::info('Rol created successfully:', ['id' => $rol->id]);
 
-        return $this->created(
-            new RolResource($rol),
-            'Rol creado exitosamente'
-        );
+            return $this->created(
+                new RolResource($rol),
+                'Rol creado exitosamente'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error creating rol:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el rol: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function show(Rol $rol)
+    public function show(Rol $role)
     {
         return $this->success(
-            new RolResource($rol->loadCount('usuarios'))
+            new RolResource($role->loadCount('usuarios'))
         );
     }
 
-    public function update(UpdateRolRequest $request, Rol $rol)
+    public function update(UpdateRolRequest $request, Rol $role)
     {
-        $updatedRol = $this->updateRolAction->execute($rol, $request->validated());
+        try {
+            \Log::info('Updating rol:', [
+                'rol_id' => $role->id,
+                'data' => $request->validated()
+            ]);
+            
+            $updatedRol = $this->updateRolAction->execute($role, $request->validated());
+            
+            \Log::info('Rol updated successfully:', ['id' => $updatedRol->id]);
 
-        return $this->success(
-            new RolResource($updatedRol->loadCount('usuarios')),
-            'Rol actualizado exitosamente'
-        );
+            return $this->success(
+                new RolResource($updatedRol->loadCount('usuarios')),
+                'Rol actualizado exitosamente'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error updating rol:', [
+                'rol_id' => $role->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el rol: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function destroy(Rol $rol)
+    public function destroy(Rol $role)
     {
-        $this->deleteRolAction->execute($rol);
+        $this->deleteRolAction->execute($role);
 
         return $this->noContent('Rol eliminado exitosamente');
     }
@@ -95,5 +131,35 @@ class RolController extends Controller
         $roles = $this->listRolesAction->execute($filters);
 
         return $this->success(new RolCollection($roles));
+    }
+
+    public function toggleEstado(Rol $role)
+    {
+        try {
+            $nuevoEstado = $role->estado === 'activo' ? 'inactivo' : 'activo';
+            
+            // Contar usuarios afectados
+            $usuariosAfectados = $role->usuarios()->count();
+            
+            // Actualizar el estado
+            $role->update(['estado' => $nuevoEstado]);
+            
+            return $this->success([
+                'id' => $role->id,
+                'estado' => $nuevoEstado,
+                'usuarios_afectados' => $usuariosAfectados,
+            ], "Rol {$nuevoEstado} exitosamente");
+        } catch (\Exception $e) {
+            \Log::error('Error toggling rol estado:', [
+                'rol_id' => $role->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cambiar el estado del rol: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

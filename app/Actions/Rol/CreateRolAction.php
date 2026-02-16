@@ -17,6 +17,9 @@ class CreateRolAction
     public function execute(array $data): Rol
     {
         $validatedData = $this->validate($data);
+        
+        // Establecer valores por defecto
+        $validatedData['estado'] = $validatedData['estado'] ?? 'activo';
 
         return Rol::create($validatedData);
     }
@@ -31,10 +34,10 @@ class CreateRolAction
     {
         return validator($data, [
             'nombre' => ['required', 'string', 'max:255', 'unique:roles,nombre'],
-            'descripcion' => ['required', 'string', 'max:1000'],
+            'descripcion' => ['nullable', 'string', 'max:1000'],
             'permiso_id' => ['nullable', 'array'],
             'permiso_id.*' => ['string', 'max:255'],
-            'estado' => ['required', Rule::in(['activo', 'inactivo'])],
+            'estado' => ['nullable', Rule::in(['activo', 'inactivo'])],
         ])->validate();
     }
 }

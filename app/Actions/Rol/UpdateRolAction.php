@@ -31,12 +31,14 @@ class UpdateRolAction
      */
     private function validate(array $data, Rol $rol): array
     {
-        return validator($data, [
-            'nombre' => ['sometimes', 'string', 'max:255', Rule::unique('roles', 'nombre')->ignore($rol->id)],
-            'descripcion' => ['sometimes', 'string', 'max:1000'],
-            'permiso_id' => ['sometimes', 'array'],
+        $rules = [
+            'nombre' => ['sometimes', 'string', 'max:255', Rule::unique('roles')->ignore($rol->id)],
+            'descripcion' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'permiso_id' => ['sometimes', 'nullable', 'array'],
             'permiso_id.*' => ['string', 'max:255'],
-            'estado' => ['sometimes', Rule::in(['activo', 'inactivo'])],
-        ])->validate();
+            'estado' => ['sometimes', 'nullable', Rule::in(['activo', 'inactivo'])],
+        ];
+
+        return validator($data, $rules)->validate();
     }
 }

@@ -16,11 +16,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'email' => ['required', 'email', 'max:255'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
-        $user = Usuario::where('email', $validated['email'])
+        // Try to find user by CI first, then by email as fallback
+        $user = Usuario::where('ci', $validated['email'])
+            ->orWhere('email', $validated['email'])
             ->with(['rol'])
             ->firstOrFail();
 

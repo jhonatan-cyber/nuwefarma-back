@@ -6,6 +6,7 @@ use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Proveedor extends Model
 {
@@ -39,6 +40,16 @@ class Proveedor extends Model
         'observaciones',
         'estado',
     ];
+
+    public function productos(): HasMany
+    {
+        return $this->hasMany(\App\Models\Producto::class, 'proveedor_id', 'id');
+    }
+
+    public function compras(): HasMany
+    {
+        return $this->hasMany(\App\Models\Compra::class, 'proveedor_id', 'id');
+    }
 
     protected $casts = [
         'created_at' => 'datetime',

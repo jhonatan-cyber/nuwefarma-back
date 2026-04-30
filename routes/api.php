@@ -54,6 +54,26 @@ Route::prefix('roles')->middleware(['auth:sanctum'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| API Routes - Clients
+|--------------------------------------------------------------------------
+|
+| Client management routes with role-based authorization
+|
+*/
+
+Route::apiResource('clientes', \App\Http\Controllers\Api\ClienteController::class)
+    ->middleware(['auth:sanctum']);
+
+// Additional client routes
+Route::prefix('clientes')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/bulk-update', [\App\Http\Controllers\Api\ClienteController::class, 'bulkUpdate']);
+    Route::get('/con-deuda', [\App\Http\Controllers\Api\ClienteController::class, 'conDeuda']);
+    Route::patch('/{cliente}/toggle-estado', [\App\Http\Controllers\Api\ClienteController::class, 'toggleEstado']);
+    Route::get('/stats/overview', [\App\Http\Controllers\Api\ClienteController::class, 'statsOverview']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | API Routes - Sales
 |--------------------------------------------------------------------------
 |

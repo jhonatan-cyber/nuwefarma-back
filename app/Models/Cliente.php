@@ -21,7 +21,20 @@ class Cliente extends Model
         'ci',
         'nombre',
         'apellidos',
+        'nit',
+        'direccion',
         'telefono',
+        'celular',
+        'email',
+        'fecha_nacimiento',
+        'sexo',
+        'estado_civil',
+        'ocupacion',
+        'referencia_nombre',
+        'referencia_telefono',
+        'limite_credito',
+        'dias_credito',
+        'observaciones',
         'estado',
     ];
 
@@ -51,5 +64,13 @@ class Cliente extends Model
     public function getNombreCompletoAttribute()
     {
         return $this->nombre.' '.$this->apellidos;
+    }
+
+    /**
+     * Relación con las ventas del cliente
+     */
+    public function ventas()
+    {
+        return $this->hasMany(\App\Models\Venta::class, 'cliente_id');
     }
 }

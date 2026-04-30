@@ -117,4 +117,39 @@ class ClienteController extends Controller
 
         return $this->success(new ClienteCollection($clientes));
     }
+
+    /**
+     * Toggle client status between active and inactive.
+     */
+    public function toggleEstado(Cliente $cliente)
+    {
+        $cliente->estado = $cliente->estado === 'activo' ? 'inactivo' : 'activo';
+        $cliente->save();
+
+        return $this->success(
+            new ClienteResource($cliente->loadCount('ventas')),
+            'Estado del cliente actualizado exitosamente'
+        );
+    }
+
+    /**
+     * Get client statistics overview.
+     */
+    public function statsOverview()
+    {
+        $total = Cliente::count();
+        $activos = Cliente::where('estado', 'activo')->count();
+        $inactivos = Cliente::where('estado', 'inactivo')->count();
+        $conDeuda = Cliente::whereHas('ventas', function ($query) {
+            $query->where('saldo_pendiente', '>', 0);
+        })->count();
+
+        return $this->success([
+            'total' => $total,
+            'activos' => $activos,
+            'inactivos' => $inactivos,
+            'con_deuda' => $conDeuda,
+            'sin_deuda' => $total - $conDeuda,
+        ]);
+    }
 }

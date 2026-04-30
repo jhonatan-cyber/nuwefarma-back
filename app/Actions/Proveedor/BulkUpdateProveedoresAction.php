@@ -32,7 +32,7 @@ class BulkUpdateProveedoresAction
     {
         return validator($data, [
             'ids' => ['required', 'array'],
-            'ids.*' => ['required', 'string', 'exists:proveedors,id'],
+            'ids.*' => ['required', 'string', 'exists:proveedores,id'],
             'estado' => ['required', Rule::in(['activo', 'inactivo'])],
         ])->validate();
     }

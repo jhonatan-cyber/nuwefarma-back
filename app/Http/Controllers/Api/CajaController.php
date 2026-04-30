@@ -167,7 +167,7 @@ class CajaController extends Controller
             $validated = $request->validate([
                 'nombre' => ['sometimes', 'string', 'max:255'],
                 'codigo' => ['sometimes', 'string', 'max:50', 'unique:cajas,codigo,'.$id],
-                'sucursal_id' => ['sometimes', 'exists:sucursales,id'],
+                'sucursal_id' => ['sometimes', 'exists:sucursals,id'],
                 'gerente_id' => ['sometimes', 'exists:usuarios,id'],
                 'saldo_inicial' => ['sometimes', 'numeric', 'min:0'],
                 'descripcion' => ['nullable', 'string', 'max:1000'],

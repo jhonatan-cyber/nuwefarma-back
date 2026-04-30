@@ -32,19 +32,18 @@ class UpdateProveedorAction
     private function validate(array $data, Proveedor $proveedor): array
     {
         return validator($data, [
-            'nombre' => ['sometimes', 'string', 'max:255'],
-            'ruc' => ['sometimes', 'string', 'max:20', Rule::unique('proveedors', 'ruc')->ignore($proveedor->id)],
-            'direccion' => ['sometimes', 'string', 'max:500'],
-            'telefono' => ['sometimes', 'string', 'max:20'],
-            'email' => ['sometimes', 'email', 'max:255', Rule::unique('proveedors', 'email')->ignore($proveedor->id)],
-            'contacto_nombre' => ['sometimes', 'string', 'max:255'],
-            'contacto_telefono' => ['sometimes', 'string', 'max:20'],
-            'contacto_email' => ['sometimes', 'email', 'max:255'],
-            'dias_credito' => ['sometimes', 'integer', 'min:0'],
-            'limite_credito' => ['sometimes', 'numeric', 'min:0'],
-            'condiciones_pago' => ['sometimes', 'string', 'max:1000'],
-            'observaciones' => ['sometimes', 'string', 'max:2000'],
-            'estado' => ['sometimes', Rule::in(['activo', 'inactivo'])],
+            'nombre' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'nit' => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('proveedores', 'nit')->ignore($proveedor->id)],
+            'direccion' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'telefono' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:255', Rule::unique('proveedores', 'email')->ignore($proveedor->id)],
+            'ciudad' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'pais' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'contacto' => ['sometimes', 'nullable', 'string', 'max:150'],
+            'telefono_contacto' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'categoria' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'observaciones' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'estado' => ['sometimes', 'nullable', Rule::in(['activo', 'inactivo'])],
         ])->validate();
     }
 }

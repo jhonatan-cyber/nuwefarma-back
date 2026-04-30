@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verify.ua' => \App\Http\Middleware\VerifyUserAgent::class,
             'api.ratelimit' => \App\Http\Middleware\RateLimitApiRequests::class,
             'api.auth' => \App\Http\Middleware\EnsureApiAuthenticated::class,
+            'validate.api.headers' => \App\Http\Middleware\ValidateApiHeaders::class,
         ]);
 
         // Headers de seguridad globales

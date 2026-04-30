@@ -15,7 +15,9 @@ use App\Http\Requests\Venta\UpdateVentaRequest;
 use App\Http\Resources\Venta\VentaCollection;
 use App\Http\Resources\Venta\VentaResource;
 use App\Models\Venta;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class VentaController extends Controller
 {
@@ -49,7 +51,7 @@ class VentaController extends Controller
      */
     public function store(StoreVentaRequest $request)
     {
-        $venta = $this->createVentaAction->execute($request->validated());
+        $venta = $this->createVentaAction->execute($request->getValidatedData());
 
         return $this->created(
             new VentaResource($venta),

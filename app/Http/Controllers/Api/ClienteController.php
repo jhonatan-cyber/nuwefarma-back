@@ -16,6 +16,7 @@ use App\Http\Resources\Cliente\ClienteCollection;
 use App\Http\Resources\Cliente\ClienteResource;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ClienteController extends Controller
 {
@@ -140,9 +141,13 @@ class ClienteController extends Controller
         $total = Cliente::count();
         $activos = Cliente::where('estado', 'activo')->count();
         $inactivos = Cliente::where('estado', 'inactivo')->count();
-        $conDeuda = Cliente::whereHas('ventas', function ($query) {
-            $query->where('saldo_pendiente', '>', 0);
-        })->count();
+        $conDeuda = 0;
+
+        if (Schema::hasColumn('ventas', 'saldo_pendiente')) {
+            $conDeuda = Cliente::whereHas('ventas', function ($query) {
+                $query->where('saldo_pendiente', '>', 0);
+            })->count();
+        }
 
         return $this->success([
             'total' => $total,

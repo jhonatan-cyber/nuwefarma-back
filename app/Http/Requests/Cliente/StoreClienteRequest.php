@@ -16,7 +16,7 @@ class StoreClienteRequest extends FormRequest
     {
         return [
             'ci' => [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 'unique:clientes,ci',
@@ -48,31 +48,19 @@ class StoreClienteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'ci.required' => 'La cédula de identidad es obligatoria.',
-            'ci.string' => 'La cédula debe ser una cadena de texto.',
-            'ci.max' => 'La cédula no puede exceder 20 caracteres.',
-            'ci.unique' => 'Ya existe un cliente con esta cédula.',
+            'ci.string' => 'La cedula debe ser una cadena de texto.',
+            'ci.max' => 'La cedula no puede exceder 20 caracteres.',
+            'ci.unique' => 'Ya existe un cliente con esta cedula.',
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.string' => 'El nombre debe ser una cadena de texto.',
             'nombre.max' => 'El nombre no puede exceder 100 caracteres.',
             'apellidos.required' => 'El apellido es obligatorio.',
             'apellidos.string' => 'El apellido debe ser una cadena de texto.',
             'apellidos.max' => 'El apellido no puede exceder 100 caracteres.',
-            'telefono.string' => 'El teléfono debe ser una cadena de texto.',
-            'telefono.max' => 'El teléfono no puede exceder 20 caracteres.',
-            'telefono.regex' => 'El formato del teléfono no es válido.',
+            'telefono.string' => 'El telefono debe ser una cadena de texto.',
+            'telefono.max' => 'El telefono no puede exceder 20 caracteres.',
+            'telefono.regex' => 'El formato del telefono no es valido.',
             'estado.in' => 'El estado debe ser activo o inactivo.',
-        ];
-    }
-
-    public function attributes(): array
-    {
-        return [
-            'ci' => 'cédula de identidad',
-            'nombre' => 'nombre',
-            'apellidos' => 'apellido',
-            'telefono' => 'teléfono',
-            'estado' => 'estado',
         ];
     }
 
@@ -81,10 +69,5 @@ class StoreClienteRequest extends FormRequest
         if (! $this->has('estado')) {
             $this->merge(['estado' => 'activo']);
         }
-    }
-
-    public function getValidatedData(): array
-    {
-        return $this->validated();
     }
 }

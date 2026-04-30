@@ -65,7 +65,7 @@ class StoreUsuarioRequest extends FormRequest
             'sucursal_id' => [
                 'nullable',
                 'uuid',
-                'exists:sucursales,id',
+                'exists:sucursals,id',
             ],
             'sueldo' => [
                 'nullable',

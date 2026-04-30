@@ -11,6 +11,7 @@ use App\Actions\Proveedor\ListProveedoresAction;
 use App\Actions\Proveedor\UpdateProveedorAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Proveedor\StoreProveedorRequest;
+use App\Http\Requests\Proveedor\UpdateProveedorRequest;
 use App\Http\Resources\Proveedor\ProveedorCollection;
 use App\Http\Resources\Proveedor\ProveedorResource;
 use App\Models\Proveedor;
@@ -32,7 +33,7 @@ class ProveedorController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only([
-            'search', 'estado', 'ruc', 'sort', 'direction', 'per_page',
+            'search', 'estado', 'nit', 'ruc', 'sort', 'direction', 'per_page',
         ]);
 
         $proveedores = $this->listProveedoresAction->execute($filters);
@@ -66,9 +67,9 @@ class ProveedorController extends Controller
     /**
      * Update the specified provider in storage.
      */
-    public function update(Request $request, Proveedor $proveedor)
+    public function update(UpdateProveedorRequest $request, Proveedor $proveedor)
     {
-        $updatedProveedor = $this->updateProveedorAction->execute($proveedor, $request->all());
+        $updatedProveedor = $this->updateProveedorAction->execute($proveedor, $request->validated());
 
         return $this->success(
             new ProveedorResource($updatedProveedor->loadCount('productos')),
@@ -93,7 +94,7 @@ class ProveedorController extends Controller
     {
         $validated = $request->validate([
             'ids' => ['required', 'array'],
-            'ids.*' => ['required', 'string', 'exists:proveedors,id'],
+            'ids.*' => ['required', 'string', 'exists:proveedores,id'],
             'estado' => ['required', 'in:activo,inactivo'],
         ]);
 

@@ -60,7 +60,7 @@ class ProductoResource extends JsonResource
                     'data' => [
                         'id' => $this->proveedor->id,
                         'nombre' => $this->proveedor->nombre,
-                        'ruc' => $this->proveedor->ruc,
+                        'nit' => $this->proveedor->nit,
                     ],
                 ]),
             ],

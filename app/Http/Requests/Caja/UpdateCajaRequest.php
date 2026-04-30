@@ -41,7 +41,7 @@ class UpdateCajaRequest extends FormRequest
                 'sometimes',
                 'required',
                 'uuid',
-                'exists:sucursales,id',
+                'exists:sucursals,id',
             ],
             'notas' => [
                 'sometimes',

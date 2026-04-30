@@ -5,21 +5,44 @@ namespace App\Models\Concerns;
 use App\Models\Usuario;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 trait HasAuditoria
 {
+    /**
+     * Cache table column lookups to avoid repeated schema queries.
+     *
+     * @var array<string, bool>
+     */
+    protected static array $auditoriaColumnCache = [];
+
     /**
      * Boot the trait
      */
     protected static function bootHasAuditoria(): void
     {
         static::creating(function (Model $model) {
-            $model->crear_usuario_id = Auth::id();
+            if (static::hasAuditoriaColumn($model, 'crear_usuario_id')) {
+                $model->crear_usuario_id = Auth::id();
+            }
         });
 
         static::updating(function (Model $model) {
-            $model->actualizar_usuario_id = Auth::id();
+            if (static::hasAuditoriaColumn($model, 'actualizar_usuario_id')) {
+                $model->actualizar_usuario_id = Auth::id();
+            }
         });
+    }
+
+    protected static function hasAuditoriaColumn(Model $model, string $column): bool
+    {
+        $cacheKey = $model->getTable().'.'.$column;
+
+        if (! array_key_exists($cacheKey, static::$auditoriaColumnCache)) {
+            static::$auditoriaColumnCache[$cacheKey] = Schema::hasColumn($model->getTable(), $column);
+        }
+
+        return static::$auditoriaColumnCache[$cacheKey];
     }
 
     /**

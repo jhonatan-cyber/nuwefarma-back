@@ -23,16 +23,42 @@ class UsuarioCollection extends ResourceCollection
                 'attributes' => [
                     'nombre' => $usuario->nombre,
                     'apellidos' => $usuario->apellidos,
+                    'ci' => $usuario->ci,
                     'email' => $usuario->email,
+                    'telefono' => $usuario->telefono,
+                    'direccion' => $usuario->direccion,
+                    'celular' => $usuario->celular,
+                    'fecha_nacimiento' => $usuario->fecha_nacimiento,
+                    'sexo' => $usuario->sexo,
+                    'estado_civil' => $usuario->estado_civil,
+                    'ocupacion' => $usuario->ocupacion,
+                    'sueldo' => $usuario->sueldo,
+                    'foto' => $usuario->foto,
                     'estado' => $usuario->estado,
+                    'rol_id' => $usuario->rol_id,
+                    'sucursal_id' => $usuario->sucursal_id,
+                    'intentos_fallidos' => $usuario->intentos_fallidos,
+                    'bloqueado_hasta' => $usuario->bloqueado_hasta,
+                    'ultimo_intento_fallido' => $usuario->ultimo_intento_fallido,
                 ],
                 'relationships' => [
                     'rol' => [
                         'data' => [
+                            'id' => $usuario->rol->id ?? null,
                             'nombre' => $usuario->rol->nombre ?? null,
+                            'descripcion' => $usuario->rol->descripcion ?? null,
+                        ],
+                    ],
+                    'sucursal' => [
+                        'data' => [
+                            'id' => $usuario->sucursal->id ?? null,
+                            'nombre' => $usuario->sucursal->nombre ?? null,
+                            'direccion' => $usuario->sucursal->direccion ?? null,
                         ],
                     ],
                 ],
+                'created_at' => $usuario->created_at,
+                'updated_at' => $usuario->updated_at,
             ]),
             'meta' => [
                 'total' => $this->total(),

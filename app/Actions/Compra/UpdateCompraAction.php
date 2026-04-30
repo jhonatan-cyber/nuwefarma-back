@@ -61,7 +61,7 @@ class UpdateCompraAction
     private function validate(array $data, Compra $compra): array
     {
         return validator($data, [
-            'proveedor_id' => ['sometimes', 'exists:proveedors,id'],
+            'proveedor_id' => ['sometimes', 'exists:proveedores,id'],
             'tipo_documento' => ['sometimes', Rule::in(['factura', 'boleta', 'nota_credito', 'guia_remision'])],
             'numero_documento' => ['sometimes', 'string', 'max:100'],
             'fecha_documento' => ['sometimes', 'date'],

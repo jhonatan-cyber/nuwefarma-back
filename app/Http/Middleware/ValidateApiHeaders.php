@@ -3,13 +3,14 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class ValidateApiHeaders
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): Response|JsonResponse
     {
         // Validate required headers
         $errors = $this->validateHeaders($request);
@@ -64,19 +65,18 @@ class ValidateApiHeaders
             $errors['api_version'] = 'Invalid API version. Supported: v1, v2';
         }
 
-        // Check for required custom headers
-        $requiredHeaders = [
+        // Custom informational headers are optional; validate only when present.
+        $optionalHeaders = [
             'X-Request-ID' => 'string|max:100',
             'X-Client-Version' => 'string|max:50',
         ];
 
-        foreach ($requiredHeaders as $header => $rule) {
+        foreach ($optionalHeaders as $header => $rule) {
             $value = $request->header($header);
+            $key = strtolower($header);
 
-            if (! $value) {
-                $errors[$header] = "Header {$header} is required";
-            } elseif (! $this->validateHeaderValue($value, $rule)) {
-                $errors[$header] = "Header {$header} is invalid";
+            if ($value && ! $this->validateHeaderValue($value, $rule)) {
+                $errors[$key] = "Header {$header} is invalid";
             }
         }
 
@@ -103,7 +103,7 @@ class ValidateApiHeaders
         return true;
     }
 
-    private function addSecurityHeaders(Response $response): void
+    private function addSecurityHeaders(Response|JsonResponse $response): void
     {
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
@@ -113,7 +113,7 @@ class ValidateApiHeaders
         $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';");
     }
 
-    private function addCachingHeaders(Response $response, Request $request): void
+    private function addCachingHeaders(Response|JsonResponse $response, Request $request): void
     {
         // Add cache headers based on response status and method
         $statusCode = $response->getStatusCode();
@@ -134,11 +134,14 @@ class ValidateApiHeaders
         }
     }
 
-    private function addApiVersionHeaders(Response $response): void
+    private function addApiVersionHeaders(Response|JsonResponse $response): void
     {
         $response->headers->set('X-API-Version', '2.0');
         $response->headers->set('X-Laravel-Version', app()->version());
         $response->headers->set('X-PHP-Version', PHP_VERSION);
-        $response->headers->set('X-Response-Time', microtime(true) - LARAVEL_START);
+
+        if (defined('LARAVEL_START')) {
+            $response->headers->set('X-Response-Time', microtime(true) - LARAVEL_START);
+        }
     }
 }

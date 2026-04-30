@@ -20,7 +20,9 @@ class ApiResponseService
         ];
 
         if ($data !== null) {
-            if ($data instanceof ResourceCollection || $data instanceof LengthAwarePaginator) {
+            if ($data instanceof JsonResource) {
+                $response['data'] = $data;
+            } elseif ($data instanceof LengthAwarePaginator) {
                 $response['data'] = $data->items();
                 $response['meta'] = [
                     'total' => $data->total(),
@@ -36,8 +38,6 @@ class ApiResponseService
                     'prev' => $data->previousPageUrl(),
                     'next' => $data->nextPageUrl(),
                 ];
-            } elseif ($data instanceof JsonResource) {
-                $response['data'] = $data;
             } else {
                 $response['data'] = $data;
             }

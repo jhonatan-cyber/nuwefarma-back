@@ -5,9 +5,9 @@ namespace App\Models;
 use App\Enums\ViaAdministracionEnum;
 use App\Models\Concerns\HasAuditoria;
 use App\Models\Concerns\HasEstado;
-use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
-    use HasAuditoria, HasEstado, HasFactory, HasUuid;
+    use HasAuditoria, HasEstado, HasFactory, HasUuids;
 
     protected $table = 'productos';
 

@@ -28,7 +28,7 @@ class StoreVentaRequest extends FormRequest
             'sucursal_id' => [
                 'required',
                 'uuid',
-                'exists:sucursales,id',
+                'exists:sucursals,id',
             ],
             'productos' => [
                 'required',
@@ -67,8 +67,18 @@ class StoreVentaRequest extends FormRequest
                 'min:0',
                 'max:999999.99',
             ],
-            'impuestos' => [
-                'nullable',
+            'tipo_pago' => [
+                'required',
+                'string',
+                Rule::in(['contado', 'credito']),
+            ],
+            'metodo_pago' => [
+                'required',
+                'string',
+                Rule::in(['efectivo', 'tarjeta', 'transferencia', 'cheque']),
+            ],
+            'impuesto' => [
+                'required',
                 'numeric',
                 'min:0',
             ],
@@ -76,11 +86,6 @@ class StoreVentaRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:0.01',
-            ],
-            'metodo_pago' => [
-                'required',
-                'string',
-                Rule::in(['efectivo', 'tarjeta_credito', 'tarjeta_debito', 'transferencia', 'credito', 'mixto']),
             ],
             'estado' => [
                 'nullable',
@@ -133,8 +138,9 @@ class StoreVentaRequest extends FormRequest
             'descuento.numeric' => 'El descuento debe ser un número.',
             'descuento.min' => 'El descuento no puede ser negativo.',
             'descuento.max' => 'El descuento no puede exceder 999,999.99.',
-            'impuestos.numeric' => 'Los impuestos deben ser un número.',
-            'impuestos.min' => 'Los impuestos no pueden ser negativos.',
+            'impuesto.required' => 'El impuesto es obligatorio.',
+            'impuesto.numeric' => 'El impuesto debe ser un número.',
+            'impuesto.min' => 'El impuesto no puede ser negativo.',
             'total.required' => 'El total es obligatorio.',
             'total.numeric' => 'El total debe ser un número.',
             'total.min' => 'El total debe ser mayor a 0.',
@@ -159,7 +165,9 @@ class StoreVentaRequest extends FormRequest
             'productos.*.descuento' => 'descuento',
             'subtotal' => 'subtotal',
             'descuento' => 'descuento',
-            'impuestos' => 'impuestos',
+            'tipo_pago' => 'tipo de pago',
+            'metodo_pago' => 'método de pago',
+            'impuesto' => 'impuesto',
             'total' => 'total',
             'metodo_pago' => 'método de pago',
             'estado' => 'estado',
@@ -174,8 +182,8 @@ class StoreVentaRequest extends FormRequest
             $this->merge(['descuento' => 0]);
         }
 
-        if ($this->has('impuestos') && $this->impuestos === '') {
-            $this->merge(['impuestos' => 0]);
+        if ($this->has('impuesto') && $this->impuesto === '') {
+            $this->merge(['impuesto' => 0]);
         }
 
         if (! $this->has('estado')) {

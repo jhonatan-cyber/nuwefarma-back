@@ -62,7 +62,7 @@ class CreateCompraAction
     private function validate(array $data): array
     {
         return validator($data, [
-            'proveedor_id' => ['required', 'exists:proveedors,id'],
+            'proveedor_id' => ['required', 'exists:proveedores,id'],
             'usuario_id' => ['required', 'exists:usuarios,id'],
             'caja_id' => ['required', 'exists:cajas,id'],
             'tipo_documento' => ['required', Rule::in(['factura', 'boleta', 'nota_credito', 'guia_remision'])],

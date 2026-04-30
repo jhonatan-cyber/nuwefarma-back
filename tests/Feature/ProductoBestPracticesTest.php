@@ -340,18 +340,20 @@ class ProductoBestPracticesTest extends TestCase
         $response = $this->getJson('/api/productos');
         $response->assertStatus(401);
 
-        // Test missing headers
+        // Test authenticated request with default headers
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
         ])->getJson('/api/productos');
 
-        $response->assertStatus(400)
+        $response->assertStatus(200)
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
             ->assertJsonStructure([
                 'success',
-                'message',
-                'errors' => [
-                    'x-request-id',
-                    'x-client-version',
+                'data' => [
+                    'data',
+                    'meta',
+                    'links',
                 ],
             ]);
     }

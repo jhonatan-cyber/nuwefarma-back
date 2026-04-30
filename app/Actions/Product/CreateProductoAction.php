@@ -25,9 +25,7 @@ readonly class CreateProductoAction
             );
 
             // Create product with validated data
-            $uuid = \Illuminate\Support\Str::uuid();
             $producto = Producto::create([
-                'id' => $uuid,
                 'nombre' => $data->nombre,
                 'categoria_id' => $data->categoriaId,
                 'proveedor_id' => $data->proveedorId,

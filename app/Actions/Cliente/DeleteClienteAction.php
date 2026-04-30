@@ -28,26 +28,11 @@ class DeleteClienteAction
      */
     private function validateDeletion(Cliente $cliente): void
     {
-        // Check if client has related records
+        // Prevent deleting clients that already participate in sales history.
         if ($cliente->ventas()->exists()) {
             throw ApiException::conflict(
                 'No se puede eliminar el cliente',
                 ['ventas' => ['El cliente tiene ventas asociadas']]
-            );
-        }
-
-        if ($cliente->cotizaciones()->exists()) {
-            throw ApiException::conflict(
-                'No se puede eliminar el cliente',
-                ['cotizaciones' => ['El cliente tiene cotizaciones asociadas']]
-            );
-        }
-
-        // Check if client has outstanding debt
-        if ($cliente->deudaPendiente() > 0) {
-            throw ApiException::conflict(
-                'No se puede eliminar el cliente',
-                ['deuda' => ['El cliente tiene deuda pendiente']]
             );
         }
     }

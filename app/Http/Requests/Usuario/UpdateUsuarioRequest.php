@@ -76,7 +76,7 @@ class UpdateUsuarioRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'uuid',
-                'exists:sucursales,id',
+                'exists:sucursals,id',
             ],
             'sueldo' => [
                 'sometimes',

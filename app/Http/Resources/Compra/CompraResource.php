@@ -21,7 +21,7 @@ class CompraResource extends JsonResource
             'proveedor' => $this->whenLoaded('proveedor', fn () => [
                 'id' => $this->proveedor->id,
                 'nombre' => $this->proveedor->nombre,
-                'ruc' => $this->proveedor->ruc,
+                'nit' => $this->proveedor->nit,
                 'email' => $this->proveedor->email,
             ]),
             'usuario' => $this->whenLoaded('usuario', fn () => [

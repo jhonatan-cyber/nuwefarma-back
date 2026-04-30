@@ -47,7 +47,7 @@ class UpdateProductoAction
         return validator($data, [
             'nombre' => ['sometimes', 'string', 'max:255'],
             'categoria_id' => ['sometimes', 'exists:categorias,id'],
-            'proveedor_id' => ['sometimes', 'exists:proveedors,id'],
+            'proveedor_id' => ['sometimes', 'exists:proveedores,id'],
             'codigo_barras' => ['sometimes', 'string', 'max:255', Rule::unique('productos', 'codigo_barras')->ignore($producto->id)],
             'sku' => ['sometimes', 'string', 'max:100', Rule::unique('productos', 'sku')->ignore($producto->id)],
             'codigo_interno' => ['sometimes', 'string', 'max:100'],

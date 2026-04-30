@@ -41,7 +41,7 @@ class StoreCajaRequest extends FormRequest
             'sucursal_id' => [
                 'required',
                 'uuid',
-                'exists:sucursales,id',
+                'exists:sucursals,id',
             ],
             'notas' => [
                 'nullable',

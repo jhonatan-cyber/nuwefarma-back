@@ -39,8 +39,8 @@ class ListProveedoresAction
         $query->when(! empty($filters['search']), function ($q) use ($filters) {
             $search = $filters['search'];
             $q->where('nombre', 'like', "%{$search}%")
-                ->orWhere('ruc', 'like', "%{$search}%")
-                ->orWhere('contacto_nombre', 'like', "%{$search}%")
+                ->orWhere('nit', 'like', "%{$search}%")
+                ->orWhere('contacto', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%");
         });
 
@@ -48,8 +48,9 @@ class ListProveedoresAction
             $q->where('estado', $filters['estado']);
         });
 
-        $query->when(! empty($filters['ruc']), function ($q) use ($filters) {
-            $q->where('ruc', $filters['ruc']);
+        $query->when(! empty($filters['ruc'] ?? $filters['nit'] ?? null), function ($q) use ($filters) {
+            $nit = $filters['ruc'] ?? ($filters['nit'] ?? null);
+            $q->where('nit', $nit);
         });
     }
 

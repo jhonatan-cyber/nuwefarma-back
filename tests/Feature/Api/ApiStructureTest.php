@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ApiStructureTest extends TestCase
@@ -22,7 +23,7 @@ class ApiStructureTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function api_info_returns_successful_response()
     {
         $response = $this->getJson('/api/info');
@@ -36,7 +37,7 @@ class ApiStructureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function health_check_returns_successful_response()
     {
         $response = $this->actingAs($this->user)
@@ -57,7 +58,7 @@ class ApiStructureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function productos_routes_exist()
     {
         $response = $this->actingAs($this->user)
@@ -66,7 +67,7 @@ class ApiStructureTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function ventas_routes_exist()
     {
         $response = $this->actingAs($this->user)
@@ -75,7 +76,7 @@ class ApiStructureTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function rutas_no_tienen_versionamiento()
     {
         $routes = [

@@ -208,4 +208,29 @@ class PdfController extends Controller
 
         return $pdf->download('comprobante_compra_'.$id.'.pdf');
     }
+
+    #[OA\Get(
+        path: '/api/reportes/cotizacion/pdf',
+        summary: 'Generar PDF de cotización',
+        security: [['bearerAuth' => []]],
+        tags: ['Reportes PDF'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'query', required: true, description: 'ID de la cotización'),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'PDF de cotización'),
+        ]
+    )]
+    public function reporteCotizacion(Request $request): Response
+    {
+        $id = $request->get('id');
+
+        if (!$id) {
+            return response()->json(['error' => 'ID de cotización requerido'], 400);
+        }
+
+        $pdf = $this->pdfService->generarReporteCotizacion($id);
+
+        return $pdf->download('cotizacion_'.$id.'.pdf');
+    }
 }

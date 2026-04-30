@@ -301,19 +301,51 @@ Route::prefix('v2')->middleware(['api', 'auth:sanctum', 'throttle:api'])->group(
     Route::prefix('reportes')->group(function () {
         Route::get('/reportes/inventario', [\App\Http\Controllers\Api\DashboardController::class, 'inventario'])
             ->name('reportes.inventario');
-        
+
         Route::get('/reportes/ventas', [\App\Http\Controllers\Api\DashboardController::class, 'ventas'])
             ->name('reportes.ventas');
-        
+
         Route::get('/reportes/financiero', [\App\Http\Controllers\Api\DashboardController::class, 'financiero'])
             ->name('reportes.financiero');
-        
+
         Route::post('/reportes/generar', [\App\Http\Controllers\Api\PdfController::class, 'generar'])
             ->name('reportes.generar');
-        
+
         Route::get('/reportes/{reporte}/descargar', [\App\Http\Controllers\Api\PdfController::class, 'descargar'])
             ->name('reportes.descargar');
+
+        // PDF Routes
+        Route::get('/reportes/ventas/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteVentas'])
+            ->name('reportes.ventas.pdf');
+
+        Route::get('/reportes/compras/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteCompras'])
+            ->name('reportes.compras.pdf');
+
+        Route::get('/reportes/inventario/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteInventario'])
+            ->name('reportes.inventario.pdf');
+
+        Route::get('/reportes/kardex/pdf/{loteId}', [\App\Http\Controllers\Api\PdfController::class, 'reporteKardex'])
+            ->name('reportes.kardex.pdf');
+
+        Route::get('/reportes/stock-bajo/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteStockBajo'])
+            ->name('reportes.stock-bajo.pdf');
+
+        Route::get('/reportes/proximos-vencer/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteProximosVencer'])
+            ->name('reportes.proximos-vencer.pdf');
+
+        Route::get('/reportes/movimientos/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteMovimientos'])
+            ->name('reportes.movimientos.pdf');
+
+        Route::get('/reportes/cotizacion/pdf', [\App\Http\Controllers\Api\PdfController::class, 'reporteCotizacion'])
+            ->name('reportes.cotizacion.pdf');
     });
+
+    // PDF Routes for comprobantes
+    Route::get('/ventas/{id}/comprobante/pdf', [\App\Http\Controllers\Api\PdfController::class, 'comprobanteVenta'])
+        ->name('ventas.comprobante.pdf');
+
+    Route::get('/compras/{id}/comprobante/pdf', [\App\Http\Controllers\Api\PdfController::class, 'comprobanteCompra'])
+        ->name('compras.comprobante.pdf');
 
     /*
     |--------------------------------------------------------------------------

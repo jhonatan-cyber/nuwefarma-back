@@ -285,4 +285,21 @@ class PdfService
 
         return $pdf;
     }
+
+    public function generarReporteCotizacion(string $cotizacionId): \Barryvdh\DomPDF\PDF
+    {
+        $cotizacion = \App\Models\Cotizacion::with(['cliente', 'usuario', 'sucursal', 'productos.producto'])
+            ->findOrFail($cotizacionId);
+
+        $data = [
+            'titulo' => 'Cotización',
+            'fecha_generacion' => now()->format('d/m/Y H:i'),
+            'cotizacion' => $cotizacion,
+        ];
+
+        $pdf = Pdf::loadView('pdf.cotizacion', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf;
+    }
 }

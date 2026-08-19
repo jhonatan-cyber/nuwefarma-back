@@ -17,7 +17,8 @@ class ListVentasAction
      */
     public function execute(array $filters = []): LengthAwarePaginator
     {
-        $query = Venta::with(['cliente', 'usuario', 'caja']);
+        $query = Venta::with(['cliente', 'usuario', 'caja'])
+            ->withSum('salidasInventario as costo_venta', 'costo_total');
 
         $this->applyFilters($query, $filters);
 

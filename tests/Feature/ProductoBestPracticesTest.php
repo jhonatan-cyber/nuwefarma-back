@@ -6,6 +6,7 @@ use App\Actions\Product\CreateProductoAction;
 use App\DTOs\Product\CreateProductoDTO;
 use App\Enums\EstadoEnum;
 use App\Models\Producto;
+use App\Models\Rol;
 use App\Models\Usuario;
 use App\Repositories\ProductoRepository;
 use App\ValueObjects\ProductPrice;
@@ -27,7 +28,8 @@ class ProductoBestPracticesTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $adminRole = Rol::factory()->create(['nombre' => 'Administrador']);
+        $this->usuario = Usuario::factory()->create(['rol_id' => $adminRole->id]);
         $this->token = $this->usuario->createToken('test-token')->plainTextToken;
         $this->repository = new ProductoRepository(new Producto);
     }
@@ -189,7 +191,7 @@ class ProductoBestPracticesTest extends TestCase
             'X-Client-Version' => '1.0.0',
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-        ])->postJson('/api/productos', $data);
+        ])->postJson('/api/v1/productos', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -231,7 +233,7 @@ class ProductoBestPracticesTest extends TestCase
             'X-Client-Version' => '1.0.0',
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-        ])->postJson('/api/productos', $data);
+        ])->postJson('/api/v1/productos', $data);
 
         $response->assertStatus(422)
             ->assertJsonStructure([
@@ -256,7 +258,7 @@ class ProductoBestPracticesTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson("/api/productos/{$uuid}");
+        ])->getJson("/api/v1/productos/{$uuid}");
 
         $response->assertStatus(404)
             ->assertJson([
@@ -337,13 +339,13 @@ class ProductoBestPracticesTest extends TestCase
     public function test_security_patterns(): void
     {
         // Test unauthorized access
-        $response = $this->getJson('/api/productos');
+        $response = $this->getJson('/api/v1/productos');
         $response->assertStatus(401);
 
         // Test authenticated request with default headers
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos');
+        ])->getJson('/api/v1/productos');
 
         $response->assertStatus(200)
             ->assertHeader('X-Content-Type-Options', 'nosniff')

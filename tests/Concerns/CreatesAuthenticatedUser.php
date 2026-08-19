@@ -31,7 +31,7 @@ trait CreatesAuthenticatedUser
 
     protected function authenticateUser(\App\Models\Usuario $user): string
     {
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => '10571705', // Usar la contraseña original
         ]);

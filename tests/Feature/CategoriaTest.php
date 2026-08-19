@@ -31,7 +31,7 @@ class CategoriaTest extends TestCase
         Categoria::create(['nombre' => 'Analgésicos', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/categorias');
+            ->getJson('/api/v1/categorias');
 
         $response->assertStatus(200)
             ->assertJson(['success' => true])
@@ -55,7 +55,7 @@ class CategoriaTest extends TestCase
     public function test_crear_categoria(): void
     {
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->postJson('/api/categorias', [
+            ->postJson('/api/v1/categorias', [
                 'nombre' => 'Vitaminas',
                 'descripcion' => 'Suplementos vitamínicos',
                 'estado' => 'activo',
@@ -79,7 +79,7 @@ class CategoriaTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Original', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->putJson("/api/categorias/{$categoria->id}", [
+            ->putJson("/api/v1/categorias/{$categoria->id}", [
                 'nombre' => 'Actualizada',
                 'estado' => 'inactivo',
             ]);
@@ -101,7 +101,7 @@ class CategoriaTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'A Eliminar', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->deleteJson("/api/categorias/{$categoria->id}");
+            ->deleteJson("/api/v1/categorias/{$categoria->id}");
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
@@ -114,7 +114,7 @@ class CategoriaTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->patchJson("/api/categorias/{$categoria->id}/toggle-estado");
+            ->patchJson("/api/v1/categorias/{$categoria->id}/toggle-estado");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -128,7 +128,7 @@ class CategoriaTest extends TestCase
         Categoria::create(['nombre' => 'Duplicada', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->postJson('/api/categorias', [
+            ->postJson('/api/v1/categorias', [
                 'nombre' => 'Duplicada',
                 'estado' => 'activo',
             ]);
@@ -140,7 +140,7 @@ class CategoriaTest extends TestCase
     public function test_categoria_no_encontrada(): void
     {
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/categorias/00000000-0000-0000-0000-000000000000');
+            ->getJson('/api/v1/categorias/00000000-0000-0000-0000-000000000000');
 
         $response->assertStatus(404)
             ->assertJson(['success' => false]);

@@ -42,7 +42,7 @@ class ClienteCrudTest extends TestCase
             'estado' => 'activo',
         ]);
 
-        $response = $this->getJson('/api/clientes');
+        $response = $this->getJson('/api/v1/clientes');
 
         $response->assertOk()
             ->assertJsonPath('success', true)
@@ -65,7 +65,7 @@ class ClienteCrudTest extends TestCase
             'estado' => 'activo',
         ];
 
-        $response = $this->postJson('/api/clientes', $payload);
+        $response = $this->postJson('/api/v1/clientes', $payload);
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
@@ -89,7 +89,7 @@ class ClienteCrudTest extends TestCase
             'estado' => 'activo',
         ]);
 
-        $response = $this->patchJson("/api/clientes/{$cliente->id}/toggle-estado");
+        $response = $this->patchJson("/api/v1/clientes/{$cliente->id}/toggle-estado");
 
         $response->assertOk()
             ->assertJsonPath('success', true)
@@ -120,7 +120,7 @@ class ClienteCrudTest extends TestCase
             'estado' => 'inactivo',
         ];
 
-        $response = $this->putJson("/api/clientes/{$cliente->id}", $payload);
+        $response = $this->putJson("/api/v1/clientes/{$cliente->id}", $payload);
 
         $response->assertOk()
             ->assertJsonPath('success', true)
@@ -148,7 +148,7 @@ class ClienteCrudTest extends TestCase
             'estado' => 'activo',
         ]);
 
-        $response = $this->deleteJson("/api/clientes/{$cliente->id}");
+        $response = $this->deleteJson("/api/v1/clientes/{$cliente->id}");
 
         $response->assertNoContent();
 

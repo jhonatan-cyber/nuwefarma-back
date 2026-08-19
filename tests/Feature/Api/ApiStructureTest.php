@@ -16,7 +16,7 @@ class ApiStructureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = Usuario::factory()->create([
             'email' => 'test@example.com',
             'password' => bcrypt('password123'),
@@ -26,22 +26,33 @@ class ApiStructureTest extends TestCase
     #[Test]
     public function api_info_returns_successful_response()
     {
-        $response = $this->getJson('/api/info');
+        $response = $this->getJson('/api/v1/info');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'name',
-                'version',
-                'laravel_version',
-                'php_version',
+                'success',
+                'message',
+                'request_id',
+                'data' => [
+                    'name',
+                    'version',
+                    'laravel_version',
+                    'php_version',
+                ],
             ]);
+
+        $features = $response->json('data.features');
+
+        $this->assertArrayNotHasKey('ai_integration', $features);
+        $this->assertArrayNotHasKey('real_time', $features);
+        $this->assertArrayNotHasKey('webhooks', $features);
     }
 
     #[Test]
     public function health_check_returns_successful_response()
     {
         $response = $this->actingAs($this->user)
-            ->getJson('/api/health');
+            ->getJson('/api/v1/health');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -62,7 +73,7 @@ class ApiStructureTest extends TestCase
     public function productos_routes_exist()
     {
         $response = $this->actingAs($this->user)
-            ->getJson('/api/productos');
+            ->getJson('/api/v1/productos');
 
         $response->assertStatus(200);
     }
@@ -71,24 +82,24 @@ class ApiStructureTest extends TestCase
     public function ventas_routes_exist()
     {
         $response = $this->actingAs($this->user)
-            ->getJson('/api/ventas');
+            ->getJson('/api/v1/ventas');
 
         $response->assertStatus(200);
     }
 
     #[Test]
-    public function rutas_no_tienen_versionamiento()
+    public function rutas_utilizan_versionamiento_v1()
     {
         $routes = [
-            '/api/productos',
-            '/api/ventas',
-            '/api/clientes',
-            '/api/categorias',
-            '/api/health',
+            '/api/v1/productos',
+            '/api/v1/ventas',
+            '/api/v1/clientes',
+            '/api/v1/categorias',
+            '/api/v1/health',
         ];
 
         foreach ($routes as $route) {
-            $this->assertStringNotContainsString('/v1/', $route);
+            $this->assertStringContainsString('/v1/', $route);
             $this->assertStringNotContainsString('/v2/', $route);
         }
     }

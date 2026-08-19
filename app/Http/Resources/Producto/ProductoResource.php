@@ -48,6 +48,11 @@ class ProductoResource extends JsonResource
                 'bajo_stock' => $this->stock_actual <= $this->stock_minimo,
                 'estado' => $this->estado,
                 'estado_label' => ucfirst($this->estado),
+                'descripcion' => $this->descripcion,
+                'fotos' => $this->fotos,
+                'lotes_count' => $this->whenCounted('lotes'),
+                'venta_productos_count' => $this->whenCounted('ventaProductos'),
+                'compra_productos_count' => $this->whenCounted('compraProductos'),
             ],
             'relationships' => [
                 'categoria' => $this->whenLoaded('categoria', fn() => [
@@ -65,7 +70,7 @@ class ProductoResource extends JsonResource
                 ]),
             ],
             'links' => [
-                'self' => route('productos.show', $this->id),
+                'self' => route('v1.productos.show', $this->id),
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

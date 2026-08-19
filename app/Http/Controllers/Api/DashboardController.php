@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Lote;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\Venta;
+use App\Models\MovimientoLote;
+use App\Services\FinancialCalculatorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use OpenApi\Attributes as OA;
@@ -41,12 +45,16 @@ class DashboardController extends Controller
     private function calculateMetrics(string $periodo): array
     {
         $fechaInicio = $this->getFechaInicio($periodo);
+        $fechaInicioAnterior = $this->getFechaInicioAnterior($periodo);
 
         return [
-            'ventas' => $this->getVentasMetrics($fechaInicio),
+            'ventas' => $this->getVentasMetrics($fechaInicio, $fechaInicioAnterior),
             'compras' => $this->getComprasMetrics($fechaInicio),
             'inventario' => $this->getInventarioMetrics(),
-            'productos' => $this->getProductosMetrics(),
+            'productos' => $this->getProductosMetrics($fechaInicio, $fechaInicioAnterior),
+            'clientes' => $this->getClientesMetrics($fechaInicio, $fechaInicioAnterior),
+            'proveedores' => $this->getProveedoresMetrics($fechaInicio, $fechaInicioAnterior),
+            'finanzas' => $this->getFinanzasMetrics(now()->startOfMonth()),
         ];
     }
 
@@ -61,7 +69,27 @@ class DashboardController extends Controller
         };
     }
 
-    private function getVentasMetrics($fechaInicio): array
+    private function getFechaInicioAnterior(string $periodo): string
+    {
+        return match ($periodo) {
+            'hoy' => now()->subDay()->startOfDay(),
+            'semana' => now()->subWeek()->startOfWeek(),
+            'mes' => now()->subMonthNoOverflow()->startOfMonth(),
+            'año' => now()->subYear()->startOfYear(),
+            default => now()->subMonthNoOverflow()->startOfMonth(),
+        };
+    }
+
+    private function calcularVariacion(float $actual, float $anterior): float
+    {
+        if ($anterior <= 0) {
+            return 0.0;
+        }
+
+        return round((($actual - $anterior) / $anterior) * 100, 2);
+    }
+
+    private function getVentasMetrics($fechaInicio, $fechaInicioAnterior): array
     {
         $ventas = Venta::where('fecha_venta', '>=', $fechaInicio)
             ->where('estado', '!=', 'cancelada');
@@ -69,6 +97,11 @@ class DashboardController extends Controller
         $totalVentas = $ventas->sum('total');
         $cantidadVentas = $ventas->count();
         $promedioVenta = $cantidadVentas > 0 ? $totalVentas / $cantidadVentas : 0;
+
+        $totalVentasAnterior = Venta::where('fecha_venta', '>=', $fechaInicioAnterior)
+            ->where('fecha_venta', '<', $fechaInicio)
+            ->where('estado', '!=', 'cancelada')
+            ->sum('total');
 
         $ventasPorDia = Venta::where('fecha_venta', '>=', $fechaInicio)
             ->where('estado', '!=', 'cancelada')
@@ -81,6 +114,7 @@ class DashboardController extends Controller
             'total' => $totalVentas,
             'cantidad' => $cantidadVentas,
             'promedio' => round($promedioVenta, 2),
+            'crecimiento' => $this->calcularVariacion((float) $totalVentas, (float) $totalVentasAnterior),
             'por_dia' => $ventasPorDia->toArray(),
         ];
     }
@@ -93,9 +127,61 @@ class DashboardController extends Controller
         $totalCompras = $compras->sum('total');
         $cantidadCompras = $compras->count();
 
+        $conteoPorEstado = Compra::where('fecha_compra', '>=', $fechaInicio)
+            ->selectRaw('estado, COUNT(*) as total')
+            ->groupBy('estado')
+            ->pluck('total', 'estado');
+
         return [
             'total' => $totalCompras,
             'cantidad' => $cantidadCompras,
+            'por_estado' => [
+                'pendiente' => (int) ($conteoPorEstado['pendiente'] ?? 0),
+                'recibida' => (int) ($conteoPorEstado['recibida'] ?? 0),
+                'cancelada' => (int) ($conteoPorEstado['cancelada'] ?? 0),
+                'devuelta' => (int) ($conteoPorEstado['devuelta'] ?? 0),
+            ],
+        ];
+    }
+
+    /**
+     * Métricas financieras consolidadas del mes en curso: lo cobrado, el
+     * saldo por cobrar y la utilidad bruta real según el costo de inventario.
+     */
+    private function getFinanzasMetrics($fechaInicio): array
+    {
+        $calculador = app(FinancialCalculatorService::class);
+
+        $ventasMes = Venta::where('fecha_venta', '>=', $fechaInicio)
+            ->where('estado', '!=', 'cancelada')
+            ->get();
+
+        $ganancias = [
+            'costo_ventas' => $ventasMes->sum(fn (Venta $venta) => $calculador->costoVenta($venta)),
+            'ingresos' => $ventasMes->sum(fn (Venta $venta) => $calculador->totalCobrado($venta)),
+            'saldo_por_cobrar' => $ventasMes->sum(fn (Venta $venta) => $calculador->saldoPorCobrar($venta)),
+            'utilidad_bruta' => $ventasMes->sum(fn (Venta $venta) => $calculador->utilidadVenta($venta)),
+        ];
+
+        $totalFacturado = $ganancias['ingresos'] + $ganancias['saldo_por_cobrar'];
+
+        $ganancias['margen_utilidad'] = $totalFacturado > 0
+            ? round(($ganancias['utilidad_bruta'] / $totalFacturado) * 100, 2)
+            : 0.0;
+
+        $ganancias['costo_ventas'] = round($ganancias['costo_ventas'], 2);
+        $ganancias['ingresos'] = round($ganancias['ingresos'], 2);
+        $ganancias['saldo_por_cobrar'] = round($ganancias['saldo_por_cobrar'], 2);
+        $ganancias['utilidad_bruta'] = round($ganancias['utilidad_bruta'], 2);
+
+        return [
+            'mensual' => [
+                'ingresos' => $ganancias['ingresos'],
+                'costo_ventas' => $ganancias['costo_ventas'],
+                'utilidad_bruta' => $ganancias['utilidad_bruta'],
+                'margen_utilidad' => $ganancias['margen_utilidad'],
+                'saldo_por_cobrar' => $ganancias['saldo_por_cobrar'],
+            ],
         ];
     }
 
@@ -121,17 +207,61 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getProductosMetrics(): array
+    private function getProductosMetrics($fechaInicio, $fechaInicioAnterior): array
     {
         $totalProductos = Producto::where('estado', 'activo')->count();
         $productosConStock = Producto::whereHas('lotes', function ($query) {
             $query->whereIn('estado', ['disponible', 'parcial'])->where('stock', '>', 0);
         })->count();
 
+        $nuevosProductos = Producto::where('created_at', '>=', $fechaInicio)->count();
+        $nuevosProductosAnterior = Producto::where('created_at', '>=', $fechaInicioAnterior)
+            ->where('created_at', '<', $fechaInicio)
+            ->count();
+
         return [
             'total' => $totalProductos,
             'con_stock' => $productosConStock,
             'sin_stock' => $totalProductos - $productosConStock,
+            'crecimiento' => $this->calcularVariacion($nuevosProductos, $nuevosProductosAnterior),
+        ];
+    }
+
+    private function getClientesMetrics($fechaInicio, $fechaInicioAnterior): array
+    {
+        $total = Cliente::count();
+        $activos = Cliente::where('estado', 'activo')->count();
+
+        $nuevos = Cliente::where('created_at', '>=', $fechaInicio)->count();
+        $nuevosAnterior = Cliente::where('created_at', '>=', $fechaInicioAnterior)
+            ->where('created_at', '<', $fechaInicio)
+            ->count();
+
+        return [
+            'total' => $total,
+            'activos' => $activos,
+            'inactivos' => $total - $activos,
+            'nuevos' => $nuevos,
+            'crecimiento' => $this->calcularVariacion($nuevos, $nuevosAnterior),
+        ];
+    }
+
+    private function getProveedoresMetrics($fechaInicio, $fechaInicioAnterior): array
+    {
+        $total = Proveedor::count();
+        $activos = Proveedor::where('estado', 'activo')->count();
+
+        $nuevos = Proveedor::where('created_at', '>=', $fechaInicio)->count();
+        $nuevosAnterior = Proveedor::where('created_at', '>=', $fechaInicioAnterior)
+            ->where('created_at', '<', $fechaInicio)
+            ->count();
+
+        return [
+            'total' => $total,
+            'activos' => $activos,
+            'inactivos' => $total - $activos,
+            'nuevos' => $nuevos,
+            'crecimiento' => $this->calcularVariacion($nuevos, $nuevosAnterior),
         ];
     }
 
@@ -186,8 +316,7 @@ class DashboardController extends Controller
             ->where('ventas.estado', '!=', 'cancelada')
             ->join('venta_productos', 'ventas.id', '=', 'venta_productos.venta_id')
             ->join('productos', 'venta_productos.producto_id', '=', 'productos.id')
-            ->leftJoin('categoria_producto', 'productos.id', '=', 'categoria_producto.producto_id')
-            ->leftJoin('categorias', 'categoria_producto.categoria_id', '=', 'categorias.id')
+            ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
             ->selectRaw('categorias.id, categorias.nombre as categoria, SUM(venta_productos.subtotal) as total, COUNT(DISTINCT venta_productos.id) as transacciones')
             ->groupBy('categorias.id', 'categorias.nombre')
             ->orderBy('total', 'desc')
@@ -279,6 +408,74 @@ class DashboardController extends Controller
             'mes_anterior' => $ventasMesAnterior,
             'comparacion_porcentaje' => round($comparacion, 2),
             'tipo' => $comparacion >= 0 ? 'subio' : 'bajo',
+        ]);
+    }
+
+    #[OA\Get(
+        path: '/api/dashboard/alertas-inventario',
+        summary: 'Obtener listas de productos con alertas de inventario',
+        security: [['bearerAuth' => []]],
+        tags: ['Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'dias', in: 'query', description: 'Días para considerar próximo a vencer', required: false),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Alertas de inventario'),
+        ]
+    )]
+    public function getAlertasInventario(Request $request)
+    {
+        $dias = max(1, (int) $request->get('dias', 30));
+
+        $bajoStock = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')
+            ->orderBy('stock_actual', 'asc')
+            ->limit(50)
+            ->get()
+            ->map(fn (Producto $p) => [
+                'id' => $p->id,
+                'nombre' => $p->nombre,
+                'codigo_barras' => $p->codigo_barras,
+                'lote' => $p->lote,
+                'stock' => $p->stock_actual,
+                'stock_minimo' => $p->stock_minimo,
+            ])
+            ->values();
+
+        $proximosVencer = Producto::where('fecha_vencimiento', '>', now())
+            ->where('fecha_vencimiento', '<=', now()->addDays($dias))
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->limit(50)
+            ->get()
+            ->map(fn (Producto $p) => [
+                'id' => $p->id,
+                'nombre' => $p->nombre,
+                'codigo_barras' => $p->codigo_barras,
+                'lote' => $p->lote,
+                'fecha_vencimiento' => $p->fecha_vencimiento?->format('Y-m-d'),
+                'stock' => $p->stock_actual,
+                'stock_minimo' => $p->stock_minimo,
+            ])
+            ->values();
+
+        $vencidos = Producto::where('fecha_vencimiento', '<=', now())
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->limit(50)
+            ->get()
+            ->map(fn (Producto $p) => [
+                'id' => $p->id,
+                'nombre' => $p->nombre,
+                'codigo_barras' => $p->codigo_barras,
+                'lote' => $p->lote,
+                'fecha_vencimiento' => $p->fecha_vencimiento?->format('Y-m-d'),
+                'stock' => $p->stock_actual,
+                'stock_minimo' => $p->stock_minimo,
+            ])
+            ->values();
+
+        return $this->success([
+            'bajo_stock' => $bajoStock,
+            'proximos_vencer' => $proximosVencer,
+            'vencidos' => $vencidos,
         ]);
     }
 }

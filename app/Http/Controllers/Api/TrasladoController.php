@@ -103,7 +103,7 @@ class TrasladoController extends Controller
             ]);
 
             foreach ($request->items as $item) {
-                $loteOrigen = Lote::findOrFail($item['lote_origen_id']);
+                $loteOrigen = Lote::query()->lockForUpdate()->findOrFail($item['lote_origen_id']);
 
                 if ($loteOrigen->stock < $item['cantidad']) {
                     throw new \Exception("Stock insuficiente en lote {$loteOrigen->numero_lote}");
@@ -150,20 +150,23 @@ class TrasladoController extends Controller
     )]
     public function enviar(string $id): JsonResponse
     {
-        $traslado = Traslado::findOrFail($id);
-
-        if (! $traslado->puedeSerEnviado()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'El traslado no puede ser enviado en su estado actual',
-            ], 422);
-        }
-
         try {
             DB::beginTransaction();
 
+            // Lock de fila: serializa la transición y evita doble procesamiento
+            $traslado = Traslado::query()->lockForUpdate()->findOrFail($id);
+
+            if (! $traslado->puedeSerEnviado()) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El traslado no puede ser enviado en su estado actual',
+                ], 422);
+            }
+
             foreach ($traslado->detalles as $detalle) {
-                $loteOrigen = $detalle->loteOrigen;
+                $loteOrigen = Lote::query()->lockForUpdate()->findOrFail($detalle->lote_origen_id);
 
                 $stockAnterior = $loteOrigen->stock;
                 $loteOrigen->descontarStock($detalle->cantidad);
@@ -218,23 +221,27 @@ class TrasladoController extends Controller
     )]
     public function recibir(string $id): JsonResponse
     {
-        $traslado = Traslado::with(['detalles.loteOrigen.producto'])->findOrFail($id);
-
-        if (! $traslado->puedeSerRecibido()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'El traslado no puede ser recibido en su estado actual',
-            ], 422);
-        }
-
         try {
             DB::beginTransaction();
 
+            // Lock de fila: serializa la transición y evita doble procesamiento
+            $traslado = Traslado::query()->lockForUpdate()->findOrFail($id);
+
+            if (! $traslado->puedeSerRecibido()) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El traslado no puede ser recibido en su estado actual',
+                ], 422);
+            }
+
             foreach ($traslado->detalles as $detalle) {
-                $loteOrigen = $detalle->loteOrigen;
+                $loteOrigen = Lote::query()->lockForUpdate()->findOrFail($detalle->lote_origen_id);
 
                 $loteDestino = Lote::where('producto_id', $loteOrigen->producto_id)
                     ->where('sucursal_id', $traslado->sucursal_destino_id)
+                    ->lockForUpdate()
                     ->first();
 
                 if (! $loteDestino) {

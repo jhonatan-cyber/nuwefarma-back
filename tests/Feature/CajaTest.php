@@ -41,7 +41,7 @@ class CajaTest extends TestCase
         ]);
 
         // Login directo
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => 'admin@test.com',
             'password' => '12345678',
         ]);
@@ -72,7 +72,7 @@ class CajaTest extends TestCase
     {
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->getJson('/api/cajas');
+        ])->getJson('/api/v1/cajas');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -112,7 +112,7 @@ class CajaTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->postJson('/api/cajas', $cajaData);
+        ])->postJson('/api/v1/cajas', $cajaData);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -149,7 +149,7 @@ class CajaTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->patchJson("/api/cajas/{$caja->id}/abrir", [
+        ])->patchJson("/api/v1/cajas/{$caja->id}/abrir", [
             'monto_apertura' => 100.00,
         ]);
 
@@ -174,7 +174,7 @@ class CajaTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->patchJson("/api/cajas/{$caja->id}/cerrar", [
+        ])->patchJson("/api/v1/cajas/{$caja->id}/cerrar", [
             'monto_final' => 500.00,
             'observaciones' => 'Cierre de caja',
         ]);
@@ -195,7 +195,7 @@ class CajaTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->postJson('/api/cajas', $cajaData);
+        ])->postJson('/api/v1/cajas', $cajaData);
 
         $response->assertStatus(422);
     }
@@ -211,7 +211,7 @@ class CajaTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->patchJson("/api/cajas/{$caja->id}/abrir");
+        ])->patchJson("/api/v1/cajas/{$caja->id}/abrir");
 
         $response->assertStatus(400)
             ->assertJsonPath('success', false);
@@ -219,7 +219,7 @@ class CajaTest extends TestCase
 
     public function test_usuario_no_autenticado_no_puede_acceder(): void
     {
-        $response = $this->getJson('/api/cajas');
+        $response = $this->getJson('/api/v1/cajas');
 
         $response->assertStatus(401);
     }

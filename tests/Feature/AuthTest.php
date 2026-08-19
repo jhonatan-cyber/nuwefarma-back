@@ -44,7 +44,7 @@ class AuthTest extends TestCase
 
     public function test_login_exitoso(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'jhonatanancasi@gmail.com',
             'password' => '10571705',
         ]);
@@ -63,20 +63,24 @@ class AuthTest extends TestCase
 
     public function test_login_credenciales_invalidas(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'jhonatanancasi@gmail.com',
             'password' => 'password_incorrecto',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonFragment([
-                'message' => 'Las credenciales proporcionadas son incorrectas.',
+            ->assertJson([
+                'success' => false,
+                'code' => 'VALIDATION_ERROR',
+                'errors' => [
+                    'email' => ['Las credenciales proporcionadas son incorrectas.'],
+                ],
             ]);
     }
 
     public function test_login_usuario_no_existe(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'noexiste@example.com',
             'password' => 'password',
         ]);
@@ -88,14 +92,14 @@ class AuthTest extends TestCase
     {
         // Realizar 5 intentos fallidos
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/auth/login', [
+            $this->postJson('/api/v1/auth/login', [
                 'email' => 'jhonatanancasi@gmail.com',
                 'password' => 'password_incorrecto',
             ]);
         }
 
         // El 6to intento fallará por throttling de Laravel (antes de llegar a la lógica del controlador)
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'jhonatanancasi@gmail.com',
             'password' => 'password_incorrecto',
         ]);
@@ -107,7 +111,7 @@ class AuthTest extends TestCase
     public function test_logout_exitoso(): void
     {
         // Login primero
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => 'jhonatanancasi@gmail.com',
             'password' => '10571705',
         ]);
@@ -116,7 +120,7 @@ class AuthTest extends TestCase
 
         // Logout con token
         $response = $this->withHeader('Authorization', "Bearer {$token}")
-            ->postJson('/api/auth/logout');
+            ->postJson('/api/v1/auth/logout');
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
@@ -124,7 +128,7 @@ class AuthTest extends TestCase
 
     public function test_me_obtener_usuario_autenticado(): void
     {
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => 'jhonatanancasi@gmail.com',
             'password' => '10571705',
         ]);
@@ -132,7 +136,7 @@ class AuthTest extends TestCase
         $token = $loginResponse['data']['token'];
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/auth/me');
 
         $response->assertStatus(200)
             ->assertJson([
@@ -148,7 +152,7 @@ class AuthTest extends TestCase
 
     public function test_sin_autenticacion_retorna_401(): void
     {
-        $response = $this->getJson('/api/auth/me');
+        $response = $this->getJson('/api/v1/auth/me');
 
         $response->assertStatus(401);
     }

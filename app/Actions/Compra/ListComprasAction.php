@@ -17,7 +17,7 @@ class ListComprasAction
      */
     public function execute(array $filters = []): LengthAwarePaginator
     {
-        $query = Compra::with(['proveedor', 'usuario', 'caja']);
+        $query = Compra::with(['proveedor', 'usuario', 'sucursal', 'productos.producto']);
 
         $this->applyFilters($query, $filters);
 
@@ -36,11 +36,17 @@ class ListComprasAction
      */
     private function applyFilters($query, array $filters): void
     {
-        $query->when(! empty($filters['search']), function ($q) use ($filters) {
-            $search = $filters['search'];
-            $q->whereHas('proveedor', function ($subQuery) use ($search) {
-                $subQuery->where('nombre', 'like', "%{$search}%")
-                    ->orWhere('ruc', 'like', "%{$search}%");
+        $termino = $filters['q'] ?? ($filters['search'] ?? null);
+
+        $query->when(! empty($termino), function ($q) use ($termino) {
+            $q->where(function ($sub) use ($termino) {
+                $sub->where('numero_compra', 'like', "%{$termino}%")
+                    ->orWhere('numero_documento', 'like', "%{$termino}%")
+                    ->orWhereHas('proveedor', function ($proveedorQuery) use ($termino) {
+                        $proveedorQuery->where('nombre', 'like', "%{$termino}%")
+                            ->orWhere('nit', 'like', "%{$termino}%")
+                            ->orWhere('ruc', 'like', "%{$termino}%");
+                    });
             });
         });
 
@@ -62,6 +68,14 @@ class ListComprasAction
 
         $query->when(! empty($filters['usuario_id']), function ($q) use ($filters) {
             $q->where('usuario_id', $filters['usuario_id']);
+        });
+
+        $query->when(! empty($filters['sucursal_id']), function ($q) use ($filters) {
+            $q->where('sucursal_id', $filters['sucursal_id']);
+        });
+
+        $query->when(! empty($filters['metodo_pago']), function ($q) use ($filters) {
+            $q->where('metodo_pago', $filters['metodo_pago']);
         });
 
         $query->when(! empty($filters['caja_id']), function ($q) use ($filters) {

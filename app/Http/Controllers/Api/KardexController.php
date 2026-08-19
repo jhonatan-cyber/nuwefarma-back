@@ -8,6 +8,7 @@ use App\Services\InventarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class KardexController extends Controller
 {
@@ -308,7 +309,7 @@ class KardexController extends Controller
     /**
      * Exportar Kardex a CSV
      */
-    public function exportarCsv(Request $request): JsonResponse
+    public function exportarCsv(Request $request): StreamedResponse
     {
         try {
             $request->validate([
@@ -394,7 +395,7 @@ class KardexController extends Controller
     /**
      * Exportar reporte de movimientos a CSV
      */
-    public function exportarMovimientosCsv(Request $request): JsonResponse
+    public function exportarMovimientosCsv(Request $request): StreamedResponse
     {
         try {
             $query = MovimientoLote::with(['lote.producto', 'usuario', 'sucursal']);

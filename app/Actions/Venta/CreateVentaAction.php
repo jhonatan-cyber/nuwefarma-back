@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Venta;
 
+use App\Exceptions\ApiException;
+use App\Models\Producto;
 use App\Models\Venta;
 use App\Models\VentaProducto;
-use App\Models\Producto;
-use App\Models\Cliente;
-use App\Models\Caja;
+use App\Services\PagoService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -17,8 +17,7 @@ class CreateVentaAction
     /**
      * Create a new sale with products.
      *
-     * @param array<string, mixed> $data
-     * @return Venta
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): Venta
     {
@@ -31,10 +30,11 @@ class CreateVentaAction
                 'cliente_id' => $validatedData['cliente_id'],
                 'usuario_id' => $validatedData['usuario_id'],
                 'caja_id' => $validatedData['caja_id'],
+                'sucursal_id' => $validatedData['sucursal_id'] ?? null,
                 'tipo_pago' => $validatedData['tipo_pago'],
                 'metodo_pago' => $validatedData['metodo_pago'],
                 'subtotal' => $validatedData['subtotal'],
-                'impuesto' => $validatedData['impuesto'],
+                'impuestos' => $validatedData['impuestos'] ?? $validatedData['impuesto'] ?? 0,
                 'descuento' => $validatedData['descuento'] ?? 0,
                 'total' => $validatedData['total'],
                 'pagado' => $validatedData['pagado'] ?? 0,
@@ -48,17 +48,18 @@ class CreateVentaAction
                 $this->addProductToSale($venta, $productoData);
             }
 
-            // Update caja balance
-            $this->updateCajaBalance($venta);
+            if ($venta->estado === 'completada') {
+                $this->applyCompletedSale($venta);
+            }
 
             return $venta->load(['cliente', 'usuario', 'caja', 'ventaProductos.producto']);
-        });
+        }, 3);
     }
 
     /**
      * Validate the sale data.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function validate(array $data): array
@@ -71,7 +72,8 @@ class CreateVentaAction
             'tipo_pago' => ['required', Rule::in(['contado', 'credito'])],
             'metodo_pago' => ['required', Rule::in(['efectivo', 'tarjeta', 'transferencia', 'cheque'])],
             'subtotal' => ['required', 'numeric', 'min:0'],
-            'impuesto' => ['required', 'numeric', 'min:0'],
+            'impuesto' => ['nullable', 'numeric', 'min:0'],
+            'impuestos' => ['nullable', 'numeric', 'min:0'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'total' => ['required', 'numeric', 'min:0'],
             'pagado' => ['nullable', 'numeric', 'min:0'],
@@ -89,12 +91,11 @@ class CreateVentaAction
     /**
      * Add product to sale and update stock.
      *
-     * @param Venta $venta
-     * @param array<string, mixed> $productoData
+     * @param  array<string, mixed>  $productoData
      */
     private function addProductToSale(Venta $venta, array $productoData): void
     {
-        $producto = Producto::findOrFail($productoData['producto_id']);
+        $producto = Producto::query()->lockForUpdate()->findOrFail($productoData['producto_id']);
 
         // Simplificar validación de stock para evitar errores
         // if ($producto->stock_actual < $productoData['cantidad']) {
@@ -107,7 +108,7 @@ class CreateVentaAction
             'producto_id' => $producto->id,
             'cantidad' => $productoData['cantidad'],
             'precio_unitario' => $productoData['precio_unitario'],
-            'descuento' => $productoData['descuento'] ?? 0,
+            'descuento_unitario' => $productoData['descuento'] ?? $productoData['descuento_unitario'] ?? 0,
             'subtotal' => ($productoData['precio_unitario'] * $productoData['cantidad']) - ($productoData['descuento'] ?? 0),
         ]);
 
@@ -117,16 +118,20 @@ class CreateVentaAction
 
     /**
      * Update caja balance.
-     *
-     * @param Venta $venta
      */
-    private function updateCajaBalance(Venta $venta): void
+    private function applyCompletedSale(Venta $venta): void
     {
-        // Simplificar para evitar errores de caja
-        // $caja = Caja::findOrFail($venta->caja_id);
-        // 
-        // if ($venta->pagado > 0) {
-        //     $caja->increment('saldo_actual', $venta->pagado);
-        // }
+        $inventarioService = app(\App\Services\InventarioService::class);
+
+        foreach ($venta->ventaProductos as $item) {
+            $inventarioService->descontarParaVenta($venta, $item);
+        }
+
+        if ((float) $venta->pagado > 0) {
+            app(PagoService::class)->registrar($venta, (float) $venta->pagado, [
+                'tipo_pago' => 'inicial',
+                'metodo_pago' => $venta->metodo_pago,
+            ]);
+        }
     }
 }

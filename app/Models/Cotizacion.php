@@ -37,4 +37,30 @@ class Cotizacion extends Model
     {
         return $this->hasMany(CotizacionProducto::class);
     }
+
+    /**
+     * Marcar como expirada si venció estando en estado "en_espera".
+     */
+    public function marcarVencidaSiCorresponde(): bool
+    {
+        if ($this->estado === 'en_espera' && $this->fecha_vencimiento && $this->fecha_vencimiento->isPast()) {
+            $this->update(['estado' => 'expirada']);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Marcar todas las cotizaciones vencidas como expiradas (bulk).
+     */
+    public static function expirarVencidas(): int
+    {
+        return static::query()
+            ->where('estado', 'en_espera')
+            ->whereNotNull('fecha_vencimiento')
+            ->where('fecha_vencimiento', '<', now())
+            ->update(['estado' => 'expirada']);
+    }
 }

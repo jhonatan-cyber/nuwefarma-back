@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Venta\AbonarVentaAction;
+use App\Actions\Venta\CancelarVentaAction;
 use App\Actions\Venta\CompleteVentaAction;
 use App\Actions\Venta\CreateVentaAction;
 use App\Actions\Venta\DeleteVentaAction;
+use App\Actions\Venta\DevolverVentaAction;
 use App\Actions\Venta\ListVentasAction;
 use App\Actions\Venta\UpdateVentaAction;
 use App\Http\Controllers\Controller;
@@ -26,7 +29,10 @@ class VentaController extends Controller
         private UpdateVentaAction $updateVentaAction,
         private DeleteVentaAction $deleteVentaAction,
         private ListVentasAction $listVentasAction,
-        private CompleteVentaAction $completeVentaAction
+        private CompleteVentaAction $completeVentaAction,
+        private CancelarVentaAction $cancelarVentaAction,
+        private DevolverVentaAction $devolverVentaAction,
+        private AbonarVentaAction $abonarVentaAction
     ) {}
 
     /**
@@ -67,7 +73,7 @@ class VentaController extends Controller
         return $this->success(
             new VentaResource($venta->load([
                 'cliente', 'usuario', 'caja', 'ventaProductos.producto',
-            ]))
+            ])->loadSum('salidasInventario as costo_venta', 'costo_total'))
         );
     }
 
@@ -112,31 +118,50 @@ class VentaController extends Controller
     }
 
     /**
-     * Cancel a pending sale.
-     * 
+     * Cancel a pending or completed sale.
+     *
      * @param Request $request
      * @param Venta $venta
      * @return JsonResponse
      */
     public function cancelar(Request $request, Venta $venta): JsonResponse
     {
-        $request->validate([
-            'motivo' => ['required', 'string', 'max:255']
-        ]);
-
-        $venta->update([
-            'estado' => 'cancelada',
-            'motivo_cancelacion' => $request->motivo,
-            'fecha_cancelacion' => now(),
-        ]);
+        $cancelledVenta = $this->cancelarVentaAction->execute($venta, $request->all());
 
         return response()->json([
             'success' => true,
             'message' => 'Venta cancelada exitosamente',
-            'data' => new VentaResource($venta->load([
-                'cliente', 'usuario', 'caja'
-            ]))
+            'data' => new VentaResource($cancelledVenta)
         ], Response::HTTP_OK);
+    }
+
+    /**
+     * Return a completed sale.
+     */
+    public function devolver(Request $request, Venta $venta): JsonResponse
+    {
+        $returnedVenta = $this->devolverVentaAction->execute($venta, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Venta devuelta exitosamente',
+            'data' => new VentaResource($returnedVenta)
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Register a partial payment against a credit sale.
+     */
+    public function abonar(Request $request, Venta $venta): JsonResponse
+    {
+        $abonadaVenta = $this->abonarVentaAction->execute($venta, $request->all());
+
+        return $this->success(
+            new VentaResource($abonadaVenta->load([
+                'cliente', 'usuario', 'caja',
+            ])),
+            'Abono registrado exitosamente'
+        );
     }
 
     /**

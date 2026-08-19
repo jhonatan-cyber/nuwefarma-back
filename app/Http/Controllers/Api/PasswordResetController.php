@@ -106,11 +106,12 @@ class PasswordResetController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['email', 'token', 'ci'],
+                required: ['email', 'token', 'password'],
                 properties: [
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan.perez@example.com'),
                     new OA\Property(property: 'token', type: 'string', example: 'abc123...'),
-                    new OA\Property(property: 'ci', type: 'string', example: '12345678', description: 'Nuevo CI que será hasheado como password'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'nueva-clave-123'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'nueva-clave-123'),
                 ]
             )
         ),
@@ -134,7 +135,7 @@ class PasswordResetController extends Controller
             $request->validate([
                 'email' => 'required|email',
                 'token' => 'required|string',
-                'ci' => 'required|string|min:6',
+                'password' => 'required|string|min:6|confirmed',
             ]);
 
             // Buscar token
@@ -167,7 +168,6 @@ class PasswordResetController extends Controller
                 ], 400);
             }
 
-            // Actualizar usuario
             $usuario = Usuario::where('email', $request->email)->first();
 
             if (! $usuario) {
@@ -177,8 +177,8 @@ class PasswordResetController extends Controller
                 ], 404);
             }
 
-            // Actualizar CI (que automáticamente actualizará el password por el boot del modelo)
-            $usuario->ci = $request->ci;
+            // Actualizar contraseña directamente (sin depender del CI)
+            $usuario->password = Hash::make($request->password);
             $usuario->save();
 
             // Revocar todos los tokens de sesión
@@ -197,7 +197,93 @@ class PasswordResetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Contraseña actualizada exitosamente. Por favor, inicia sesión con tu nuevo CI.',
+                'message' => 'Contraseña actualizada exitosamente. Por favor, inicia sesión con tu nueva contraseña.',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validación fallida',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    }
+
+    #[OA\Post(
+        path: '/api/auth/change-password',
+        summary: 'Cambiar contraseña del usuario autenticado',
+        security: [['bearerAuth' => []]],
+        tags: ['Recuperación de Contraseña'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['password_actual', 'nueva_password'],
+                properties: [
+                    new OA\Property(property: 'password_actual', type: 'string', format: 'password', example: 'clave-actual'),
+                    new OA\Property(property: 'nueva_password', type: 'string', format: 'password', example: 'nueva-clave-123'),
+                    new OA\Property(property: 'nueva_password_confirmation', type: 'string', format: 'password', example: 'nueva-clave-123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contraseña cambiada exitosamente',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'La contraseña actual es incorrecta'),
+            new OA\Response(response: 401, description: 'No autenticado'),
+        ]
+    )]
+    public function changePassword(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'password_actual' => 'required|string',
+                'nueva_password' => 'required|string|min:6|confirmed',
+            ]);
+
+            /** @var Usuario $usuario */
+            $usuario = $request->user();
+
+            if (! Hash::check($request->password_actual, $usuario->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La contraseña actual es incorrecta.',
+                ], 400);
+            }
+
+            // La nueva contraseña no puede ser igual a la actual
+            if (Hash::check($request->nueva_password, $usuario->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La nueva contraseña debe ser diferente a la actual.',
+                ], 400);
+            }
+
+            $usuario->password = Hash::make($request->nueva_password);
+            $usuario->save();
+
+            // Revocar las demás sesiones, conservando la sesión actual
+            $usuario->tokens()
+                ->where('id', '!=', $request->user()->currentAccessToken()?->id)
+                ->delete();
+
+            // Registrar actividad
+            ActivityLog::registrar(
+                accion: 'change_password',
+                modulo: 'auth',
+                descripcion: "El usuario {$usuario->email} cambió su contraseña",
+                usuarioId: $usuario->id
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Contraseña cambiada exitosamente.',
             ]);
         } catch (ValidationException $e) {
             return response()->json([

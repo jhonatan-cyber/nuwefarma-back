@@ -59,7 +59,7 @@ class UsuarioTest extends TestCase
             'estado' => 'activo',
         ]);
 
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => 'admin@test.com',
             'password' => 'password123',
         ]);
@@ -74,7 +74,7 @@ class UsuarioTest extends TestCase
     {
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->getJson('/api/usuarios');
+        ])->getJson('/api/v1/usuarios');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -117,7 +117,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->postJson('/api/usuarios', $usuarioData);
+        ])->postJson('/api/v1/usuarios', $usuarioData);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -156,7 +156,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->postJson('/api/usuarios', $usuarioData);
+        ])->postJson('/api/v1/usuarios', $usuarioData);
 
         $response->assertStatus(422);
     }
@@ -177,7 +177,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->putJson("/api/usuarios/{$usuario->id}", [
+        ])->putJson("/api/v1/usuarios/{$usuario->id}", [
             'nombre' => 'Usuario Actualizado',
             'apellidos' => 'Test Actualizado',
             'ci' => '88888888',
@@ -212,7 +212,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->patchJson("/api/usuarios/{$usuario->id}", [
+        ])->patchJson("/api/v1/usuarios/{$usuario->id}", [
             'estado' => 'inactivo',
         ]);
 
@@ -236,7 +236,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->postJson("/api/usuarios/{$usuario->id}/assign-role", [
+        ])->postJson("/api/v1/usuarios/{$usuario->id}/assign-role", [
             'rol_id' => $this->adminRol->id,
         ]);
 
@@ -264,7 +264,7 @@ class UsuarioTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->deleteJson("/api/usuarios/{$usuario->id}");
+        ])->deleteJson("/api/v1/usuarios/{$usuario->id}");
 
         $response->assertStatus(200);
 
@@ -275,7 +275,7 @@ class UsuarioTest extends TestCase
 
     public function test_usuario_no_autenticado_no_puede_acceder(): void
     {
-        $response = $this->getJson('/api/usuarios');
+        $response = $this->getJson('/api/v1/usuarios');
 
         $response->assertStatus(401);
     }

@@ -15,6 +15,7 @@ use App\Http\Requests\Rol\UpdateRolRequest;
 use App\Http\Resources\Rol\RolCollection;
 use App\Http\Resources\Rol\RolResource;
 use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 
 class RolController extends Controller
@@ -161,5 +162,42 @@ class RolController extends Controller
                 'message' => 'Error al cambiar el estado del rol: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function statsOverview(Request $request)
+    {
+        $base = Rol::query();
+
+        if ($request->query('estado')) {
+            $base->where('estado', $request->query('estado'));
+        }
+
+        $total = (clone $base)->count();
+        $activos = (clone $base)->where('estado', 'activo')->count();
+        $inactivos = (clone $base)->where('estado', 'inactivo')->count();
+        $rolesConUsuarios = (clone $base)->has('usuarios')->count();
+        $totalUsuarios = Usuario::count();
+
+        $usuariosPorRol = (clone $base)
+            ->withCount('usuarios')
+            ->orderBy('usuarios_count', 'desc')
+            ->get()
+            ->map(fn (Rol $rol) => [
+                'id' => $rol->id,
+                'nombre' => $rol->nombre,
+                'usuarios' => $rol->usuarios_count,
+            ])
+            ->values();
+
+        return $this->success([
+            'resumen' => [
+                'total' => $total,
+                'activos' => $activos,
+                'inactivos' => $inactivos,
+                'con_usuarios' => $rolesConUsuarios,
+                'total_usuarios' => $totalUsuarios,
+            ],
+            'usuarios_por_rol' => $usuariosPorRol,
+        ]);
     }
 }

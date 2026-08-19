@@ -5,40 +5,29 @@ declare(strict_types=1);
 namespace App\Actions\Compra;
 
 use App\Exceptions\ApiException;
-use App\Models\Caja;
 use App\Models\Compra;
 use Illuminate\Support\Facades\DB;
 
 class DeleteCompraAction
 {
     /**
-     * Cancel/delete a purchase with business logic validation.
+     * Delete a purchase with business logic validation.
+     * Reverts inventory if merchandise was already received.
      *
      * @throws ApiException
      */
     public function execute(Compra $compra): bool
     {
         return DB::transaction(function () use ($compra) {
+            $compra = Compra::query()->lockForUpdate()->findOrFail($compra->id);
             $this->validateDeletion($compra);
 
-            // Restore stock for all products in the purchase
-            foreach ($compra->compraProductos as $compraProducto) {
-                $producto = $compraProducto->producto;
-                $producto->decrement('stock_actual', $compraProducto->cantidad);
-            }
+            $compra->revertirInventario();
 
-            // Update caja balance if payment was made
-            if ($compra->pagado > 0) {
-                $caja = $compra->caja;
-                $caja->increment('saldo_actual', $compra->pagado);
-            }
+            $compra->productos()->delete();
 
-            // Delete purchase products first
-            $compra->compraProductos()->delete();
-
-            // Delete purchase
             return $compra->delete();
-        });
+        }, 3);
     }
 
     /**
@@ -48,18 +37,10 @@ class DeleteCompraAction
      */
     private function validateDeletion(Compra $compra): void
     {
-        if ($compra->estado === 'cancelada') {
-            throw ApiException::conflict(
-                'La compra ya está cancelada',
-                ['estado' => ['No se puede eliminar una compra ya cancelada']]
-            );
-        }
-
-        // Check if purchase has related records that prevent deletion
-        if ($compra->devoluciones()->exists()) {
+        if (in_array($compra->estado, ['cancelada', 'devuelta'], true)) {
             throw ApiException::conflict(
                 'No se puede eliminar la compra',
-                ['devoluciones' => ['La compra tiene devoluciones asociadas']]
+                ['estado' => ["La compra ya está {$compra->estado}"]]
             );
         }
     }

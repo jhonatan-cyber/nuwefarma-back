@@ -6,34 +6,44 @@ namespace App\Actions\Compra;
 
 use App\Exceptions\ApiException;
 use App\Models\Compra;
+use App\Services\PagoService;
 use Illuminate\Support\Facades\DB;
 
 class CompleteCompraAction
 {
     /**
-     * Complete a pending purchase.
+     * Complete a pending purchase (equivalent to full reception).
      *
      * @param  array<string, mixed>  $data
      */
     public function execute(Compra $compra, array $data = []): Compra
     {
         return DB::transaction(function () use ($compra, $data) {
+            $compra = Compra::query()->lockForUpdate()->findOrFail($compra->id);
             $this->validateCompletion($compra);
 
             $validatedData = $this->validate($data);
 
-            // Update purchase status
-            $compra->update([
-                'estado' => 'completada',
-                'pagado' => $validatedData['pagado'] ?? $compra->total,
-                'saldo_pendiente' => max(0, $compra->total - ($validatedData['pagado'] ?? $compra->total)),
-            ]);
+            $compra->recibir();
 
-            // Update caja balance
-            $this->updateCajaBalance($compra, $validatedData['pagado'] ?? $compra->total);
+            $total = (float) $compra->total;
+            $pagado = (float) ($validatedData['pagado'] ?? $total);
+            $pagado = max(0, min($pagado, $total));
 
-            return $compra->fresh()->load(['proveedor', 'usuario', 'caja']);
-        });
+            if ($pagado > 0) {
+                $compra->update([
+                    'pagado' => $pagado,
+                    'saldo_pendiente' => round($total - $pagado, 2),
+                ]);
+
+                app(PagoService::class)->registrar($compra, $pagado, [
+                    'tipo_pago' => $pagado >= $total ? 'total' : 'parcial',
+                    'metodo_pago' => $compra->metodo_pago,
+                ]);
+            }
+
+            return $compra->fresh()->load(['proveedor', 'usuario', 'sucursal', 'productos.producto']);
+        }, 3);
     }
 
     /**
@@ -43,17 +53,17 @@ class CompleteCompraAction
      */
     private function validateCompletion(Compra $compra): void
     {
-        if ($compra->estado === 'completada') {
+        if ($compra->estado === 'recibida') {
             throw ApiException::conflict(
-                'La compra ya está completada',
-                ['estado' => ['No se puede completar una compra ya finalizada']]
+                'La compra ya está recibida',
+                ['estado' => ['No se puede completar una compra ya recibida']]
             );
         }
 
-        if ($compra->estado === 'cancelada') {
+        if (in_array($compra->estado, ['cancelada', 'devuelta'], true)) {
             throw ApiException::conflict(
-                'No se puede completar una compra cancelada',
-                ['estado' => ['La compra está cancelada']]
+                "No se puede completar una compra {$compra->estado}",
+                ['estado' => ['La compra está finalizada']]
             );
         }
     }
@@ -69,16 +79,5 @@ class CompleteCompraAction
         return validator($data, [
             'pagado' => ['sometimes', 'numeric', 'min:0'],
         ])->validate();
-    }
-
-    /**
-     * Update caja balance.
-     */
-    private function updateCajaBalance(Compra $compra, float $pagado): void
-    {
-        if ($pagado > 0) {
-            $caja = $compra->caja;
-            $caja->decrement('saldo_actual', $pagado);
-        }
     }
 }

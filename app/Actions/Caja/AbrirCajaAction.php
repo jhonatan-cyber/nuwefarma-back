@@ -6,6 +6,7 @@ namespace App\Actions\Caja;
 
 use App\Exceptions\ApiException;
 use App\Models\Caja;
+use Illuminate\Support\Facades\DB;
 
 class AbrirCajaAction
 {
@@ -16,19 +17,22 @@ class AbrirCajaAction
      */
     public function execute(Caja $caja, array $data = []): Caja
     {
-        $this->validateOpening($caja);
+        return DB::transaction(function () use ($caja, $data) {
+            $caja = Caja::query()->lockForUpdate()->findOrFail($caja->id);
+            $this->validateOpening($caja);
 
-        $validatedData = $this->validate($data);
+            $validatedData = $this->validate($data);
 
-        // Update cash register
-        $caja->update([
-            'estado' => 'abierta',
-            'saldo_inicial' => $validatedData['saldo_inicial'] ?? $caja->saldo_actual,
-            'saldo_actual' => $validatedData['saldo_inicial'] ?? $caja->saldo_actual,
-            'fecha_apertura' => now(),
-        ]);
+            // Update cash register
+            $caja->update([
+                'estado' => 'abierta',
+                'saldo_inicial' => $validatedData['saldo_inicial'] ?? $caja->saldo_actual,
+                'saldo_actual' => $validatedData['saldo_inicial'] ?? $caja->saldo_actual,
+                'fecha_apertura' => now(),
+            ]);
 
-        return $caja->fresh()->load(['sucursal', 'gerente']);
+            return $caja->fresh()->load(['sucursal', 'gerente']);
+        }, 3);
     }
 
     /**

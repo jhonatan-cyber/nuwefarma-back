@@ -260,34 +260,6 @@ class AdvancedProductoService
     }
 
     /**
-     * Laravel 12+ real-time inventory monitoring
-     */
-    public function getRealTimeInventory(): array
-    {
-        $key = 'real_time_inventory';
-
-        // Check Redis for real-time data
-        if ($this->redis->exists($key)) {
-            return json_decode($this->redis->get($key), true);
-        }
-
-        $data = [
-            'total_products' => Producto::count(),
-            'active_products' => Producto::where('estado', EstadoEnum::ACTIVO->value)->count(),
-            'low_stock_count' => Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->count(),
-            'out_of_stock_count' => Producto::where('stock_actual', '<=', 0)->count(),
-            'total_inventory_value' => Producto::selectRaw('SUM(stock_actual * precio_venta)')->value('SUM(stock_actual * precio_venta)') ?? 0,
-            'expiring_soon_count' => Producto::proximosAVencer(30)->count(),
-            'last_updated' => now()->toISOString(),
-        ];
-
-        // Cache in Redis for 5 minutes
-        $this->redis->setex($key, 300, json_encode($data));
-
-        return $data;
-    }
-
-    /**
      * Laravel 12+ advanced filtering with JSON operations
      */
     public function filterByJsonAttributes(array $jsonFilters): Collection
@@ -367,7 +339,6 @@ class AdvancedProductoService
         $patterns = [
             'productos_search_*',
             'productos_analytics_*',
-            'real_time_inventory',
         ];
 
         foreach ($patterns as $pattern) {

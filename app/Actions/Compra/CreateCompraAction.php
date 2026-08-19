@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Compra;
 
-use App\Models\Caja;
 use App\Models\Compra;
 use App\Models\CompraProducto;
-use App\Models\Producto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -23,34 +21,32 @@ class CreateCompraAction
         return DB::transaction(function () use ($data) {
             $validatedData = $this->validate($data);
 
-            // Create purchase
+            $descuento = (float) ($validatedData['descuento'] ?? 0);
+            $impuestos = (float) ($validatedData['impuestos'] ?? 0);
+            $subtotal = collect($validatedData['productos'])->sum(
+                fn ($item) => ((float) $item['precio_unitario'] - (float) ($item['descuento_unitario'] ?? 0)) * (int) $item['cantidad']
+            );
+
             $compra = Compra::create([
-                'proveedor_id' => $validatedData['proveedor_id'],
-                'usuario_id' => $validatedData['usuario_id'],
-                'caja_id' => $validatedData['caja_id'],
-                'tipo_documento' => $validatedData['tipo_documento'],
-                'numero_documento' => $validatedData['numero_documento'],
-                'fecha_documento' => $validatedData['fecha_documento'],
-                'subtotal' => $validatedData['subtotal'],
-                'impuesto' => $validatedData['impuesto'],
-                'descuento' => $validatedData['descuento'] ?? 0,
-                'total' => $validatedData['total'],
-                'pagado' => $validatedData['pagado'] ?? 0,
-                'saldo_pendiente' => $validatedData['saldo_pendiente'] ?? 0,
-                'estado' => $validatedData['estado'],
-                'observaciones' => $validatedData['observaciones'] ?? null,
+                'proveedor_id' => $this->nullIfEmpty($validatedData['proveedor_id'] ?? null),
+                'usuario_id' => $this->nullIfEmpty($validatedData['usuario_id'] ?? null) ?? auth()->id(),
+                'sucursal_id' => $this->nullIfEmpty($validatedData['sucursal_id'] ?? null) ?? auth()->user()?->sucursal_id,
+                'metodo_pago' => $validatedData['metodo_pago'] ?? 'efectivo',
+                'descuento' => $descuento,
+                'impuestos' => $impuestos,
+                'subtotal' => $subtotal,
+                'total' => $subtotal - $descuento + $impuestos,
+                'estado' => 'pendiente',
+                'notas' => $this->nullIfEmpty($validatedData['notas'] ?? null),
+                'fecha_compra' => now(),
             ]);
 
-            // Add products to purchase
             foreach ($validatedData['productos'] as $productoData) {
                 $this->addProductToPurchase($compra, $productoData);
             }
 
-            // Update caja balance
-            $this->updateCajaBalance($compra);
-
-            return $compra->load(['proveedor', 'usuario', 'caja', 'compraProductos.producto']);
-        });
+            return $compra->load(['proveedor', 'usuario', 'sucursal', 'productos.producto']);
+        }, 3);
     }
 
     /**
@@ -62,64 +58,45 @@ class CreateCompraAction
     private function validate(array $data): array
     {
         return validator($data, [
-            'proveedor_id' => ['required', 'exists:proveedores,id'],
-            'usuario_id' => ['required', 'exists:usuarios,id'],
-            'caja_id' => ['required', 'exists:cajas,id'],
-            'tipo_documento' => ['required', Rule::in(['factura', 'boleta', 'nota_credito', 'guia_remision'])],
-            'numero_documento' => ['required', 'string', 'max:100'],
-            'fecha_documento' => ['required', 'date'],
-            'subtotal' => ['required', 'numeric', 'min:0'],
-            'impuesto' => ['required', 'numeric', 'min:0'],
+            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
+            'usuario_id' => ['nullable', 'exists:usuarios,id'],
+            'sucursal_id' => ['nullable', 'exists:sucursals,id'],
+            'metodo_pago' => ['nullable', Rule::in(['efectivo', 'tarjeta', 'transferencia', 'mixto'])],
             'descuento' => ['nullable', 'numeric', 'min:0'],
-            'total' => ['required', 'numeric', 'min:0'],
-            'pagado' => ['nullable', 'numeric', 'min:0'],
-            'saldo_pendiente' => ['nullable', 'numeric', 'min:0'],
-            'estado' => ['required', Rule::in(['pendiente', 'completada', 'cancelada'])],
-            'observaciones' => ['nullable', 'string', 'max:1000'],
+            'impuestos' => ['nullable', 'numeric', 'min:0'],
+            'notas' => ['nullable', 'string', 'max:1000'],
             'productos' => ['required', 'array', 'min:1'],
             'productos.*.producto_id' => ['required', 'exists:productos,id'],
+            'productos.*.lote_id' => ['nullable', 'exists:lotes,id'],
+            'productos.*.numero_lote' => ['nullable', 'string', 'max:100'],
             'productos.*.cantidad' => ['required', 'integer', 'min:1'],
             'productos.*.precio_unitario' => ['required', 'numeric', 'min:0'],
-            'productos.*.descuento' => ['nullable', 'numeric', 'min:0'],
-            'productos.*.lote' => ['nullable', 'string', 'max:100'],
+            'productos.*.descuento_unitario' => ['nullable', 'numeric', 'min:0'],
             'productos.*.fecha_vencimiento' => ['nullable', 'date'],
         ])->validate();
     }
 
     /**
-     * Add product to purchase and update stock.
+     * Add product to purchase.
      *
      * @param  array<string, mixed>  $productoData
      */
     private function addProductToPurchase(Compra $compra, array $productoData): void
     {
-        $producto = Producto::findOrFail($productoData['producto_id']);
-
-        // Create purchase product
         CompraProducto::create([
             'compra_id' => $compra->id,
-            'producto_id' => $producto->id,
+            'producto_id' => $productoData['producto_id'],
+            'lote_id' => $this->nullIfEmpty($productoData['lote_id'] ?? null),
+            'numero_lote' => $this->nullIfEmpty($productoData['numero_lote'] ?? null),
+            'fecha_vencimiento' => $this->nullIfEmpty($productoData['fecha_vencimiento'] ?? null),
             'cantidad' => $productoData['cantidad'],
             'precio_unitario' => $productoData['precio_unitario'],
-            'descuento' => $productoData['descuento'] ?? 0,
-            'subtotal' => ($productoData['precio_unitario'] * $productoData['cantidad']) - ($productoData['descuento'] ?? 0),
-            'lote' => $productoData['lote'] ?? null,
-            'fecha_vencimiento' => $productoData['fecha_vencimiento'] ?? null,
+            'descuento_unitario' => $productoData['descuento_unitario'] ?? 0,
         ]);
-
-        // Update product stock
-        $producto->increment('stock_actual', $productoData['cantidad']);
     }
 
-    /**
-     * Update caja balance.
-     */
-    private function updateCajaBalance(Compra $compra): void
+    private function nullIfEmpty(mixed $value): mixed
     {
-        $caja = Caja::findOrFail($compra->caja_id);
-
-        if ($compra->pagado > 0) {
-            $caja->decrement('saldo_actual', $compra->pagado);
-        }
+        return $value === '' || $value === null ? null : $value;
     }
 }

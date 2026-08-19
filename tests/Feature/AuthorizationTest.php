@@ -70,12 +70,12 @@ class AuthorizationTest extends TestCase
         ]);
 
         // Login
-        $adminLogin = $this->postJson('/api/auth/login', [
+        $adminLogin = $this->postJson('/api/v1/auth/login', [
             'email' => 'admin@example.com',
             'password' => '11111111',
         ]);
 
-        $usuarioLogin = $this->postJson('/api/auth/login', [
+        $usuarioLogin = $this->postJson('/api/v1/auth/login', [
             'email' => 'usuario@example.com',
             'password' => '22222222',
         ]);
@@ -87,7 +87,7 @@ class AuthorizationTest extends TestCase
     public function test_admin_puede_crear_categoria(): void
     {
         $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
-            ->postJson('/api/categorias', [
+            ->postJson('/api/v1/categorias', [
                 'nombre' => 'Antibióticos',
                 'estado' => 'activo',
             ]);
@@ -99,7 +99,7 @@ class AuthorizationTest extends TestCase
     public function test_usuario_no_puede_crear_categoria(): void
     {
         $response = $this->withHeader('Authorization', "Bearer {$this->usuarioToken}")
-            ->postJson('/api/categorias', [
+            ->postJson('/api/v1/categorias', [
                 'nombre' => 'Antibióticos',
                 'estado' => 'activo',
             ]);
@@ -113,7 +113,7 @@ class AuthorizationTest extends TestCase
         Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->usuarioToken}")
-            ->getJson('/api/categorias');
+            ->getJson('/api/v1/categorias');
 
         $response->assertStatus(403)
             ->assertJson(['success' => false]);
@@ -124,7 +124,7 @@ class AuthorizationTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
-            ->deleteJson("/api/categorias/{$categoria->id}");
+            ->deleteJson("/api/v1/categorias/{$categoria->id}");
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
@@ -135,7 +135,7 @@ class AuthorizationTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->usuarioToken}")
-            ->deleteJson("/api/categorias/{$categoria->id}");
+            ->deleteJson("/api/v1/categorias/{$categoria->id}");
 
         $response->assertStatus(403)
             ->assertJson(['success' => false]);
@@ -146,7 +146,7 @@ class AuthorizationTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Original', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
-            ->putJson("/api/categorias/{$categoria->id}", [
+            ->putJson("/api/v1/categorias/{$categoria->id}", [
                 'nombre' => 'Editada',
             ]);
 
@@ -159,7 +159,7 @@ class AuthorizationTest extends TestCase
         $categoria = Categoria::create(['nombre' => 'Original', 'estado' => 'activo']);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->usuarioToken}")
-            ->putJson("/api/categorias/{$categoria->id}", [
+            ->putJson("/api/v1/categorias/{$categoria->id}", [
                 'nombre' => 'Editada',
             ]);
 
@@ -169,7 +169,7 @@ class AuthorizationTest extends TestCase
 
     public function test_sin_autenticacion_no_puede_crear(): void
     {
-        $response = $this->postJson('/api/categorias', [
+        $response = $this->postJson('/api/v1/categorias', [
             'nombre' => 'Antibióticos',
             'estado' => 'activo',
         ]);

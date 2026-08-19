@@ -23,7 +23,10 @@ class CompraProducto extends Model
         'compra_id',
         'producto_id',
         'lote_id',
+        'numero_lote',
+        'fecha_vencimiento',
         'cantidad',
+        'cantidad_recibida',
         'precio_unitario',
         'descuento_unitario',
         'subtotal',
@@ -31,9 +34,11 @@ class CompraProducto extends Model
 
     protected $casts = [
         'cantidad' => 'integer',
+        'cantidad_recibida' => 'integer',
         'precio_unitario' => 'decimal:2',
         'descuento_unitario' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'fecha_vencimiento' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -6,6 +6,7 @@ namespace App\Actions\Venta;
 
 use App\Exceptions\ApiException;
 use App\Models\Venta;
+use App\Services\PagoService;
 use Illuminate\Support\Facades\DB;
 
 class CompleteVentaAction
@@ -18,22 +19,33 @@ class CompleteVentaAction
     public function execute(Venta $venta, array $data = []): Venta
     {
         return DB::transaction(function () use ($venta, $data) {
+            $venta = Venta::query()->lockForUpdate()->findOrFail($venta->id);
             $this->validateCompletion($venta);
 
             $validatedData = $this->validate($data);
 
+            $total = (float) $venta->total;
+            $pagado = (float) ($validatedData['pagado'] ?? $total);
+            $pagado = max(0, min($pagado, $total));
+
             // Update sale status
             $venta->update([
                 'estado' => 'completada',
-                'pagado' => (float) ($validatedData['pagado'] ?? $venta->total),
-                'saldo_pendiente' => max(0, $venta->total - (float) ($validatedData['pagado'] ?? $venta->total)),
+                'pagado' => $pagado,
+                'saldo_pendiente' => round($total - $pagado, 2),
             ]);
 
-            // Update caja balance
-            $this->updateCajaBalance($venta, (float) ($validatedData['pagado'] ?? $venta->total));
+            if ($pagado > 0) {
+                app(PagoService::class)->registrar($venta, $pagado, [
+                    'tipo_pago' => $pagado >= $total ? 'total' : 'parcial',
+                    'metodo_pago' => $venta->metodo_pago,
+                ]);
+            }
+
+            $this->applyInventory($venta);
 
             return $venta->fresh()->load(['cliente', 'usuario', 'caja']);
-        });
+        }, 3);
     }
 
     /**
@@ -71,15 +83,12 @@ class CompleteVentaAction
         ])->validate();
     }
 
-    /**
-     * Update caja balance.
-     */
-    private function updateCajaBalance(Venta $venta, float $pagado): void
+    private function applyInventory(Venta $venta): void
     {
-        // Simplificar para evitar errores de caja
-        // if ($pagado > 0) {
-        //     $caja = $venta->caja;
-        //     $caja->increment('saldo_actual', $pagado);
-        // }
+        $inventarioService = app(\App\Services\InventarioService::class);
+
+        foreach ($venta->ventaProductos as $item) {
+            $inventarioService->descontarParaVenta($venta, $item);
+        }
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lote;
+use App\Models\MovimientoLote;
 use App\Services\InventarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -93,18 +94,49 @@ class LoteController extends Controller
                 'notas' => 'sometimes|string',
             ]);
 
-            $lote->update($validated);
-
-            if (isset($validated['stock'])) {
-                if ($lote->stock == 0) {
-                    $lote->estado = 'agotado';
-                } elseif ($lote->stock <= $lote->stock_minimo) {
-                    $lote->estado = 'parcial';
-                } else {
-                    $lote->estado = 'disponible';
+            // La identidad del lote es inmutable una vez que registra movimientos
+            if ($lote->movimientos()->exists()) {
+                if (isset($validated['numero_lote']) && $validated['numero_lote'] !== $lote->numero_lote) {
+                    throw new \Exception('No se puede cambiar el número de lote de un lote con movimientos registrados');
                 }
-                $lote->save();
             }
+
+            // El stock solo se modifica a través de movimientos auditables
+            if (isset($validated['stock'])) {
+                $nuevoStock = (int) $validated['stock'];
+                $diferencia = $nuevoStock - (int) $lote->stock;
+
+                if ($diferencia !== 0) {
+                    $documento = [
+                        'tipo' => 'AjusteInventario',
+                        'id' => $lote->id,
+                        'numero' => $lote->numero_lote,
+                        'observaciones' => 'Ajuste directo de stock desde edición de lote',
+                    ];
+
+                    if ($diferencia > 0) {
+                        $this->inventarioService->agregarStock(
+                            $lote->id,
+                            $diferencia,
+                            $lote->precio_costo_promedio ?? $lote->precio_costo ?? 0,
+                            $documento,
+                            MovimientoLote::AJUSTE_POSITIVO
+                        );
+                    } else {
+                        $this->inventarioService->descontarStockDeLote(
+                            $lote->id,
+                            abs($diferencia),
+                            $documento,
+                            MovimientoLote::AJUSTE_NEGATIVO
+                        );
+                    }
+                }
+
+                unset($validated['stock']);
+            }
+
+            $lote->update($validated);
+            $lote->refresh();
 
             return $this->success(
                 $lote->load(['producto', 'proveedor']),

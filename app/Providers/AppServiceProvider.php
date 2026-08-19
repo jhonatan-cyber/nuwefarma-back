@@ -16,23 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton('features', function ($app) {
-            return new class
-            {
-                public function enabled(string $category, string $feature): bool
-                {
-                    $config = config("features.{$category}.{$feature}", false);
-
-                    if (is_bool($config)) {
-                        return $config;
-                    }
-
-                    return filter_var($config, FILTER_VALIDATE_BOOLEAN);
-                }
-            };
-        });
-
-        require_once app_path('Helpers/FeatureFlags.php');
+        // Register application bindings here when a concrete implementation exists.
     }
 
     /**

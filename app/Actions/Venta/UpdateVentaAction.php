@@ -50,6 +50,13 @@ class UpdateVentaAction
                 ['estado' => ['La venta ya está completada']]
             );
         }
+
+        if ($venta->estado === 'devuelta') {
+            throw ApiException::conflict(
+                'No se puede modificar una venta devuelta',
+                ['estado' => ['La venta ya está devuelta']]
+            );
+        }
     }
 
     /**

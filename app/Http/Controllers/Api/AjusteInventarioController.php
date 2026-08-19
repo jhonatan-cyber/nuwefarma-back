@@ -106,7 +106,7 @@ class AjusteInventarioController extends Controller
             ]);
 
             foreach ($request->items as $item) {
-                $lote = Lote::findOrFail($item['lote_id']);
+                $lote = Lote::query()->lockForUpdate()->findOrFail($item['lote_id']);
                 $stockAnterior = $lote->stock;
                 $stockNuevo = $item['stock_nuevo'];
                 $diferencia = $stockNuevo - $stockAnterior;

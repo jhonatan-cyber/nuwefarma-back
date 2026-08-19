@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
+use App\Exceptions\ApiException;
+use App\Models\Concerns\ScopedBySucursal;
+use App\Services\CajaLibroService;
+use App\Services\NotaCreditoService;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Venta extends Model
 {
+    use ScopedBySucursal;
     use HasFactory, HasUuids;
 
     protected $table = 'ventas';
@@ -37,6 +43,7 @@ class Venta extends Model
         'caja_id',
         'notas',
         'fecha_venta',
+        'fecha_vencimiento',
     ];
 
     protected $casts = [
@@ -47,6 +54,7 @@ class Venta extends Model
         'pagado' => 'decimal:2',
         'saldo_pendiente' => 'decimal:2',
         'fecha_venta' => 'datetime',
+        'fecha_vencimiento' => 'date',
         'fecha_cancelacion' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -101,6 +109,34 @@ class Venta extends Model
     }
 
     /**
+     * Relación con los pagos asociados a la venta.
+     */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'documento_id')
+            ->where('documento_tipo', 'Venta');
+    }
+
+    /**
+     * Relación con las notas de crédito emitidas por devoluciones.
+     */
+    public function notasCredito(): HasMany
+    {
+        return $this->hasMany(NotaCredito::class, 'documento_id')
+            ->where('documento_tipo', 'Venta');
+    }
+
+    /**
+     * Salidas de inventario (lotes/kardex) imputadas a esta venta.
+     */
+    public function salidasInventario(): HasMany
+    {
+        return $this->hasMany(MovimientoLote::class, 'documento_id')
+            ->where('documento_tipo', 'Venta')
+            ->where('tipo_movimiento', MovimientoLote::SALIDA_VENTA);
+    }
+
+    /**
      * Generar número de venta automático
      */
     public static function generateNumeroVenta(): string
@@ -126,18 +162,32 @@ class Venta extends Model
      */
     public function puedeSerCancelada(): bool
     {
-        return in_array($this->estado, ['pendiente', 'completada']);
+        return in_array($this->estado, ['pendiente', 'completada'], true);
     }
 
     /**
-     * Cancelar venta
+     * Cancelar venta. Si ya estaba completada, revierte inventario y caja.
+     *
+     * @throws ApiException
      */
-    public function cancelar(): void
+    public function cancelar(?string $motivo = null): void
     {
-        if ($this->puedeSerCancelada()) {
-            $this->estado = 'cancelada';
-            $this->save();
+        if (! $this->puedeSerCancelada()) {
+            throw ApiException::conflict(
+                'La venta no puede ser cancelada',
+                ['estado' => ["La venta está en estado: {$this->estado}"]]
+            );
         }
+
+        DB::transaction(function () use ($motivo) {
+            $this->revertirInventario();
+
+            $this->update([
+                'estado' => 'cancelada',
+                'motivo_cancelacion' => $motivo,
+                'fecha_cancelacion' => now(),
+            ]);
+        });
     }
 
     /**
@@ -146,20 +196,120 @@ class Venta extends Model
     public function completar(): void
     {
         if ($this->estado === 'pendiente') {
-            // Simplificar sin inventario por ahora para evitar errores
             $this->estado = 'completada';
             $this->save();
         }
     }
 
     /**
-     * Procesar devolución
+     * Devolver una venta completada, revirtiendo inventario, caja y emitiendo
+     * la nota de crédito interna correspondiente.
+     *
+     * @throws ApiException
      */
-    public function devolver(): void
+    public function devolver(?string $motivo = null): void
     {
-        if ($this->estado === 'completada') {
-            $this->estado = 'devuelta';
-            $this->save();
+        if ($this->estado !== 'completada') {
+            throw ApiException::conflict(
+                'Solo se pueden devolver ventas completadas',
+                ['estado' => ["La venta está en estado: {$this->estado}"]]
+            );
         }
+
+        DB::transaction(function () use ($motivo) {
+            $this->revertirInventario(MovimientoCaja::ORIGEN_NOTA_CREDITO);
+
+            $updateData = ['estado' => 'devuelta'];
+
+            if ($motivo) {
+                $updateData['motivo_cancelacion'] = $motivo;
+            }
+
+            $this->update($updateData);
+
+            if ((float) $this->pagado > 0) {
+                app(NotaCreditoService::class)->emitir($this, (float) $this->pagado, $motivo);
+            }
+        });
+    }
+
+    /**
+     * Revertir inventario, lotes y caja de una venta completada.
+     */
+    public function revertirInventario(string $origen = MovimientoCaja::ORIGEN_VENTA): void
+    {
+        if ($this->estado !== 'completada') {
+            return;
+        }
+
+        DB::transaction(function () use ($origen) {
+            $usuario = auth()->user();
+            $venta = Venta::query()->lockForUpdate()->findOrFail($this->id);
+
+            // Restaurar stock a nivel producto (compatible con ventas sin lotes)
+            foreach ($venta->ventaProductos()->get() as $item) {
+                if ($item->producto) {
+                    $item->producto->increment('stock_actual', $item->cantidad);
+                }
+            }
+
+            // Restaurar lotes desde el libro de movimientos (SALIDA_VENTA)
+            $movimientos = MovimientoLote::query()
+                ->where('documento_tipo', 'Venta')
+                ->where('documento_id', $venta->id)
+                ->where('tipo_movimiento', MovimientoLote::SALIDA_VENTA)
+                ->get();
+
+            foreach ($movimientos as $movimiento) {
+                if (! $movimiento->lote_id) {
+                    continue;
+                }
+
+                $lote = Lote::query()->lockForUpdate()->find($movimiento->lote_id);
+
+                if (! $lote) {
+                    continue;
+                }
+
+                $stockAnterior = $lote->stock;
+                $lote->stock += $movimiento->cantidad;
+
+                if ($lote->stock > 0 && $lote->estado === 'agotado') {
+                    $lote->estado = 'disponible';
+                }
+
+                $lote->save();
+
+                MovimientoLote::create([
+                    'lote_id' => $movimiento->lote_id,
+                    'tipo_movimiento' => MovimientoLote::ENTRADA_DEVOLUCION,
+                    'cantidad' => $movimiento->cantidad,
+                    'stock_anterior' => $stockAnterior,
+                    'stock_nuevo' => $lote->stock,
+                    'documento_tipo' => 'Venta',
+                    'documento_id' => $venta->id,
+                    'documento_numero' => $venta->numero_venta,
+                    'usuario_id' => $usuario?->id,
+                    'sucursal_id' => $venta->sucursal_id,
+                    'producto_nombre' => $lote->producto?->nombre,
+                    'producto_codigo' => $lote->producto?->codigo_barras,
+                    'costo_unitario' => $movimiento->costo_unitario,
+                    'costo_total' => $movimiento->costo_total,
+                    'observaciones' => "Reversión de salida por venta {$venta->numero_venta}",
+                ]);
+            }
+
+            if ((float) $venta->pagado > 0 && $venta->caja_id) {
+                app(CajaLibroService::class)->egreso(
+                    $venta->caja_id,
+                    (float) $venta->pagado,
+                    $origen,
+                    'Venta',
+                    $venta->id,
+                    $venta->numero_venta,
+                    "Reversión de caja por devolución de venta {$venta->numero_venta}"
+                );
+            }
+        });
     }
 }

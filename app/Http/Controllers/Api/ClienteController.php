@@ -15,6 +15,7 @@ use App\Http\Requests\Cliente\UpdateClienteRequest;
 use App\Http\Resources\Cliente\ClienteCollection;
 use App\Http\Resources\Cliente\ClienteResource;
 use App\Models\Cliente;
+use App\Models\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
@@ -156,5 +157,61 @@ class ClienteController extends Controller
             'con_deuda' => $conDeuda,
             'sin_deuda' => $total - $conDeuda,
         ]);
+    }
+
+    /**
+     * Estado de cuenta del cliente: ventas por cobrar, pagos realizados y saldo.
+     */
+    public function estadoCuenta(Cliente $cliente)
+    {
+        $ventas = Venta::with(['pagos'])
+            ->where('cliente_id', $cliente->id)
+            ->whereNotIn('estado', ['cancelada', 'devuelta'])
+            ->orderByDesc('fecha_venta')
+            ->get();
+
+        $porCobrar = $ventas
+            ->filter(fn (Venta $venta) => (float) $venta->saldo_pendiente > 0)
+            ->values();
+
+        $pagos = $ventas
+            ->flatMap(fn (Venta $venta) => $venta->pagos)
+            ->sortByDesc('fecha_pago')
+            ->values();
+
+        return $this->success([
+            'cliente' => [
+                'id' => $cliente->id,
+                'nombre' => trim($cliente->nombre.' '.($cliente->apellidos ?? '')),
+                'ci' => $cliente->ci,
+                'email' => $cliente->email,
+                'telefono' => $cliente->telefono,
+            ],
+            'resumen' => [
+                'total_vendido' => round((float) $ventas->where('estado', 'completada')->sum('total'), 2),
+                'total_pagado' => round((float) $ventas->sum('pagado'), 2),
+                'saldo_pendiente' => round((float) $ventas->sum('saldo_pendiente'), 2),
+                'cantidad_cuentas_abiertas' => $porCobrar->count(),
+            ],
+            'cuentas_por_cobrar' => $porCobrar->map(fn (Venta $venta) => [
+                'id' => $venta->id,
+                'documento_numero' => $venta->numero_venta,
+                'fecha' => $venta->fecha_venta,
+                'fecha_vencimiento' => $venta->fecha_vencimiento,
+                'total' => $venta->total,
+                'pagado' => $venta->pagado,
+                'saldo_pendiente' => $venta->saldo_pendiente,
+                'estado' => $venta->estado,
+            ]),
+            'pagos' => $pagos->map(fn ($pago) => [
+                'id' => $pago->id,
+                'numero_pago' => $pago->numero_pago,
+                'documento_numero' => $pago->documento_numero,
+                'fecha_pago' => $pago->fecha_pago,
+                'monto' => $pago->monto,
+                'metodo_pago' => $pago->metodo_pago,
+                'tipo_pago' => $pago->tipo_pago,
+            ]),
+        ], 'Estado de cuenta del cliente');
     }
 }

@@ -98,8 +98,18 @@ class ProductoController extends Controller
             $validated = $request->validate([
                 'nombre' => ['required', 'string', 'max:255'],
                 'categoria_id' => ['nullable', 'exists:categorias,id'],
+                'proveedor_id' => ['nullable', 'exists:proveedores,id'],
                 'codigo_barras' => ['nullable', 'string', 'max:50'],
                 'sku' => ['nullable', 'string', 'max:50'],
+                'laboratorio' => ['nullable', 'string', 'max:255'],
+                'forma_farmaceutica' => ['nullable', 'string', 'max:100'],
+                'concentracion' => ['nullable', 'string', 'max:100'],
+                'presentacion' => ['nullable', 'string', 'max:100'],
+                'registro_sanitario' => ['nullable', 'string', 'max:100'],
+                'fecha_vencimiento' => ['nullable', 'date'],
+                'descripcion' => ['nullable', 'string'],
+                'fotos' => ['nullable', 'array'],
+                'fotos.*' => ['string', 'max:2048'],
                 'stock_actual' => ['nullable', 'integer', 'min:0'],
                 'stock_minimo' => ['nullable', 'integer', 'min:0'],
                 'precio_compra' => ['nullable', 'numeric', 'min:0'],
@@ -112,8 +122,17 @@ class ProductoController extends Controller
             $producto = Producto::create([
                 'nombre' => $validated['nombre'],
                 'categoria_id' => $validated['categoria_id'] ?? null,
+                'proveedor_id' => $validated['proveedor_id'] ?? null,
                 'codigo_barras' => $validated['codigo_barras'] ?? null,
                 'sku' => $validated['sku'] ?? null,
+                'laboratorio' => $validated['laboratorio'] ?? null,
+                'forma_farmaceutica' => $validated['forma_farmaceutica'] ?? null,
+                'concentracion' => $validated['concentracion'] ?? null,
+                'presentacion' => $validated['presentacion'] ?? null,
+                'registro_sanitario' => $validated['registro_sanitario'] ?? null,
+                'fecha_vencimiento' => $validated['fecha_vencimiento'] ?? null,
+                'descripcion' => $validated['descripcion'] ?? null,
+                'fotos' => $validated['fotos'] ?? null,
                 'stock_actual' => $validated['stock_actual'] ?? 0,
                 'stock_minimo' => $validated['stock_minimo'] ?? 10,
                 'precio_compra' => $validated['precio_compra'] ?? 0,
@@ -125,7 +144,7 @@ class ProductoController extends Controller
             $response = response()->json([
                 'success' => true,
                 'message' => 'Producto creado exitosamente',
-                'data' => new ProductoResource($producto->load(['categoria']))
+                'data' => new ProductoResource($producto->load(['categoria', 'proveedor'])->loadCount(['lotes', 'ventaProductos', 'compraProductos']))
             ], Response::HTTP_CREATED);
 
             // Agregar headers de seguridad y versión
@@ -159,11 +178,13 @@ class ProductoController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $producto = Producto::findOrFail($id);
+            $producto = Producto::with(['categoria', 'proveedor'])
+                ->withCount(['lotes', 'ventaProductos', 'compraProductos'])
+                ->findOrFail($id);
             
             $response = response()->json([
                 'success' => true,
-                'data' => new ProductoResource($producto->load(['categoria']))
+                'data' => new ProductoResource($producto)
             ], Response::HTTP_OK);
 
             // Agregar headers de seguridad y versión
@@ -199,9 +220,18 @@ class ProductoController extends Controller
         // Simplificar sin DTOs y Value Objects por ahora
         $producto->update([
             'nombre' => $request->nombre ?? $producto->nombre,
-            'categoria_id' => $request->categoria_id ?? $producto->categoria_id,
+            'categoria_id' => $request->has('categoria_id') ? $request->categoria_id : $producto->categoria_id,
+            'proveedor_id' => $request->has('proveedor_id') ? $request->proveedor_id : $producto->proveedor_id,
             'codigo_barras' => $request->codigo_barras ?? $producto->codigo_barras,
             'sku' => $request->sku ?? $producto->sku,
+            'laboratorio' => $request->laboratorio ?? $producto->laboratorio,
+            'forma_farmaceutica' => $request->forma_farmaceutica ?? $producto->forma_farmaceutica,
+            'concentracion' => $request->concentracion ?? $producto->concentracion,
+            'presentacion' => $request->presentacion ?? $producto->presentacion,
+            'registro_sanitario' => $request->registro_sanitario ?? $producto->registro_sanitario,
+            'fecha_vencimiento' => $request->fecha_vencimiento ?? $producto->fecha_vencimiento,
+            'descripcion' => $request->descripcion ?? $producto->descripcion,
+            'fotos' => $request->has('fotos') ? $request->input('fotos') : $producto->fotos,
             'stock_actual' => $request->stock_actual ?? $producto->stock_actual,
             'stock_minimo' => $request->stock_minimo ?? $producto->stock_minimo,
             'precio_compra' => $request->precio_compra ?? $producto->precio_compra,
@@ -213,7 +243,7 @@ class ProductoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Producto actualizado exitosamente',
-            'data' => new ProductoResource($producto->load(['categoria']))
+            'data' => new ProductoResource($producto->load(['categoria', 'proveedor'])->loadCount(['lotes', 'ventaProductos', 'compraProductos']))
         ], Response::HTTP_OK);
     }
 
@@ -273,7 +303,7 @@ class ProductoController extends Controller
             $response = response()->json([
                 'success' => true,
                 'message' => 'Estado del producto actualizado exitosamente',
-                'data' => new ProductoResource($producto->load(['categoria']))
+                'data' => new ProductoResource($producto->load(['categoria', 'proveedor']))
             ], Response::HTTP_OK);
 
             // Agregar headers de seguridad y versión

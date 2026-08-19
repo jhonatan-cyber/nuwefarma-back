@@ -41,7 +41,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos');
+        ])->getJson('/api/v1/productos');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -78,7 +78,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson("/api/productos/{$producto->id}");
+        ])->getJson("/api/v1/productos/{$producto->id}");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -104,7 +104,7 @@ class ProductoApiTest extends TestCase
         
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson("/api/productos/{$uuid}");
+        ])->getJson("/api/v1/productos/{$uuid}");
 
         $response->assertStatus(404)
             ->assertJson([
@@ -129,7 +129,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->postJson('/api/productos', $data);
+        ])->postJson('/api/v1/productos', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -161,7 +161,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->postJson('/api/productos', $data);
+        ])->postJson('/api/v1/productos', $data);
 
         $response->assertStatus(422)
             ->assertJsonStructure([
@@ -190,7 +190,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->putJson("/api/productos/{$producto->id}", $data);
+        ])->putJson("/api/v1/productos/{$producto->id}", $data);
 
         $response->assertStatus(200);
 
@@ -210,7 +210,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->deleteJson("/api/productos/{$producto->id}");
+        ])->deleteJson("/api/v1/productos/{$producto->id}");
 
         $response->assertStatus(200);
 
@@ -228,7 +228,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?page=2&per_page=10');
+        ])->getJson('/api/v1/productos?page=2&per_page=10');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -265,7 +265,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?q=paracetamol');
+        ])->getJson('/api/v1/productos?q=paracetamol');
 
         $response->assertStatus(200);
 
@@ -294,7 +294,7 @@ class ProductoApiTest extends TestCase
         // Test filtro por estado
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?estado=activo');
+        ])->getJson('/api/v1/productos?estado=activo');
 
         $response->assertStatus(200);
         $data = $response->json('data.data');
@@ -304,7 +304,7 @@ class ProductoApiTest extends TestCase
         // Test filtro bajo stock
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?stock_bajo=true');
+        ])->getJson('/api/v1/productos?stock_bajo=true');
 
         $data = $response->json('data.data');
         $this->assertCount(1, $data);
@@ -322,7 +322,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson('/api/productos?sort=precio_venta&direction=desc');
+        ])->getJson('/api/v1/productos?sort=precio_venta&direction=desc');
 
         $response->assertStatus(200);
         $data = $response->json('data.data');
@@ -337,12 +337,13 @@ class ProductoApiTest extends TestCase
      */
     public function test_acceso_no_autorizado_devuelve_401(): void
     {
-        $response = $this->getJson('/api/productos');
+        $response = $this->getJson('/api/v1/productos');
 
         $response->assertStatus(401)
             ->assertJson([
                 'success' => false,
-                'message' => 'Unauthenticated',
+                'code' => 'UNAUTHENTICATED',
+                'message' => 'No autenticado',
             ]);
     }
 
@@ -355,7 +356,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->patchJson("/api/productos/{$producto->id}/toggle-estado");
+        ])->patchJson("/api/v1/productos/{$producto->id}/toggle-estado");
 
         $response->assertStatus(200);
 
@@ -410,7 +411,7 @@ class ProductoApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer {$this->token}",
-        ])->getJson("/api/productos/{$producto->id}");
+        ])->getJson("/api/v1/productos/{$producto->id}");
 
         $response->assertStatus(200);
         $data = $response->json('data');

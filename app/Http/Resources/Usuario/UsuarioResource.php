@@ -53,7 +53,7 @@ class UsuarioResource extends JsonResource
                 ]),
             ],
             'links' => [
-                'self' => route('usuarios.show', $this->id),
+                'self' => route('v1.usuarios.show', $this->id),
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

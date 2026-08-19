@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Cotizacion\ConvertirCotizacionAction;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Venta\VentaResource;
 use App\Models\Cotizacion;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class CotizacionController extends Controller
 {
+    public function __construct(
+        private ConvertirCotizacionAction $convertirCotizacionAction
+    ) {}
+
     #[OA\Get(
         path: '/api/cotizaciones',
         summary: 'Listar todas las cotizaciones',
@@ -23,6 +29,8 @@ class CotizacionController extends Controller
     public function index(Request $request)
     {
         try {
+            Cotizacion::expirarVencidas();
+
             $query = Cotizacion::query();
 
             // Filtro por búsqueda
@@ -151,6 +159,7 @@ class CotizacionController extends Controller
     public function show(Cotizacion $cotizacion)
     {
         try {
+            $cotizacion->marcarVencidaSiCorresponde();
             $cotizacion->load('productos.producto');
 
             return response()->json([
@@ -297,6 +306,7 @@ class CotizacionController extends Controller
                 'estado' => 'required|in:en_espera,aceptada,rechazada,expirada',
             ]);
 
+            $cotizacion->marcarVencidaSiCorresponde();
             $cotizacion->update(['estado' => $validated['estado']]);
 
             return response()->json([
@@ -308,6 +318,32 @@ class CotizacionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar el estado: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function convertir(Request $request, Cotizacion $cotizacion)
+    {
+        try {
+            $venta = $this->convertirCotizacionAction->execute($cotizacion, $request->all());
+
+            return response()->json([
+                'success' => true,
+                'data' => new VentaResource($venta),
+                'message' => 'Cotización convertida en venta correctamente',
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\App\Exceptions\ApiException $e) {
+            return $e->render($request);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al convertir la cotización: '.$e->getMessage(),
             ], 500);
         }
     }

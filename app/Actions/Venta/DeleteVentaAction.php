@@ -19,18 +19,19 @@ class DeleteVentaAction
     public function execute(Venta $venta): bool
     {
         return DB::transaction(function () use ($venta) {
+            $venta = Venta::query()->lockForUpdate()->findOrFail($venta->id);
             $this->validateDeletion($venta);
 
-            // Restore stock for all products in the sale
-            foreach ($venta->ventaProductos as $ventaProducto) {
-                $producto = $ventaProducto->producto;
-                $producto->increment('stock_actual', $ventaProducto->cantidad);
-            }
+            if ($venta->estado === 'completada') {
+                foreach ($venta->ventaProductos as $ventaProducto) {
+                    $producto = $ventaProducto->producto()->lockForUpdate()->firstOrFail();
+                    $producto->increment('stock_actual', $ventaProducto->cantidad);
+                }
 
-            // Update caja balance if payment was made
-            if ($venta->pagado > 0) {
-                $caja = $venta->caja;
-                $caja->decrement('saldo_actual', $venta->pagado);
+                if ($venta->pagado > 0) {
+                    Caja::query()->lockForUpdate()->findOrFail($venta->caja_id)
+                        ->decrement('saldo_actual', $venta->pagado);
+                }
             }
 
             // Delete sale products first
@@ -38,7 +39,7 @@ class DeleteVentaAction
 
             // Delete sale
             return $venta->delete();
-        });
+        }, 3);
     }
 
     /**
@@ -48,18 +49,10 @@ class DeleteVentaAction
      */
     private function validateDeletion(Venta $venta): void
     {
-        if ($venta->estado === 'cancelada') {
-            throw ApiException::conflict(
-                'La venta ya está cancelada',
-                ['estado' => ['No se puede eliminar una venta ya cancelada']]
-            );
-        }
-
-        // Check if sale has related records that prevent deletion
-        if ($venta->devoluciones()->exists()) {
+        if (in_array($venta->estado, ['cancelada', 'devuelta'], true)) {
             throw ApiException::conflict(
                 'No se puede eliminar la venta',
-                ['devoluciones' => ['La venta tiene devoluciones asociadas']]
+                ['estado' => ["La venta ya está {$venta->estado}"]]
             );
         }
     }

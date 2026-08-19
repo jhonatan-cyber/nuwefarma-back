@@ -31,6 +31,7 @@ class ProveedorResource extends JsonResource
             'observaciones' => $this->observaciones,
             'estado' => $this->estado,
             'productos_count' => $this->whenCounted('productos'),
+            'compras_count' => $this->whenCounted('compras'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -25,10 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.ratelimit' => \App\Http\Middleware\RateLimitApiRequests::class,
             'api.auth' => \App\Http\Middleware\EnsureApiAuthenticated::class,
             'validate.api.headers' => \App\Http\Middleware\ValidateApiHeaders::class,
+            'module.access' => \App\Http\Middleware\ModuleAccess::class,
+            'sucursal.access' => \App\Http\Middleware\EnsureSucursalAccess::class,
         ]);
 
         // Headers de seguridad globales
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+        $middleware->append(\App\Http\Middleware\RequestId::class);
+        $middleware->append(\App\Http\Middleware\NormalizeApiResponse::class);
 
         // Sanctum SPA: maneja autenticación con bearer tokens automáticamente
         // NO necesitamos validar CSRF para peticiones con bearer tokens
@@ -44,10 +48,25 @@ return Application::configure(basePath: dirname(__DIR__))
         // Manejar errores de autenticación no capturados
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated',
-                ], 401);
+                return \App\Services\ApiResponseService::unauthorized('No autenticado');
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return \App\Services\ApiResponseService::validationError($e->errors());
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return \App\Services\ApiResponseService::notFound();
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return \App\Services\ApiResponseService::forbidden();
             }
         });
     })->create();

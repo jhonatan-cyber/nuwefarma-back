@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Compra\CancelarCompraAction;
 use App\Actions\Compra\CompleteCompraAction;
 use App\Actions\Compra\CreateCompraAction;
 use App\Actions\Compra\DeleteCompraAction;
+use App\Actions\Compra\DevolverCompraAction;
 use App\Actions\Compra\ListComprasAction;
+use App\Actions\Compra\PagarCompraAction;
+use App\Actions\Compra\RecibirCompraAction;
 use App\Actions\Compra\UpdateCompraAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Compra\CompraCollection;
@@ -22,7 +26,11 @@ class CompraController extends Controller
         private UpdateCompraAction $updateCompraAction,
         private DeleteCompraAction $deleteCompraAction,
         private ListComprasAction $listComprasAction,
-        private CompleteCompraAction $completeCompraAction
+        private CompleteCompraAction $completeCompraAction,
+        private RecibirCompraAction $recibirCompraAction,
+        private CancelarCompraAction $cancelarCompraAction,
+        private DevolverCompraAction $devolverCompraAction,
+        private PagarCompraAction $pagarCompraAction
     ) {}
 
     public function index(Request $request)
@@ -87,6 +95,48 @@ class CompraController extends Controller
                 'proveedor', 'usuario', 'caja',
             ])),
             'Compra completada exitosamente'
+        );
+    }
+
+    public function recibir(Request $request, Compra $compra)
+    {
+        $receivedCompra = $this->recibirCompraAction->execute($compra, $request->all());
+
+        return $this->success(
+            new CompraResource($receivedCompra),
+            'Compra recibida exitosamente'
+        );
+    }
+
+    public function cancelar(Request $request, Compra $compra)
+    {
+        $cancelledCompra = $this->cancelarCompraAction->execute($compra, $request->all());
+
+        return $this->success(
+            new CompraResource($cancelledCompra),
+            'Compra cancelada exitosamente'
+        );
+    }
+
+    public function devolver(Request $request, Compra $compra)
+    {
+        $returnedCompra = $this->devolverCompraAction->execute($compra, $request->all());
+
+        return $this->success(
+            new CompraResource($returnedCompra),
+            'Compra devuelta exitosamente'
+        );
+    }
+
+    public function pagar(Request $request, Compra $compra)
+    {
+        $paidCompra = $this->pagarCompraAction->execute($compra, $request->all());
+
+        return $this->success(
+            new CompraResource($paidCompra->load([
+                'proveedor', 'usuario', 'caja',
+            ])),
+            'Pago de compra registrado exitosamente'
         );
     }
 

@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopedBySucursal;
 use App\Models\Concerns\HasAuditoria;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Caja extends Model
 {
+    use ScopedBySucursal;
     use HasAuditoria, HasFactory, HasUuids;
 
     protected $table = 'cajas';
@@ -35,6 +38,7 @@ class Caja extends Model
         'descripcion',
         'saldo_inicial',
         'saldo_actual',
+        'saldo_final',
         'total_ingresos',
         'total_egresos',
         'fecha_apertura',
@@ -43,11 +47,13 @@ class Caja extends Model
         'usuario_id',
         'sucursal_id',
         'notas',
+        'observaciones_cierre',
     ];
 
     protected $casts = [
         'saldo_inicial' => 'decimal:2',
         'saldo_actual' => 'decimal:2',
+        'saldo_final' => 'decimal:2',
         'total_ingresos' => 'decimal:2',
         'total_egresos' => 'decimal:2',
         'fecha_apertura' => 'date',
@@ -70,6 +76,30 @@ class Caja extends Model
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class, 'sucursal_id');
+    }
+
+    /**
+     * Relación con los pagos registrados en la caja.
+     */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'caja_id');
+    }
+
+    /**
+     * Relación con los movimientos de la caja.
+     */
+    public function movimientos(): HasMany
+    {
+        return $this->hasMany(MovimientoCaja::class, 'caja_id');
+    }
+
+    /**
+     * Relación con los arqueos de la caja.
+     */
+    public function arqueos(): HasMany
+    {
+        return $this->hasMany(ArqueoCaja::class, 'caja_id');
     }
 
     /**

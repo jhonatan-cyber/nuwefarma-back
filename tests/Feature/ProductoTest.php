@@ -41,7 +41,7 @@ class ProductoTest extends TestCase
         ]);
 
         // Login y obtener token
-        $loginResponse = $this->postJson('/api/auth/login', [
+        $loginResponse = $this->postJson('/api/v1/auth/login', [
             'email' => 'test@example.com',
             'password' => '12345678',
         ]);
@@ -204,7 +204,7 @@ class ProductoTest extends TestCase
 
         // Probar el endpoint específico
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/productos/bajo-stock');
+            ->getJson('/api/v1/productos/bajo-stock');
 
         // Debug: ver qué está recibiendo
         if ($response->status() !== 200) {
@@ -243,10 +243,74 @@ class ProductoTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->getJson('/api/productos/proximos-vencer');
+            ->getJson('/api/v1/productos/proximos-vencer');
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data.data')
             ->assertJsonFragment(['nombre' => 'Vence Pronto']);
+    }
+
+    public function test_puede_crear_producto_con_proveedor_fotos_y_descripcion(): void
+    {
+        $categoria = Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
+        $proveedor = \App\Models\Proveedor::create([
+            'nombre' => 'Laboratorio Test',
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->postJson('/api/v1/productos', [
+                'nombre' => 'Amoxicilina 500mg',
+                'categoria_id' => $categoria->id,
+                'proveedor_id' => $proveedor->id,
+                'codigo_barras' => '1234567890123',
+                'laboratorio' => 'Lab Test',
+                'forma_farmaceutica' => 'Cápsulas',
+                'concentracion' => '500 mg',
+                'presentacion' => 'Caja x 20',
+                'descripcion' => 'Antibiótico de amplio espectro',
+                'fotos' => ['https://ejemplo.com/foto1.jpg', 'https://ejemplo.com/foto2.jpg'],
+                'precio_compra' => 5,
+                'precio_venta' => 12,
+                'stock_actual' => 20,
+                'stock_minimo' => 5,
+                'estado' => 'activo',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.attributes.nombre', 'Amoxicilina 500mg')
+            ->assertJsonPath('data.attributes.fotos.0', 'https://ejemplo.com/foto1.jpg')
+            ->assertJsonPath('data.attributes.descripcion', 'Antibiótico de amplio espectro')
+            ->assertJsonPath('data.relationships.proveedor.data.nombre', 'Laboratorio Test');
+
+        $this->assertDatabaseHas('productos', [
+            'nombre' => 'Amoxicilina 500mg',
+            'proveedor_id' => $proveedor->id,
+            'laboratorio' => 'Lab Test',
+        ]);
+    }
+
+    public function test_show_producto_incluye_conteos_relacionados(): void
+    {
+        $categoria = Categoria::create(['nombre' => 'Test', 'estado' => 'activo']);
+
+        $producto = Producto::create([
+            'nombre' => 'Ibuprofeno',
+            'categoria_id' => $categoria->id,
+            'precio_compra' => 8,
+            'precio_venta' => 15,
+            'stock_actual' => 10,
+            'stock_minimo' => 2,
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->getJson("/api/v1/productos/{$producto->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.attributes.nombre', 'Ibuprofeno')
+            ->assertJsonPath('data.attributes.lotes_count', 0)
+            ->assertJsonPath('data.attributes.venta_productos_count', 0)
+            ->assertJsonPath('data.attributes.compra_productos_count', 0);
     }
 }

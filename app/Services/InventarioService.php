@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Lote;
 use App\Models\MovimientoLote;
+use App\Models\Producto;
+use App\Models\Venta;
+use App\Models\VentaProducto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -73,10 +76,10 @@ class InventarioService
         });
     }
 
-    public function agregarStock(string $loteId, int $cantidad, float $precioCosto, array $documento = []): array
+    public function agregarStock(string $loteId, int $cantidad, float $precioCosto, array $documento = [], ?string $tipoMovimiento = null): array
     {
-        return DB::transaction(function () use ($loteId, $cantidad, $precioCosto, $documento) {
-            $lote = Lote::findOrFail($loteId);
+        return DB::transaction(function () use ($loteId, $cantidad, $precioCosto, $documento, $tipoMovimiento) {
+            $lote = Lote::query()->lockForUpdate()->findOrFail($loteId);
             $stockAnterior = $lote->stock;
 
             $nuevoCostoTotal = ($stockAnterior * $lote->precio_costo_promedio) + ($cantidad * $precioCosto);
@@ -92,7 +95,7 @@ class InventarioService
 
             $this->registrarMovimiento([
                 'lote_id' => $loteId,
-                'tipo_movimiento' => MovimientoLote::ENTRADA_COMPRA,
+                'tipo_movimiento' => $tipoMovimiento ?? MovimientoLote::ENTRADA_COMPRA,
                 'cantidad' => $cantidad,
                 'stock_anterior' => $stockAnterior,
                 'stock_nuevo' => $nuevoStock,
@@ -116,7 +119,12 @@ class InventarioService
     public function descontarStock(string $productoId, int $cantidad, array $documento = []): array
     {
         return DB::transaction(function () use ($productoId, $cantidad, $documento) {
-            $lotes = $this->getLotesDisponibles($productoId);
+            $lotes = Lote::query()
+                ->where('producto_id', $productoId)
+                ->disponibles()
+                ->fefo()
+                ->lockForUpdate()
+                ->get();
             $lotesUtilizados = [];
             $restante = $cantidad;
 
@@ -171,10 +179,10 @@ class InventarioService
         });
     }
 
-    public function descontarStockDeLote(string $loteId, int $cantidad, array $documento = []): array
+    public function descontarStockDeLote(string $loteId, int $cantidad, array $documento = [], ?string $tipoMovimiento = null): array
     {
-        return DB::transaction(function () use ($loteId, $cantidad, $documento) {
-            $lote = Lote::findOrFail($loteId);
+        return DB::transaction(function () use ($loteId, $cantidad, $documento, $tipoMovimiento) {
+            $lote = Lote::query()->lockForUpdate()->findOrFail($loteId);
 
             if ($cantidad > $lote->stock_disponible) {
                 throw new \Exception("Stock insuficiente en lote {$lote->numero_lote}");
@@ -186,7 +194,7 @@ class InventarioService
 
             $this->registrarMovimiento([
                 'lote_id' => $loteId,
-                'tipo_movimiento' => MovimientoLote::SALIDA_VENTA,
+                'tipo_movimiento' => $tipoMovimiento ?? MovimientoLote::SALIDA_VENTA,
                 'cantidad' => $cantidad,
                 'stock_anterior' => $stockAnterior,
                 'stock_nuevo' => $stockNuevo,
@@ -211,7 +219,7 @@ class InventarioService
     public function devolverStock(string $loteId, int $cantidad, ?float $precioCosto = null, array $documento = []): array
     {
         return DB::transaction(function () use ($loteId, $cantidad, $precioCosto, $documento) {
-            $lote = Lote::findOrFail($loteId);
+            $lote = Lote::query()->lockForUpdate()->findOrFail($loteId);
             $stockAnterior = $lote->stock;
 
             $lote->aumentarStock($cantidad, $precioCosto);
@@ -241,10 +249,66 @@ class InventarioService
         });
     }
 
+    /**
+     * Descontar stock de una venta aplicando FEFO sobre lotes disponibles.
+     * Si el producto no tiene lotes, mantiene el comportamiento legacy.
+     */
+    public function descontarParaVenta(Venta $venta, VentaProducto $ventaProducto): void
+    {
+        $productoId = $ventaProducto->producto_id;
+        $cantidad = $ventaProducto->cantidad;
+
+        $producto = Producto::query()->whereKey($productoId)->first();
+
+        if ($producto && $producto->stock_actual < $cantidad) {
+            throw \App\Exceptions\ApiException::conflict(
+                "Stock insuficiente para {$producto->nombre}",
+                ['stock' => ['No existe stock suficiente para completar la venta']]
+            );
+        }
+
+        $existenLotes = Lote::query()
+            ->where('producto_id', $productoId)
+            ->where('estado', '!=', 'retirado')
+            ->where('stock', '>', 0)
+            ->exists();
+
+        // Sin lotes registrados: comportamiento legacy a nivel producto
+        if (! $existenLotes) {
+            Producto::query()->whereKey($productoId)->decrement('stock_actual', $cantidad);
+
+            return;
+        }
+
+        try {
+            $resultado = $this->descontarStock($productoId, $cantidad, [
+                'tipo' => 'Venta',
+                'id' => $venta->id,
+                'numero' => $venta->numero_venta,
+                'observaciones' => "Venta {$venta->numero_venta}",
+            ]);
+        } catch (\App\Exceptions\ApiException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw \App\Exceptions\ApiException::conflict(
+                'Stock insuficiente para completar la venta',
+                ['stock' => [$e->getMessage()]]
+            );
+        }
+
+        // Mantener sincronizada la doble fuente de verdad (producto vs lotes)
+        Producto::query()->whereKey($productoId)->decrement('stock_actual', $cantidad);
+
+        $primerLote = $resultado['lotes_utilizados'][0] ?? null;
+        if ($primerLote) {
+            $ventaProducto->update(['lote_id' => $primerLote['lote_id']]);
+        }
+    }
+
     public function marcarVencido(string $loteId): array
     {
         return DB::transaction(function () use ($loteId) {
-            $lote = Lote::findOrFail($loteId);
+            $lote = Lote::query()->lockForUpdate()->findOrFail($loteId);
             $stockAnterior = $lote->stock;
 
             $lote->update([
@@ -385,8 +449,18 @@ class InventarioService
     public function transferirEntreLotes(string $loteOrigenId, string $loteDestinoId, int $cantidad): array
     {
         return DB::transaction(function () use ($loteOrigenId, $loteDestinoId, $cantidad) {
-            $loteOrigen = Lote::findOrFail($loteOrigenId);
-            $loteDestino = Lote::findOrFail($loteDestinoId);
+            $ids = [$loteOrigenId, $loteDestinoId];
+            sort($ids);
+
+            $lotes = Lote::query()
+                ->whereIn('id', $ids)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $loteOrigen = $lotes->get($loteOrigenId) ?? throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(Lote::class, [$loteOrigenId]);
+            $loteDestino = $lotes->get($loteDestinoId) ?? throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(Lote::class, [$loteDestinoId]);
 
             if ($cantidad > $loteOrigen->stock_disponible) {
                 throw new \Exception('Stock insuficiente en lote origen');

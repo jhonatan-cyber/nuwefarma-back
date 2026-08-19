@@ -19,14 +19,21 @@ class UpdateCompraAction
     public function execute(Compra $compra, array $data): Compra
     {
         return DB::transaction(function () use ($compra, $data) {
+            $compra = Compra::query()->lockForUpdate()->findOrFail($compra->id);
             $this->validateUpdateability($compra);
 
             $validatedData = $this->validate($data, $compra);
 
-            // Update purchase
-            $compra->update($validatedData);
+            foreach (['proveedor_id', 'usuario_id', 'sucursal_id'] as $field) {
+                if (array_key_exists($field, $validatedData)) {
+                    $validatedData[$field] = $validatedData[$field] ?: null;
+                }
+            }
 
-            return $compra->fresh()->load(['proveedor', 'usuario', 'caja', 'compraProductos.producto']);
+            $compra->update($validatedData);
+            $compra->calcularTotales();
+
+            return $compra->fresh()->load(['proveedor', 'usuario', 'sucursal', 'productos.producto']);
         });
     }
 
@@ -37,17 +44,17 @@ class UpdateCompraAction
      */
     private function validateUpdateability(Compra $compra): void
     {
-        if ($compra->estado === 'cancelada') {
+        if (in_array($compra->estado, ['cancelada', 'devuelta'], true)) {
             throw ApiException::conflict(
-                'No se puede modificar una compra cancelada',
-                ['estado' => ['La compra ya está cancelada']]
+                'No se puede modificar la compra',
+                ['estado' => ["La compra ya está {$compra->estado}"]]
             );
         }
 
-        if ($compra->estado === 'completada') {
+        if ($compra->estado === 'recibida') {
             throw ApiException::conflict(
-                'No se puede modificar una compra completada',
-                ['estado' => ['La compra ya está completada']]
+                'No se puede modificar una compra recibida',
+                ['estado' => ['La compra ya fue recibida y contabilizada']]
             );
         }
     }
@@ -61,18 +68,13 @@ class UpdateCompraAction
     private function validate(array $data, Compra $compra): array
     {
         return validator($data, [
-            'proveedor_id' => ['sometimes', 'exists:proveedores,id'],
-            'tipo_documento' => ['sometimes', Rule::in(['factura', 'boleta', 'nota_credito', 'guia_remision'])],
-            'numero_documento' => ['sometimes', 'string', 'max:100'],
-            'fecha_documento' => ['sometimes', 'date'],
-            'subtotal' => ['sometimes', 'numeric', 'min:0'],
-            'impuesto' => ['sometimes', 'numeric', 'min:0'],
+            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
+            'usuario_id' => ['nullable', 'exists:usuarios,id'],
+            'sucursal_id' => ['nullable', 'exists:sucursals,id'],
+            'metodo_pago' => ['sometimes', Rule::in(['efectivo', 'tarjeta', 'transferencia', 'mixto'])],
             'descuento' => ['sometimes', 'numeric', 'min:0'],
-            'total' => ['sometimes', 'numeric', 'min:0'],
-            'pagado' => ['sometimes', 'numeric', 'min:0'],
-            'saldo_pendiente' => ['sometimes', 'numeric', 'min:0'],
-            'estado' => ['sometimes', Rule::in(['pendiente', 'completada', 'cancelada'])],
-            'observaciones' => ['sometimes', 'string', 'max:1000'],
+            'impuestos' => ['sometimes', 'numeric', 'min:0'],
+            'notas' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ])->validate();
     }
 }

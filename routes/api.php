@@ -255,6 +255,19 @@ Route::prefix('v1')->name('v1.')->middleware(['module.access', 'sucursal.access'
             ->parameters(['libro-controlados' => 'libroControlado'])
             ->only(['index']);
 
+        Route::prefix('ordenes-compra')->group(function () {
+            Route::patch('/{orden}/aprobar', [\App\Http\Controllers\Api\OrdenCompraController::class, 'aprobar']);
+            Route::patch('/{orden}/rechazar', [\App\Http\Controllers\Api\OrdenCompraController::class, 'rechazar']);
+            Route::patch('/{orden}/enviar', [\App\Http\Controllers\Api\OrdenCompraController::class, 'enviar']);
+            Route::patch('/{orden}/recibir', [\App\Http\Controllers\Api\OrdenCompraController::class, 'recibir']);
+            Route::patch('/{orden}/cancelar', [\App\Http\Controllers\Api\OrdenCompraController::class, 'cancelar']);
+            Route::get('/sugerencias/reposicion', [\App\Http\Controllers\Api\OrdenCompraController::class, 'sugerencias']);
+            Route::get('/historial-precios/{producto}', [\App\Http\Controllers\Api\OrdenCompraController::class, 'historialPrecios']);
+        });
+        Route::apiResource('ordenes-compra', \App\Http\Controllers\Api\OrdenCompraController::class)
+            ->parameters(['ordenes-compra' => 'orden'])
+            ->only(['index', 'store', 'show']);
+
         Route::patch('/cotizaciones/{cotizacion}/cambiar-estado', [\App\Http\Controllers\Api\CotizacionController::class, 'cambiarEstado']);
         Route::post('/cotizaciones/{cotizacion}/convertir', [\App\Http\Controllers\Api\CotizacionController::class, 'convertir']);
         Route::apiResource('cotizaciones', \App\Http\Controllers\Api\CotizacionController::class)

@@ -22,6 +22,11 @@ class ProductoResource extends JsonResource
             'type' => 'productos',
             'attributes' => [
                 'nombre' => $this->nombre,
+                'principio_activo' => $this->principio_activo,
+                'condicion_venta' => $this->condicion_venta,
+                'condicion_venta_label' => $this->condicion_venta_label,
+                'es_controlado' => $this->es_controlado,
+                'requiere_receta' => $this->requiere_receta,
                 'codigo_barras' => $this->codigo_barras,
                 'sku' => $this->sku,
                 'codigo_interno' => $this->codigo_interno,

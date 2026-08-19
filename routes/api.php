@@ -217,6 +217,44 @@ Route::prefix('v1')->name('v1.')->middleware(['module.access', 'sucursal.access'
         });
         Route::apiResource('notas-credito', \App\Http\Controllers\Api\NotaCreditoController::class)->only(['index', 'show']);
 
+        Route::apiResource('medicos', \App\Http\Controllers\Api\MedicoController::class);
+        Route::apiResource('pacientes', \App\Http\Controllers\Api\PacienteController::class);
+
+        Route::prefix('recetas')->group(function () {
+            Route::post('/marcar-vencidas', [\App\Http\Controllers\Api\RecetaController::class, 'marcarVencidas']);
+            Route::patch('/{receta}/dispensar', [\App\Http\Controllers\Api\RecetaController::class, 'dispensar']);
+            Route::patch('/{receta}/anular', [\App\Http\Controllers\Api\RecetaController::class, 'anular']);
+        });
+        Route::apiResource('recetas', \App\Http\Controllers\Api\RecetaController::class)->only(['index', 'store', 'show']);
+
+        Route::prefix('equivalencias')->group(function () {
+            Route::get('/sugeridos/{producto}', [\App\Http\Controllers\Api\EquivalenciaProductoController::class, 'sugeridos']);
+        });
+        Route::apiResource('equivalencias', \App\Http\Controllers\Api\EquivalenciaProductoController::class)
+            ->except(['update']);
+
+        Route::prefix('conteos-inventario')->group(function () {
+            Route::patch('/{conteo}/items/{item}/contar', [\App\Http\Controllers\Api\ConteoInventarioController::class, 'registrarConteo']);
+            Route::patch('/{conteo}/cerrar', [\App\Http\Controllers\Api\ConteoInventarioController::class, 'cerrar']);
+            Route::patch('/{conteo}/cancelar', [\App\Http\Controllers\Api\ConteoInventarioController::class, 'cancelar']);
+        });
+        Route::apiResource('conteos-inventario', \App\Http\Controllers\Api\ConteoInventarioController::class)
+            ->only(['index', 'store', 'show']);
+
+        Route::prefix('registros-temperatura')->group(function () {
+            Route::get('/alertas', [\App\Http\Controllers\Api\RegistroTemperaturaController::class, 'alertas']);
+        });
+        Route::apiResource('registros-temperatura', \App\Http\Controllers\Api\RegistroTemperaturaController::class)
+            ->parameters(['registros-temperatura' => 'registroTemperatura'])
+            ->only(['index', 'store', 'show']);
+
+        Route::prefix('libro-controlados')->group(function () {
+            Route::get('/reporte', [\App\Http\Controllers\Api\LibroControladoController::class, 'reporte']);
+        });
+        Route::apiResource('libro-controlados', \App\Http\Controllers\Api\LibroControladoController::class)
+            ->parameters(['libro-controlados' => 'libroControlado'])
+            ->only(['index']);
+
         Route::patch('/cotizaciones/{cotizacion}/cambiar-estado', [\App\Http\Controllers\Api\CotizacionController::class, 'cambiarEstado']);
         Route::post('/cotizaciones/{cotizacion}/convertir', [\App\Http\Controllers\Api\CotizacionController::class, 'convertir']);
         Route::apiResource('cotizaciones', \App\Http\Controllers\Api\CotizacionController::class)

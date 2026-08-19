@@ -59,6 +59,8 @@ class MovimientoLote extends Model
 
     public const SALIDA_VENTA = 'SALIDA_VENTA';
 
+    public const SALIDA_DISPENSACION = 'SALIDA_DISPENSACION';
+
     public const SALIDA_DEVOLUCION_PROV = 'SALIDA_DEVOLUCION_PROV';
 
     public const SALIDA_TRASLADO_OUT = 'SALIDA_TRASLADO_OUT';
@@ -115,6 +117,7 @@ class MovimientoLote extends Model
     {
         return $query->whereIn('tipo_movimiento', [
             self::SALIDA_VENTA,
+            self::SALIDA_DISPENSACION,
             self::SALIDA_DEVOLUCION_PROV,
             self::SALIDA_TRASLADO_OUT,
             self::AJUSTE_NEGATIVO,
@@ -199,6 +202,7 @@ class MovimientoLote extends Model
     {
         return in_array($this->tipo_movimiento, [
             self::SALIDA_VENTA,
+            self::SALIDA_DISPENSACION,
             self::SALIDA_DEVOLUCION_PROV,
             self::SALIDA_TRASLADO_OUT,
             self::AJUSTE_NEGATIVO,
@@ -217,6 +221,7 @@ class MovimientoLote extends Model
             self::ENTRADA_DEVOLUCION => 'Entrada por Devolución',
             self::ENTRADA_TRASLADO_IN => 'Entrada por Traslado',
             self::SALIDA_VENTA => 'Salida por Venta',
+            self::SALIDA_DISPENSACION => 'Dispensación a Paciente',
             self::SALIDA_DEVOLUCION_PROV => 'Salida por Devolución a Proveedor',
             self::SALIDA_TRASLADO_OUT => 'Salida por Traslado',
             self::AJUSTE_POSITIVO => 'Ajuste Positivo',

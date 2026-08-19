@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CondicionVentaEnum;
 use App\Enums\ViaAdministracionEnum;
 use App\Models\Concerns\HasAuditoria;
 use App\Models\Concerns\HasEstado;
@@ -31,6 +32,7 @@ class Producto extends Model
         'categoria_id',
         'proveedor_id',
         'nombre',
+        'principio_activo',
         'codigo_barras',
         'sku',
         'codigo_interno',
@@ -45,6 +47,7 @@ class Producto extends Model
         'lote',
         'fecha_vencimiento',
         'registro_sanitario',
+        'condicion_venta',
         'refrigeracion_requerida',
         'dias_para_alertar_vencimiento',
         'stock_actual',
@@ -66,6 +69,7 @@ class Producto extends Model
         'fecha_vencimiento' => 'date',
         'refrigeracion_requerida' => 'boolean',
         'permite_fraccionar' => 'boolean',
+        'condicion_venta' => CondicionVentaEnum::class,
         'dias_para_alertar_vencimiento' => 'integer',
         'stock_actual' => 'integer',
         'stock_minimo' => 'integer',
@@ -94,6 +98,9 @@ class Producto extends Model
         'bajo_stock',
         'proximo_vencer',
         'via_administracion_label',
+        'condicion_venta_label',
+        'es_controlado',
+        'requiere_receta',
     ];
 
     // Relationships
@@ -127,6 +134,27 @@ class Producto extends Model
     {
         return Attribute::make(
             get: fn () => trim("{$this->nombre} {$this->concentracion} {$this->forma_farmaceutica}")
+        );
+    }
+
+    protected function condicionVentaLabel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->condicion_venta?->getLabel()
+        );
+    }
+
+    protected function esControlado(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->condicion_venta?->esControlado() ?? false
+        );
+    }
+
+    protected function requiereReceta(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->condicion_venta?->requiereReceta() ?? false
         );
     }
 
@@ -204,6 +232,21 @@ class Producto extends Model
     public function scopeFraccionables(Builder $query): Builder
     {
         return $query->where('permite_fraccionar', true);
+    }
+
+    public function scopeControlados(Builder $query): Builder
+    {
+        return $query->where('condicion_venta', CondicionVentaEnum::RECETA_RETENIDA);
+    }
+
+    public function scopeConReceta(Builder $query): Builder
+    {
+        return $query->whereNot('condicion_venta', CondicionVentaEnum::VENTA_LIBRE);
+    }
+
+    public function scopeVentaLibre(Builder $query): Builder
+    {
+        return $query->where('condicion_venta', CondicionVentaEnum::VENTA_LIBRE);
     }
 
     public function scopePorCategoria(Builder $query, string|int $categoria): Builder

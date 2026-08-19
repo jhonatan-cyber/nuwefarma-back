@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\FiscalProvider;
 use App\Models\Cliente;
 use App\Observers\ClienteObserver;
+use App\Providers\SimulatedSiatProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register application bindings here when a concrete implementation exists.
+        $this->app->singleton(FiscalProvider::class, fn () => new SimulatedSiatProvider());
     }
 
     /**

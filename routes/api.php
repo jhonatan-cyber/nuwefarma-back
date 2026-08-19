@@ -268,6 +268,33 @@ Route::prefix('v1')->name('v1.')->middleware(['module.access', 'sucursal.access'
             ->parameters(['ordenes-compra' => 'orden'])
             ->only(['index', 'store', 'show']);
 
+        Route::prefix('facturas')->group(function () {
+            Route::post('/emitir', [\App\Http\Controllers\Api\FacturaController::class, 'emitir']);
+            Route::post('/contingencia', [\App\Http\Controllers\Api\FacturaController::class, 'emitirContingencia']);
+            Route::patch('/{factura}/anular', [\App\Http\Controllers\Api\FacturaController::class, 'anular']);
+            Route::get('/{factura}/consultar', [\App\Http\Controllers\Api\FacturaController::class, 'consultar']);
+            Route::get('/{factura}/representacion', [\App\Http\Controllers\Api\FacturaController::class, 'representacion']);
+        });
+        Route::apiResource('facturas', \App\Http\Controllers\Api\FacturaController::class)
+            ->only(['index', 'show']);
+
+        Route::prefix('empresa-fiscal')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\FacturaController::class, 'empresa']);
+            Route::put('/', [\App\Http\Controllers\Api\FacturaController::class, 'guardarEmpresa']);
+        });
+
+        Route::prefix('puntos-venta')->group(function () {
+            Route::post('/', [\App\Http\Controllers\Api\FacturaController::class, 'crearPuntoVenta']);
+            Route::get('/', [\App\Http\Controllers\Api\FacturaController::class, 'listarPuntosVenta']);
+            Route::get('/{puntoVenta}/sesiones', [\App\Http\Controllers\Api\FacturaController::class, 'sesiones']);
+        });
+
+        Route::prefix('siat')->group(function () {
+            Route::get('/transacciones', [\App\Http\Controllers\Api\FacturaController::class, 'transacciones']);
+            Route::post('/credenciales', [\App\Http\Controllers\Api\FacturaController::class, 'guardarCredencial']);
+            Route::get('/configuracion', [\App\Http\Controllers\Api\FacturaController::class, 'estadoConfiguracion']);
+        });
+
         Route::patch('/cotizaciones/{cotizacion}/cambiar-estado', [\App\Http\Controllers\Api\CotizacionController::class, 'cambiarEstado']);
         Route::post('/cotizaciones/{cotizacion}/convertir', [\App\Http\Controllers\Api\CotizacionController::class, 'convertir']);
         Route::apiResource('cotizaciones', \App\Http\Controllers\Api\CotizacionController::class)

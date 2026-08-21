@@ -7,6 +7,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para notificaciones
+ *
+ * @property-read string $id
+ * @property-read string $tipo
+ * @property-read string $titulo
+ * @property-read string $mensaje
+ * @property-read string $modulo
+ * @property-read ?string $registro_id
+ * @property-read string $estado
+ * @property-read ?string $usuario_id
+ * @property-read ?array $data
+ * @property-read ?\Illuminate\Support\Carbon $leido_at
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Notificacion extends Model
 {
     use HasFactory, HasUuids;

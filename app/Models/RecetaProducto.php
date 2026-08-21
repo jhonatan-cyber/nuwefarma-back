@@ -7,6 +7,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para receta_productos
+ *
+ * @property-read string $id
+ * @property-read string $receta_id
+ * @property-read string $producto_id
+ * @property-read string $cantidad_prescrita
+ * @property-read string $cantidad_dispensada
+ * @property-read ?string $posologia
+ * @property-read ?string $duracion
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class RecetaProducto extends Model
 {
     use HasFactory, HasUuids;

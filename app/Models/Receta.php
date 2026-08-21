@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para recetas
+ *
+ * @property-read string $id
+ * @property-read string $numero_receta
+ * @property-read \Illuminate\Support\Carbon $fecha_emision
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read ?string $observaciones
+ * @property-read string $estado
+ * @property-read ?string $medico_id
+ * @property-read ?string $paciente_id
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Receta extends Model
 {
     use HasFactory, HasUuids;

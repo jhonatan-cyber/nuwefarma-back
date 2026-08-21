@@ -9,6 +9,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para categorias
+ *
+ * @property-read string $id
+ * @property-read string $nombre
+ * @property-read ?string $descripcion
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Categoria extends Model
 {
     use HasAuditoria, HasFactory, HasUuids;

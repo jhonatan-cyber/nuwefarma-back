@@ -8,6 +8,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para proveedores
+ *
+ * @property-read string $id
+ * @property-read string $nombre
+ * @property-read ?string $nit
+ * @property-read ?string $telefono
+ * @property-read ?string $email
+ * @property-read ?string $direccion
+ * @property-read ?string $ciudad
+ * @property-read ?string $pais
+ * @property-read ?string $contacto
+ * @property-read ?string $telefono_contacto
+ * @property-read ?string $categoria
+ * @property-read ?string $observaciones
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Proveedor extends Model
 {
     use HasAuditoria, HasFactory, HasUuids;

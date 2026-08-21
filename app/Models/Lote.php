@@ -10,6 +10,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Map de columnas para lotes
+ *
+ * @property-read string $id
+ * @property-read string $producto_id
+ * @property-read string $numero_lote
+ * @property-read \Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read int $stock
+ * @property-read int $stock_comprometido
+ * @property-read int $stock_minimo
+ * @property-read ?int $stock_maximo
+ * @property-read string $precio_costo
+ * @property-read string $precio_costo_promedio
+ * @property-read string $estado
+ * @property-read ?string $proveedor_id
+ * @property-read ?string $compra_id
+ * @property-read ?string $documento_origen
+ * @property-read ?string $ubicacion_bodega
+ * @property-read \Illuminate\Support\Carbon $fecha_ingreso
+ * @property-read ?\Illuminate\Support\Carbon $fecha_alerta_vencimiento
+ * @property-read ?string $notas
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?\Illuminate\Support\Carbon $deleted_at
+ */
 class Lote extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;

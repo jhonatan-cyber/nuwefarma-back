@@ -9,6 +9,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para siat_sesiones
+ *
+ * @property-read string $id
+ * @property-read ?string $punto_venta_id
+ * @property-read string $tipo
+ * @property-read string $codigo
+ * @property-read ?string $codigo_control
+ * @property-read ?string $descripcion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vigencia
+ * @property-read ?\Illuminate\Support\Carbon $fecha_inicio
+ * @property-read ?\Illuminate\Support\Carbon $fecha_fin
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class SiatSesion extends Model
 {
     use HasFactory, HasUuids;

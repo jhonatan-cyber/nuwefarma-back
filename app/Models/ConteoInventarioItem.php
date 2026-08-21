@@ -7,6 +7,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para conteo_inventario_items
+ *
+ * @property-read string $id
+ * @property-read string $conteo_id
+ * @property-read string $producto_id
+ * @property-read ?string $lote_id
+ * @property-read int $stock_sistema
+ * @property-read ?int $stock_fisico
+ * @property-read int $diferencia
+ * @property-read string $estado
+ * @property-read ?string $observaciones
+ * @property-read ?string $contado_por_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class ConteoInventarioItem extends Model
 {
     use HasFactory, HasUuids;

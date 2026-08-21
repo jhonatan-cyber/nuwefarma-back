@@ -13,6 +13,33 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Map de columnas para ventas
+ *
+ * @property-read string $id
+ * @property-read string $numero_venta
+ * @property-read string $subtotal
+ * @property-read string $descuento
+ * @property-read string $impuestos
+ * @property-read string $total
+ * @property-read string $estado
+ * @property-read string $metodo_pago
+ * @property-read ?string $cliente_id
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $caja_id
+ * @property-read ?string $notas
+ * @property-read \Illuminate\Support\Carbon $fecha_venta
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read string $pagado
+ * @property-read string $saldo_pendiente
+ * @property-read string $tipo_pago
+ * @property-read ?string $observaciones
+ * @property-read ?string $motivo_cancelacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_cancelacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vencimiento
+ */
 class Venta extends Model
 {
     use ScopedBySucursal;

@@ -9,6 +9,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para puntos_venta
+ *
+ * @property-read string $id
+ * @property-read ?string $sucursal_id
+ * @property-read string $codigo_poa
+ * @property-read ?string $nombre
+ * @property-read ?string $telefono
+ * @property-read ?string $direccion
+ * @property-read string $tipo
+ * @property-read string $ambiente
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class PuntoVenta extends Model
 {
     use HasFactory, HasUuids;

@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para ajuste_inventario_detalles
+ *
+ * @property-read string $id
+ * @property-read string $ajuste_id
+ * @property-read string $lote_id
+ * @property-read int $stock_anterior
+ * @property-read int $stock_nuevo
+ * @property-read int $diferencia
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class AjusteInventarioDetalle extends Model
 {
     use HasFactory, HasUuids;

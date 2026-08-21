@@ -5,6 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Map de columnas para cotizacions
+ *
+ * @property-read string $id
+ * @property-read string $numero_cotizacion
+ * @property-read string $cliente
+ * @property-read \Illuminate\Support\Carbon $fecha
+ * @property-read \Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read string $subtotal
+ * @property-read string $impuesto
+ * @property-read string $descuento
+ * @property-read string $total
+ * @property-read string $estado
+ * @property-read ?string $descripcion
+ * @property-read ?string $notas
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Cotizacion extends Model
 {
     use HasUuids;

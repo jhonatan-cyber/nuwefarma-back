@@ -11,6 +11,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para arqueos_caja
+ *
+ * @property-read string $id
+ * @property-read string $numero_arqueo
+ * @property-read string $caja_id
+ * @property-read string $saldo_inicial
+ * @property-read string $total_ingresos
+ * @property-read string $total_egresos
+ * @property-read string $saldo_sistema
+ * @property-read string $total_declarado
+ * @property-read string $total_contado
+ * @property-read string $diferencia
+ * @property-read ?array $detalles
+ * @property-read string $estado
+ * @property-read ?string $observaciones
+ * @property-read ?\Illuminate\Support\Carbon $fecha_cierre
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class ArqueoCaja extends Model
 {
     use ScopedBySucursal;

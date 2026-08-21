@@ -7,6 +7,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para registros_temperatura
+ *
+ * @property-read string $id
+ * @property-read ?string $sucursal_id
+ * @property-read string $tipo_registro
+ * @property-read ?string $ubicacion
+ * @property-read ?string $dispositivo
+ * @property-read string $temperatura
+ * @property-read ?string $humedad
+ * @property-read ?string $temp_minima_aceptable
+ * @property-read ?string $temp_maxima_aceptable
+ * @property-read bool $dentro_rango
+ * @property-read ?string $observaciones
+ * @property-read ?string $usuario_id
+ * @property-read \Illuminate\Support\Carbon $registrado_en
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class RegistroTemperatura extends Model
 {
     use HasFactory, HasUuids;

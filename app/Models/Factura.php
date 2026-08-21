@@ -10,6 +10,47 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para facturas
+ *
+ * @property-read string $id
+ * @property-read ?string $venta_id
+ * @property-read ?string $punto_venta_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $usuario_id
+ * @property-read string $numero_factura
+ * @property-read string $cuf
+ * @property-read ?string $cufd
+ * @property-read ?string $cuis
+ * @property-read ?string $numero_autorizacion
+ * @property-read ?string $codigo_control
+ * @property-read string $tipo_emision
+ * @property-read string $tipo_documento_sector
+ * @property-read string $tipo_pago
+ * @property-read ?string $nit_cliente
+ * @property-read ?string $razon_social_cliente
+ * @property-read ?string $codigo_cliente
+ * @property-read ?string $complemento_ci
+ * @property-read ?string $direccion_cliente
+ * @property-read ?string $email_cliente
+ * @property-read \Illuminate\Support\Carbon $fecha_emision
+ * @property-read ?string $leyenda
+ * @property-read ?string $numero_serie
+ * @property-read ?string $numero_duplicado
+ * @property-read string $subtotal
+ * @property-read string $descuento
+ * @property-read string $monto_total
+ * @property-read string $monto_sujeto_iva
+ * @property-read string $monto_no_sujeto
+ * @property-read string $monto_ice
+ * @property-read string $estado
+ * @property-read ?string $motivo_anulacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_anulacion
+ * @property-read ?string $respuesta_siat
+ * @property-read ?string $qr
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Factura extends Model
 {
     use HasFactory, HasUuids;

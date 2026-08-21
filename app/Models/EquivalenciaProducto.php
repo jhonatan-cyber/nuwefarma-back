@@ -14,6 +14,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * considera al producto equivalente como reemplazo, con factor de conversión
  * cuando las presentaciones difieren.
  */
+/**
+ * Map de columnas para equivalencia_productos
+ *
+ * @property-read string $id
+ * @property-read string $producto_id
+ * @property-read string $producto_equivalente_id
+ * @property-read string $tipo
+ * @property-read ?string $factor_conversion
+ * @property-read ?string $notas
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class EquivalenciaProducto extends Model
 {
     use HasFactory, HasUuids;

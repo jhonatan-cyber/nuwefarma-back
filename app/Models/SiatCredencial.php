@@ -9,6 +9,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
+/**
+ * Map de columnas para siat_credenciales
+ *
+ * @property-read string $id
+ * @property-read string $nombre
+ * @property-read string $valor_cifrado
+ * @property-read string $ambiente
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class SiatCredencial extends Model
 {
     use HasFactory, HasUuids;

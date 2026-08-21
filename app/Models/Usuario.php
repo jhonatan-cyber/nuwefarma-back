@@ -10,6 +10,30 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Map de columnas para usuarios
+ *
+ * @property-read string $id
+ * @property-read string $nombre
+ * @property-read string $apellidos
+ * @property-read ?string $direccion
+ * @property-read string $telefono
+ * @property-read string $email
+ * @property-read ?\Illuminate\Support\Carbon $email_verified_at
+ * @property-read string $password
+ * @property-read ?string $remember_token
+ * @property-read string $rol_id
+ * @property-read ?string $sueldo
+ * @property-read string $foto
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read string $ci
+ * @property-read int $intentos_fallidos
+ * @property-read ?\Illuminate\Support\Carbon $bloqueado_hasta
+ * @property-read ?\Illuminate\Support\Carbon $ultimo_intento_fallido
+ * @property-read ?string $sucursal_id
+ */
 class Usuario extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasUuids, Notifiable;

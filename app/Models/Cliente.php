@@ -7,6 +7,26 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Map de columnas para clientes
+ *
+ * @property-read string $id
+ * @property-read ?string $ci
+ * @property-read string $nombre
+ * @property-read ?string $apellidos
+ * @property-read ?string $telefono
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read ?string $nit
+ * @property-read ?string $email
+ * @property-read ?string $direccion
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Cliente extends Model
 {
     use HasAuditoria, HasFactory, HasUuids;

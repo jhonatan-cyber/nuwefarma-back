@@ -14,6 +14,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Map de columnas para compras
+ *
+ * @property-read string $id
+ * @property-read string $numero_compra
+ * @property-read string $subtotal
+ * @property-read string $descuento
+ * @property-read string $impuestos
+ * @property-read string $total
+ * @property-read string $estado
+ * @property-read string $metodo_pago
+ * @property-read ?string $proveedor_id
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $notas
+ * @property-read \Illuminate\Support\Carbon $fecha_compra
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $caja_id
+ * @property-read ?string $tipo_documento
+ * @property-read ?string $numero_documento
+ * @property-read ?\Illuminate\Support\Carbon $fecha_documento
+ * @property-read string $pagado
+ * @property-read string $saldo_pendiente
+ * @property-read ?string $observaciones
+ * @property-read ?string $motivo_cancelacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_cancelacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Compra extends Model
 {
     use ScopedBySucursal;

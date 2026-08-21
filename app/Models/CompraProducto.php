@@ -7,6 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para compra_productos
+ *
+ * @property-read string $id
+ * @property-read string $compra_id
+ * @property-read string $producto_id
+ * @property-read int $cantidad
+ * @property-read string $precio_unitario
+ * @property-read string $descuento_unitario
+ * @property-read string $subtotal
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $lote_id
+ * @property-read ?string $numero_lote
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read int $cantidad_recibida
+ */
 class CompraProducto extends Model
 {
     use HasFactory, HasUuids;

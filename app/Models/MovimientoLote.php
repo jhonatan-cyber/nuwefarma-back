@@ -8,6 +8,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para movimientos_lote
+ *
+ * @property-read string $id
+ * @property-read string $lote_id
+ * @property-read string $tipo_movimiento
+ * @property-read int $cantidad
+ * @property-read int $stock_anterior
+ * @property-read int $stock_nuevo
+ * @property-read ?string $documento_tipo
+ * @property-read ?string $documento_id
+ * @property-read ?string $documento_numero
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $producto_nombre
+ * @property-read ?string $producto_codigo
+ * @property-read ?string $costo_unitario
+ * @property-read ?string $costo_total
+ * @property-read ?string $observaciones
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class MovimientoLote extends Model
 {
     use HasFactory, HasUuids;

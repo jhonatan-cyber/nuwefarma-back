@@ -14,6 +14,61 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para productos
+ *
+ * @property-read string $id
+ * @property-read ?string $categoria_id
+ * @property-read string $nombre
+ * @property-read ?string $codigo_barras
+ * @property-read ?string $sku
+ * @property-read ?string $codigo_interno
+ * @property-read ?string $laboratorio
+ * @property-read ?string $forma_farmaceutica
+ * @property-read ?string $concentracion
+ * @property-read ?string $presentacion
+ * @property-read ?string $via_administracion
+ * @property-read ?string $unidad_medida
+ * @property-read ?int $fracciones_por_unidad
+ * @property-read bool $permite_fraccionar
+ * @property-read ?string $lote
+ * @property-read ?\Illuminate\Support\Carbon $fecha_vencimiento
+ * @property-read ?string $registro_sanitario
+ * @property-read bool $refrigeracion_requerida
+ * @property-read int $dias_para_alertar_vencimiento
+ * @property-read int $stock_actual
+ * @property-read int $stock_minimo
+ * @property-read ?int $stock_maximo
+ * @property-read string $precio_compra
+ * @property-read string $precio_venta
+ * @property-read ?string $margen_sugerido
+ * @property-read ?string $impuesto
+ * @property-read ?array $etiquetas
+ * @property-read ?array $fotos
+ * @property-read ?string $descripcion
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $proveedor_id
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read ?string $principio_activo
+ * @property-read App\Enums\CondicionVentaEnum $condicion_venta
+ * @property-read string|null $nombre_completo
+ * @property-read string|null $estado_label
+ * @property-read string|null $estado_color
+ * @property-read float $precio_con_impuesto
+ * @property-read float $margen_real
+ * @property-read bool $bajo_stock
+ * @property-read bool $proximo_vencer
+ * @property-read string|null $via_administracion_label
+ * @property-read string|null $condicion_venta_label
+ * @property-read bool $es_controlado
+ * @property-read bool $requiere_receta
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Producto extends Model
 {
     use HasAuditoria, HasEstado, HasFactory, HasUuids;

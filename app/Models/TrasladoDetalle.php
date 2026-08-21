@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para traslado_detalles
+ *
+ * @property-read string $id
+ * @property-read string $traslado_id
+ * @property-read string $lote_origen_id
+ * @property-read ?string $lote_destino_id
+ * @property-read int $cantidad
+ * @property-read int $recibido
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class TrasladoDetalle extends Model
 {
     use HasFactory, HasUuids;

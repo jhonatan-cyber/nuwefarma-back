@@ -11,6 +11,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para notas_credito
+ *
+ * @property-read string $id
+ * @property-read string $numero
+ * @property-read string $documento_tipo
+ * @property-read string $documento_id
+ * @property-read ?string $documento_numero
+ * @property-read string $monto
+ * @property-read ?string $motivo
+ * @property-read string $estado
+ * @property-read ?string $aplicado_a
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class NotaCredito extends Model
 {
     use ScopedBySucursal;

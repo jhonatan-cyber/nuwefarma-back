@@ -8,6 +8,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para traslados
+ *
+ * @property-read string $id
+ * @property-read string $numero_traslado
+ * @property-read string $sucursal_origen_id
+ * @property-read string $sucursal_destino_id
+ * @property-read string $usuario_solicita_id
+ * @property-read ?string $usuario_autoriza_id
+ * @property-read ?string $usuario_recibe_id
+ * @property-read string $estado
+ * @property-read ?string $observaciones
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Traslado extends Model
 {
     use HasFactory, HasUuids;

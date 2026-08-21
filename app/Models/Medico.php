@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para medicos
+ *
+ * @property-read string $id
+ * @property-read string $nombres
+ * @property-read ?string $apellidos
+ * @property-read ?string $ci
+ * @property-read ?string $registro_profesional
+ * @property-read ?string $especialidad
+ * @property-read ?string $telefono
+ * @property-read ?string $email
+ * @property-read ?string $institucion
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read string|null $nombre_completo
+ */
 class Medico extends Model
 {
     use HasEstado, HasFactory, HasUuids;

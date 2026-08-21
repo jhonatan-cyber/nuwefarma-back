@@ -9,6 +9,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para siat_transacciones
+ *
+ * @property-read string $id
+ * @property-read string $uuid_request
+ * @property-read string $tipo_operacion
+ * @property-read ?string $factura_id
+ * @property-read ?string $punto_venta_id
+ * @property-read ?string $cuf
+ * @property-read string $estado
+ * @property-read ?string $codigo_respuesta
+ * @property-read ?string $descripcion
+ * @property-read ?array $request_payload
+ * @property-read ?array $response_payload
+ * @property-read ?string $ip_origen
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class SiatTransaccion extends Model
 {
     use HasFactory, HasUuids;

@@ -10,6 +10,33 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para cajas
+ *
+ * @property-read string $id
+ * @property-read string $numero_caja
+ * @property-read string $nombre
+ * @property-read ?string $descripcion
+ * @property-read string $saldo_inicial
+ * @property-read string $saldo_actual
+ * @property-read string $total_ingresos
+ * @property-read string $total_egresos
+ * @property-read \Illuminate\Support\Carbon $fecha_apertura
+ * @property-read ?\Illuminate\Support\Carbon $fecha_cierre
+ * @property-read string $estado
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $notas
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $saldo_final
+ * @property-read ?string $observaciones_cierre
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class Caja extends Model
 {
     use ScopedBySucursal;

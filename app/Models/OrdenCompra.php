@@ -9,6 +9,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para ordenes_compra
+ *
+ * @property-read string $id
+ * @property-read string $numero_orden
+ * @property-read string $tipo
+ * @property-read string $prioridad
+ * @property-read string $estado
+ * @property-read ?string $proveedor_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?string $usuario_id
+ * @property-read ?string $aprobado_por_id
+ * @property-read ?string $recibido_por_id
+ * @property-read ?\Illuminate\Support\Carbon $fecha_solicitud
+ * @property-read ?\Illuminate\Support\Carbon $fecha_estimada
+ * @property-read ?\Illuminate\Support\Carbon $fecha_recepcion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_aprobacion
+ * @property-read ?\Illuminate\Support\Carbon $fecha_envio
+ * @property-read ?\Illuminate\Support\Carbon $fecha_finalizacion
+ * @property-read string $subtotal
+ * @property-read string $descuento
+ * @property-read string $impuestos
+ * @property-read string $total
+ * @property-read ?string $notas
+ * @property-read ?string $motivo_rechazo
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class OrdenCompra extends Model
 {
     use HasFactory, HasUuids;

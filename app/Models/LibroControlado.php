@@ -10,6 +10,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Traza regulatoria del libro de movimientos de medicamentos controlados.
  */
+/**
+ * Map de columnas para libro_controlados
+ *
+ * @property-read string $id
+ * @property-read string $producto_id
+ * @property-read ?string $lote_id
+ * @property-read ?string $receta_id
+ * @property-read ?string $receta_numero
+ * @property-read ?string $paciente_id
+ * @property-read ?string $medico_id
+ * @property-read string $cantidad
+ * @property-read ?string $autorizacion
+ * @property-read string $tipo_operacion
+ * @property-read ?string $observaciones
+ * @property-read ?string $cajero_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class LibroControlado extends Model
 {
     use HasFactory, HasUuids;

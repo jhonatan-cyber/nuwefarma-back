@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Map de columnas para roles
+ *
+ * @property-read string $id
+ * @property-read string $nombre
+ * @property-read ?string $descripcion
+ * @property-read ?array $permiso_id
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Rol extends Model
 {
     use HasFactory, HasUuids;

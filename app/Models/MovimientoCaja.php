@@ -11,6 +11,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Map de columnas para movimientos_caja
+ *
+ * @property-read string $id
+ * @property-read string $caja_id
+ * @property-read string $tipo
+ * @property-read string $origen
+ * @property-read ?string $documento_tipo
+ * @property-read ?string $documento_id
+ * @property-read ?string $documento_numero
+ * @property-read string $monto
+ * @property-read ?string $saldo_despues
+ * @property-read ?string $concepto
+ * @property-read ?string $usuario_id
+ * @property-read ?string $sucursal_id
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ * @property-read ?string $crear_usuario_id
+ * @property-read ?string $actualizar_usuario_id
+ * @property-read string|null $creador_nombre
+ * @property-read string|null $actualizador_nombre
+ * @property-read array $auditoria
+ */
 class MovimientoCaja extends Model
 {
     use ScopedBySucursal;

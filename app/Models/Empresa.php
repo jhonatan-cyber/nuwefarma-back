@@ -8,6 +8,27 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Map de columnas para empresas
+ *
+ * @property-read string $id
+ * @property-read string $nit
+ * @property-read string $razon_social
+ * @property-read ?string $nombre_comercial
+ * @property-read string $codigo_actividad
+ * @property-read ?string $descripcion_actividad
+ * @property-read ?string $municipio
+ * @property-read ?string $departamento
+ * @property-read ?string $direccion
+ * @property-read ?string $telefono
+ * @property-read ?string $correo_electronico
+ * @property-read string $moneda
+ * @property-read string $regimen
+ * @property-read string $pais
+ * @property-read string $estado
+ * @property-read ?\Illuminate\Support\Carbon $created_at
+ * @property-read ?\Illuminate\Support\Carbon $updated_at
+ */
 class Empresa extends Model
 {
     use HasFactory, HasUuids;
